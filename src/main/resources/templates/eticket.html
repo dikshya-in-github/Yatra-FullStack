@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your E-Ticket | Yatra — Discover Nepal's Skies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <link rel="stylesheet" href="assets/css/eticket.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+            <div class="nav-actions">
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- WIZARD BAND — step 4 complete -->
+    <header class="wizard-band">
+        <div class="container">
+            <ol class="steps">
+                <li class="step done"><span class="step-num"><i class="fa-solid fa-check"></i></span><span
+                        class="step-label">Select Flights</span></li>
+                <li class="step done"><span class="step-num"><i class="fa-solid fa-check"></i></span><span
+                        class="step-label">Passenger Details</span></li>
+                <li class="step done"><span class="step-num"><i class="fa-solid fa-check"></i></span><span
+                        class="step-label">Payment Method</span></li>
+                <li class="step active"><span class="step-num">4</span><span class="step-label">Your E-ticket</span>
+                </li>
+            </ol>
+        </div>
+    </header>
+
+    <main class="et-wrap container">
+        <!-- SUCCESS BANNER -->
+        <div class="success-banner reveal active" id="successBanner">
+            <span class="sb-icon"><i class="fa-solid fa-circle-check"></i></span>
+            <div>
+                <h1>Payment Successful!</h1>
+                <p id="paidLine">Paid <b>NPR 8,299.99</b> via <b>eSewa</b> · Txn ID: <b id="txnId">9A00000000</b></p>
+            </div>
+        </div>
+
+        <!-- BOARDING-PASS TICKET -->
+        <div class="ticket reveal active" id="ticket">
+            <!-- Header route strip -->
+            <div class="t-head">
+                <div class="t-route">
+                    <div class="t-port">
+                        <strong id="tFromCode">KTM</strong>
+                        <span id="tFromCity">Kathmandu</span>
+                        <span class="t-time" id="tDepTime">06:50 AM</span>
+                    </div>
+                    <div class="t-mid">
+                        <span class="t-flightno" id="tFlightNo">U4 951</span>
+                        <span class="t-plane-line"><i class="fa-solid fa-plane"></i></span>
+                        <span class="t-airline" id="tAirline">Operated by Buddha Air</span>
+                        <span class="t-dur" id="tDuration">45 min</span>
+                    </div>
+                    <div class="t-port right">
+                        <strong id="tToCode">BDP</strong>
+                        <span id="tToCity">Bhadrapur</span>
+                        <span class="t-time" id="tArrTime">07:35 AM</span>
+                    </div>
+                </div>
+                <div class="t-head-right">
+                    <span class="t-status"><i class="fa-solid fa-circle-check"></i> CONFIRMED</span>
+                    <span class="t-pnr-badge">PNR: <b id="tPnrBadge">YATRA6K</b></span>
+                </div>
+            </div>
+
+            <div class="t-body">
+                <div class="t-grid">
+                    <div class="t-cell"><small>Passenger</small><b id="tPassenger">Dikshya Ghising</b></div>
+                    <div class="t-cell"><small>Date</small><b id="tDate">Tue, 15 Sep</b></div>
+                    <div class="t-cell"><small>Class</small><b id="tClass">E Class</b></div>
+                    <div class="t-cell"><small>Baggage</small><b>15kg + 5kg hand carry</b></div>
+                    <div class="t-cell"><small>Ticket No.</small><b id="tTicketNo">784-2400000000</b></div>
+                    <div class="t-cell"><small>PNR</small><b id="tPnr">YATRA6K</b></div>
+                </div>
+
+                <div class="t-fare">
+                    <div class="tf-row"><span>Fare</span><b id="tFare">NPR 8,299.99</b></div>
+                    <div class="tf-row" id="tPromoRow" hidden><span>Promo Discount</span><b class="tf-green"
+                            id="tPromoVal"></b></div>
+                    <div class="tf-row total"><span>Total Paid</span><b id="tTotal">NPR 8,299.99</b></div>
+                </div>
+
+                <div class="t-pay">
+                    <div class="t-cell"><small>Payment Method</small><b id="tMethod">eSewa Wallet</b></div>
+                    <div class="t-cell"><small>Transaction ID</small><b id="tTxn">9A00000000</b></div>
+                    <div class="t-cell"><small>Paid On</small><b id="tPaidAt">—</b></div>
+                </div>
+            </div>
+
+            <!-- Passenger Copy (perforation + official note) -->
+            <div class="t-perf" aria-hidden="true"><span></span><span></span></div>
+            <div class="t-stub">
+                <div class="barcode" aria-hidden="true" id="barcode"></div>
+                <div class="stub-text">
+                    <p class="stub-note"><b>CITIZENSHIP OR PASSPORT OR DRIVING LICENCE MUST BE PRESENTED AT THE
+                            CHECK-IN TIME</b> FOR PROOF OF IDENTITY ALONG WITH THIS NON-TRANSFERABLE ELECTRONIC
+                        TICKET. Please arrive at the airport <b>one hour</b> before departure. Thank you for choosing
+                        Yatra. We wish for your pleasant flight.</p>
+                    <p class="issued-by">Issued by <b id="tIssuedBy">eSewa</b> · Passenger Copy</p>
+                </div>
+            </div>
+
+            <!-- Airport Copy (duplicate stub, like real Nepali e-tickets) -->
+            <div class="t-perf" aria-hidden="true"><span></span><span></span></div>
+            <div class="t-stub airport-copy">
+                <div class="barcode" aria-hidden="true" id="barcode2"></div>
+                <div class="stub-text">
+                    <p class="stub-note"><b id="acPnr">YATRA6K</b> · <span id="acRoute">KTM - BDP</span> ·
+                        <span id="acDate">Tue, 15 Sep</span>
+                    </p>
+                    <p class="issued-by">Airport Copy — retain until boarding</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="et-actions reveal active">
+            <button type="button" class="btn btn-outline" id="printBtn"><i class="fa-solid fa-print"></i> Print / Save
+                PDF</button>
+            <a href="./ticketStatus.html" class="btn btn-outline"><i class="fa-solid fa-ticket"></i> My Tickets</a>
+            <a href="./homeLogged.html" class="btn btn-primary"><i class="fa-solid fa-plane-departure"></i> Book Another
+                Flight</a>
+        </div>
+    </main>
+
+    <!-- FOOTER (slim, wizard pages) -->
+    <footer class="wizard-footer">
+        <div class="container">
+            <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fa-solid fa-plane-up"></i></button>
+
+    <!-- Auth layer (config → auth) — the navbar chip + "Log Out" need it -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/eticket.js"></script>
+
+    <!-- Navbar user chip + a "Log Out" that really clears the session.
+         This page's navbar is wired by eticket.js, not homeLogged.js, so the
+         shared chrome is called explicitly here (no-op without a session —
+         the chip then reads "Guest" and offers Log In). -->
+    <script>YatraAuth.renderSessionChrome();</script>
+</body>
+
+</html>

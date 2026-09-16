@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destinations | Yatra — Discover Nepal's Skies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (tokens, navbar, footer, buttons, reveal) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/destinations.css">
+</head>
+
+<body>
+
+    <!-- ==========================================
+         NAVIGATION BAR (same as homeLogged.html)
+    =========================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="./destinations.html" style="color: var(--primary);"><i class="fa-solid fa-map-location-dot"></i>
+            Destinations</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- ==========================================
+         PAGE HERO
+    =========================================== -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+
+        <div class="container hero-content">
+            <nav class="breadcrumb reveal active" aria-label="Breadcrumb">
+                Home <i class="fa-solid fa-chevron-right"></i> <span class="current">Destinations</span>
+            </nav>
+            <h1 class="hero-title reveal active">Explore <span>Destinations</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                From Himalayan peaks to Terai plains — discover the beautiful places Yatra can take you.
+            </p>
+            <div class="hero-cta reveal active delay-2">
+                <a href="./homeLogged.html" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-plane-departure"></i> Book a Flight
+                </a>
+            </div>
+        </div>
+        <i class="fa-solid fa-chevron-down hero-scroll-hint" aria-hidden="true"></i>
+    </header>
+
+    <!-- ==========================================
+         DESTINATIONS GRID
+    =========================================== -->
+    <section class="destinations-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-map-location-dot"></i> Where We Fly</span>
+                <h2>Our Destinations</h2>
+                <p>Explore the beautiful destinations we fly to — tap a card to see flights, tips, and travel guides.
+                </p>
+            </div>
+
+            <div class="dest-grid" id="destGrid">
+                <!-- Row 1 -->
+                <a href="./homeLogged.html" class="dest-card reveal"
+                    data-tagline="City of Lakes, gateway to the Annapurnas">
+                    <img src="assets/imgs/pokhara.jpg" alt="Pokhara" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Pokhara</h3>
+                        <p class="dest-tagline">City of Lakes, gateway to the Annapurnas <i
+                                class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal delay-1"
+                    data-tagline="The living museum of Newari heritage">
+                    <img src="assets/imgs/header-top-image.jpg" alt="Kathmandu" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Kathmandu</h3>
+                        <p class="dest-tagline">The living museum of Newari heritage <i
+                                class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal delay-2" data-tagline="Where the Buddha was born">
+                    <img src="assets/imgs/bhairahawa.jpeg" alt="Bhairahawa" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Bhairahawa</h3>
+                        <p class="dest-tagline">Where the Buddha was born <i class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+
+                <!-- Row 2 -->
+                <a href="./homeLogged.html" class="dest-card reveal"
+                    data-tagline="Tea gardens and the 'Queen of Hills'">
+                    <img src="assets/imgs/mountainview.jpg" alt="Bhadrapur" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Bhadrapur</h3>
+                        <p class="dest-tagline">Tea gardens and the 'Queen of Hills' <i
+                                class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal delay-1"
+                    data-tagline="Industrial hub of the eastern Terai">
+                    <img src="assets/imgs/biratnagar.png" alt="Biratnagar" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Biratnagar</h3>
+                        <p class="dest-tagline">Industrial hub of the eastern Terai <i
+                                class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal delay-2"
+                    data-tagline="Home of the Tharu cultural heartland">
+                    <img src="assets/imgs/nepalgunj.jpeg" alt="Bharatpur" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Bharatpur</h3>
+                        <p class="dest-tagline">Home of the Tharu cultural heartland <i
+                                class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+
+                <!-- Row 3 (hidden — revealed by Load More) -->
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra"
+                    data-tagline="Gateway to the Everest foothills" hidden>
+                    <img src="assets/imgs/mountainview.jpg" alt="Lukla" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Lukla</h3>
+                        <p class="dest-tagline">Gateway to the Everest foothills <i class="fa-solid fa-arrow-right"></i>
+                        </p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra delay-1"
+                    data-tagline="Sacred gardens of Janaki Mandir" hidden>
+                    <img src="assets/imgs/pokhara.jpg" alt="Janakpur" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Janakpur</h3>
+                        <p class="dest-tagline">Sacred gardens of Janaki Mandir <i class="fa-solid fa-arrow-right"></i>
+                        </p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra delay-2"
+                    data-tagline="Gateway to the Terai plains" hidden>
+                    <img src="assets/imgs/bhairahawa.jpeg" alt="Simara" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Simara</h3>
+                        <p class="dest-tagline">Gateway to the Terai plains <i class="fa-solid fa-arrow-right"></i>
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Row 4 (hidden) -->
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra"
+                    data-tagline="Rivers, bridges, and far-west energy" hidden>
+                    <img src="assets/imgs/nepalgunj.jpeg" alt="Dhangadhi" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Dhangadhi</h3>
+                        <p class="dest-tagline">Rivers, bridges, and far-west energy <i
+                                class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra delay-1"
+                    data-tagline="Jungles of Bardiya National Park" hidden>
+                    <img src="assets/imgs/nepalgunj.jpeg" alt="Nepalgunj" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Nepalgunj</h3>
+                        <p class="dest-tagline">Jungles of Bardiya National Park <i class="fa-solid fa-arrow-right"></i>
+                        </p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra delay-2"
+                    data-tagline="Portal to Shey Phoksundo" hidden>
+                    <img src="assets/imgs/mountainview.jpg" alt="Surkhet" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Surkhet</h3>
+                        <p class="dest-tagline">Portal to Shey Phoksundo <i class="fa-solid fa-arrow-right"></i></p>
+                    </div>
+                </a>
+
+                <!-- Row 5 (hidden) -->
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra"
+                    data-tagline="Gateway to the Everest region" hidden>
+                    <img src="assets/imgs/mountainview.jpg" alt="Tumlingtar" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Tumlingtar</h3>
+                        <p class="dest-tagline">Gateway to the Everest region <i class="fa-solid fa-arrow-right"></i>
+                        </p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra delay-1"
+                    data-tagline="Terai heartland of Mithila art" hidden>
+                    <img src="assets/imgs/biratnagar.png" alt="Rajbiraj" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Rajbiraj</h3>
+                        <p class="dest-tagline">Terai heartland of Mithila art <i class="fa-solid fa-arrow-right"></i>
+                        </p>
+                    </div>
+                </a>
+                <a href="./homeLogged.html" class="dest-card reveal dest-extra delay-2"
+                    data-tagline="Himalayan town above the clouds" hidden>
+                    <img src="assets/imgs/pokhara.jpg" alt="Salleri" loading="lazy" decoding="async">
+                    <span class="dest-shade"></span>
+                    <div class="dest-info">
+                        <h3>Salleri</h3>
+                        <p class="dest-tagline">Himalayan town above the clouds <i class="fa-solid fa-arrow-right"></i>
+                        </p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Load More -->
+            <div class="load-more-wrap">
+                <button class="btn btn-primary btn-lg" id="loadMoreBtn">
+                    Load More <i class="fa-solid fa-rotate-down"></i>
+                </button>
+                <p class="load-feedback" id="loadFeedback" role="status" aria-live="polite"></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         WHY FLY YATRA (stats band)
+    =========================================== -->
+    <section class="stats-band section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Why Fly With Us</span>
+                <h2>Sky-High Standards</h2>
+            </div>
+            <div class="stats-row">
+                <div class="stat-card reveal delay-1">
+                    <div class="stat-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+                    <div class="stat-number" data-target="15">0</div>
+                    <div class="stat-label">Destinations Served</div>
+                </div>
+                <div class="stat-card reveal delay-2">
+                    <div class="stat-icon"><i class="fa-solid fa-plane"></i></div>
+                    <div class="stat-number" data-target="1200">0</div>
+                    <div class="stat-label">Flights Every Month</div>
+                </div>
+                <div class="stat-card reveal delay-3">
+                    <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+                    <div class="stat-number" data-target="98">0%</div>
+                    <div class="stat-label">On-Time Performance</div>
+                </div>
+                <div class="stat-card reveal delay-4">
+                    <div class="stat-icon"><i class="fa-solid fa-face-smile"></i></div>
+                    <div class="stat-number" data-target="50">0K+</div>
+                    <div class="stat-label">Happy Travelers</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         CTA BAND
+    =========================================== -->
+    <section class="cta-section section-padding">
+        <div class="container reveal">
+            <h2>Found Your Next Adventure?</h2>
+            <p>Lock in the best fare in minutes — safe, secure, and always at the best price.</p>
+            <div class="cta-buttons">
+                <a href="./homeLogged.html" class="btn btn-white">
+                    <i class="fa-solid fa-plane-departure"></i> Book a Flight
+                </a>
+                <a href="./ticketStatus.html" class="btn btn-outline-white">
+                    <i class="fa-solid fa-ticket"></i> Check Ticket Status
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER (same as homeLogged.html)
+    =========================================== -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="eSewa"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="Khalti"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="ConnectIPS"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="Nabil Bank"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="Visa"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to top -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+
+    <!-- Auth layer: the session the navbar chip + "Log Out" read (config → auth) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+
+    <!-- Shared site JS (navbar, menu, reveal, counters, back-to-top) -->
+    <script src="assets/js/homeLogged.js"></script>
+    <!-- Page-specific JS -->
+    <script src="assets/js/destinations.js"></script>
+</body>
+
+</html>

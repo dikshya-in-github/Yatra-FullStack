@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra - Log In</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #0ea371;
+            --primary-dark: #086936;
+            --primary-light: #e6f7f0;
+            --accent: #e63946;
+
+            --dark: #0f172a;
+            --slate: #475569;
+            --slate-light: #94a3b8;
+            --white: #ffffff;
+            --off-white: #e8ecef;
+            --line: #e2e8f0;
+            --field-bg: #f8fafc;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-full: 9999px;
+
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.12);
+
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            background: linear-gradient(160deg, #f7f9fb 0%, var(--off-white) 55%, #dce8e3 100%);
+            color: var(--slate);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(0.6rem, 2vh, 1.25rem) 1.25rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .bg-decor {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+
+        .blob-1 {
+            width: 520px;
+            height: 520px;
+            background: rgba(14, 163, 113, 0.24);
+            top: -190px;
+            left: -150px;
+            animation: float1 18s ease-in-out infinite;
+        }
+
+        .blob-2 {
+            width: 440px;
+            height: 440px;
+            background: rgba(8, 105, 54, 0.16);
+            bottom: -170px;
+            right: -130px;
+            animation: float2 22s ease-in-out infinite;
+        }
+
+        .decor-plane {
+            position: absolute;
+            top: 26%;
+            left: -12%;
+            font-size: 1.9rem;
+            color: rgba(14, 163, 113, 0.28);
+            animation: fly 28s linear infinite;
+        }
+
+        @keyframes float1 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(40px, 50px) scale(1.08);
+            }
+        }
+
+        @keyframes float2 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(-50px, -40px) scale(1.1);
+            }
+        }
+
+        @keyframes fly {
+            0% {
+                transform: translate(0, 0) rotate(18deg);
+                opacity: 0;
+            }
+
+            8% {
+                opacity: 1;
+            }
+
+            88% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(125vw, -32vh) rotate(18deg);
+                opacity: 0;
+            }
+        }
+
+        .card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 480px;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem 3rem;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-dark), var(--primary), #45d39a);
+        }
+
+        .reveal {
+            animation: fadeUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+            animation-delay: var(--d, 0s);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(22px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-head {
+            text-align: center;
+        }
+
+        .logo-link {
+            display: inline-block;
+            margin-bottom: 0.6rem;
+        }
+
+        .logo {
+            height: 50px;
+            transition: var(--transition);
+        }
+
+        .logo-link:hover .logo {
+            transform: scale(1.06);
+        }
+
+        .card-head h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--dark);
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--slate);
+            max-width: 420px;
+            margin: 0.25rem auto 0;
+        }
+
+        .login-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: clamp(0.7rem, 1.7vh, 0.95rem);
+            margin-top: 1rem;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            min-width: 0;
+        }
+
+        .field label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .control {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--field-bg);
+            border: 1.5px solid var(--line);
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .control:focus-within {
+            border-color: var(--primary);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(14, 163, 113, 0.13);
+        }
+
+        .control input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font: inherit;
+            font-size: 0.9rem;
+            color: var(--dark);
+            padding: 0.62rem 0.9rem;
+            outline: none;
+        }
+
+        .control input::placeholder {
+            color: var(--slate-light);
+        }
+
+        .control.has-toggle input {
+            padding-right: 2.7rem;
+        }
+
+        .toggle {
+            position: absolute;
+            right: 0.3rem;
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--slate-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle:hover {
+            color: var(--primary);
+            background: rgba(14, 163, 113, 0.1);
+        }
+
+        .field.has-error .control {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1);
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .error-msg {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .error-msg::before {
+            content: "\f06a";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 0.72rem;
+        }
+
+        .options-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 0.1rem;
+        }
+
+        .check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--slate);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .check input {
+            width: 17px;
+            height: 17px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .forgot {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .forgot:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .btn-submit {
+            position: relative;
+            justify-self: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            max-width: 170px;
+            min-height: 44px;
+            margin-top: 0.35rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            font: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(14, 163, 113, 0.3);
+            transition: var(--transition);
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(14, 163, 113, 0.4);
+        }
+
+        .btn-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.85;
+            cursor: not-allowed;
+        }
+
+        .btn-submit::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-submit:hover:not(:disabled)::after {
+            left: 130%;
+        }
+
+        .login-line {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--slate);
+        }
+
+        .login-line a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .login-line a:hover {
+            color: var(--primary-dark);
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 2rem;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.9rem 1.4rem;
+            border-radius: var(--radius-full);
+            background: var(--dark);
+            color: var(--white);
+            font-size: 0.88rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            transform: translate(-50%, 150%);
+            pointer-events: none;
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        .toast.success i {
+            color: #4ade80;
+        }
+
+        .toast.error i {
+            color: #f87171;
+        }
+
+        @media (max-width: 560px) {
+            body {
+                padding: 1.5rem 1rem;
+            }
+
+            .card {
+                padding: 2rem 1.5rem 2.25rem;
+            }
+
+            .logo {
+                height: 46px;
+            }
+
+            .logo-link {
+                margin-bottom: 1.25rem;
+            }
+
+            .card-head h1 {
+                font-size: 1.6rem;
+            }
+
+            .subtitle {
+                font-size: 0.95rem;
+                margin-top: 0.6rem;
+            }
+
+            .login-form {
+                gap: 1rem;
+                margin-top: 1.75rem;
+            }
+
+            .field {
+                gap: 0.45rem;
+            }
+
+            .control input {
+                padding: 0.9rem 1rem;
+                font-size: 0.95rem;
+            }
+
+            .toggle {
+                width: 38px;
+                height: 38px;
+            }
+
+            .control.has-toggle input {
+                padding-right: 3rem;
+            }
+
+            .btn-submit {
+                min-height: 54px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-decor" aria-hidden="true">
+        <span class="blob blob-1"></span>
+        <span class="blob blob-2"></span>
+        <i class="fa-solid fa-plane decor-plane"></i>
+    </div>
+
+    <main class="card">
+
+        <div class="card-head reveal" style="--d:0s">
+            <a href="./home.html" class="logo-link" aria-label="Yatra home">
+                <img src="assets/imgs/Yatra-logo-black.png" alt="Yatra" class="logo">
+            </a>
+            <h1>Welcome Back</h1>
+            <p class="subtitle">Log in to manage your bookings and pick up your journey where you left off.</p>
+        </div>
+
+        <form class="login-form" id="loginForm" novalidate>
+
+            <div class="field reveal" style="--d:0.08s">
+                <label for="loginId">Email / Phone Number</label>
+                <div class="control">
+                    <input type="text" id="loginId" name="loginId" placeholder="you@example.com or 98XXXXXXXX"
+                        autocomplete="username" required>
+                </div>
+            </div>
+
+            <div class="field reveal" style="--d:0.16s">
+                <label for="loginPassword">Password</label>
+                <div class="control has-toggle">
+                    <input type="password" id="loginPassword" name="password" placeholder="Enter Password"
+                        autocomplete="current-password" required>
+                    <button type="button" class="toggle" data-pw-toggle="loginPassword" aria-label="Show password">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="options-row reveal" style="--d:0.24s">
+                <label class="check" for="keepSigned">
+                    <input type="checkbox" id="keepSigned" name="keepSignedIn">
+                    <span>Keep me signed in?</span>
+                </label>
+                <a href="#" class="forgot">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="btn-submit reveal" style="--d:0.32s">
+                <i class="fa-solid fa-right-to-bracket"></i> Log In
+            </button>
+
+            <p class="login-line reveal" style="--d:0.4s">
+                Don't have an account? <a href="./signup.html">Sign Up</a>
+            </p>
+        </form>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Shared layer: config → mock data → API → validation (§35) → auth (§35) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/validation.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const $ = (s, c = document) => c.querySelector(s);
+            const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
+
+            /* §35 validation.js — paint errors with the .field.has-error +
+               .error-msg convention this page styles inline. */
+            YatraValidation.errorStyle = 'field';
+
+            const form = $('#loginForm');
+            const ident = $('#loginId');
+            const password = $('#loginPassword');
+            const keepSigned = $('#keepSigned');
+
+            $$('[data-pw-toggle]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = document.getElementById(btn.dataset.pwToggle);
+                    const show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    btn.innerHTML = `<i class="fa-regular ${show ? 'fa-eye-slash' : 'fa-eye'}"></i>`;
+                    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    input.focus({ preventScroll: true });
+                });
+            });
+
+            /* Field errors are painted by assets/js/validation.js (§35) — the
+               shared layer also owns the email/phone patterns. */
+            $$('.login-form input').forEach(el => {
+                el.addEventListener('input', () => YatraValidation.clearFieldError(el));
+                el.addEventListener('change', () => YatraValidation.clearFieldError(el));
+            });
+
+            const remembered = localStorage.getItem('yatra_login_hint');
+            if (remembered) {
+                ident.value = remembered;
+                keepSigned.checked = true;
+            }
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const check = validateLoginForm({ form });
+                if (!check.valid) {
+                    toast('Please fix the highlighted fields.', 'error');
+                    return;
+                }
+
+                const btn = form.querySelector('.btn-submit');
+                const originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Logging in…';
+
+                const loginId = ident.value.trim();
+
+                if (keepSigned.checked) localStorage.setItem('yatra_login_hint', loginId);
+                else localStorage.removeItem('yatra_login_hint');
+
+                /* §35 auth.js → POST /api/auth/login through api.js. Mock mode
+                   resolves from the shared user roster in mock-data.js; Phase 3
+                   is the same call against Spring Security, and the returned JWT
+                   goes to sessionStorage[yatra_auth_token] (api.js attaches it). */
+                YatraAuth.login(loginId, password.value)
+                    .then((user) => {
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i> Logged in';
+                        toast('Welcome back' + (user && user.name ? ', ' + user.name : '') + '!', 'success');
+
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerHTML = originalHTML;
+                            window.location.href = './homeLogged.html';
+                        }, 1100);
+                    })
+                    .catch((err) => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHTML;
+                        toast((err && err.message) || 'Could not log you in. Please try again.', 'error');
+                    });
+            });
+
+            const toastEl = $('#toast');
+            let toastTimer;
+
+            function toast(message, type = 'success') {
+                toastEl.className = 'toast ' + type;
+                toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
+                requestAnimationFrame(() => toastEl.classList.add('show'));
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4000);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,555 @@
+/* =====================================================
+   TEST REDESIGN — eSewa ePay LOGIN (standalone, light)
+   Only used by esewaLogin.html. The shared gateway pages
+   (esewaBalance / esewaConfirm) still use esewaLogin.css.
+   Revert: point esewaLogin.html back to esewaLogin.css.
+   ===================================================== */
+:root {
+  --esw-green: #60b94e;
+  --esw-green-dark: #4ea337;
+  --esw-green-soft: #e8f5e4;
+  --ink: #12211a;
+  --slate: #5b6b62;
+  --muted: #5f6f65;
+  --line: #dfe6e1;
+  --field-line: #d3dce0;
+  --bg: #f2f5f3;
+  --card: #ffffff;
+  --err: #e05252;
+  --radius: 14px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.epay2-body {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  background:
+    radial-gradient(900px 320px at 50% -80px, rgba(96, 185, 78, 0.14), transparent 70%),
+    var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+button,
+input {
+  font-family: inherit;
+}
+
+/* ---------- Top nav ---------- */
+.epay2-nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding: 0.85rem clamp(1rem, 4vw, 2rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.epay2-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.epay2-logo {
+  height: 2.4rem;
+  width: auto;
+  display: block;
+}
+.epay2-chip {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--esw-green-dark);
+  background: var(--esw-green-soft);
+  border-radius: 9999px;
+  padding: 0.28rem 0.7rem;
+}
+.epay2-secure {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--slate);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.epay2-secure i {
+  color: var(--esw-green);
+}
+
+/* ---------- Layout ---------- */
+.epay2-main {
+  flex: 1;
+  width: min(460px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.25rem 0 3rem;
+}
+
+/* ---------- Steps ---------- */
+.epay2-steps {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 1.75rem;
+}
+.epay2-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.epay2-steps li + li::before {
+  content: "";
+  width: 34px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  margin-right: 0.55rem;
+}
+.step-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #fff;
+  border: 2px solid var(--line);
+  color: var(--muted);
+}
+.epay2-steps li.is-active {
+  color: var(--esw-green-dark);
+}
+.epay2-steps li.is-active .step-dot {
+  background: var(--esw-green);
+  border-color: var(--esw-green);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(96, 185, 78, 0.4);
+}
+
+/* ---------- Card ---------- */
+.epay2-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgba(18, 33, 26, 0.08);
+  padding: 2rem clamp(1.25rem, 4vw, 2.25rem);
+  animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Merchant row */
+.epay2-merchant {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: #f8faf9;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}.epay2-merchant-logo {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.epay2-merchant-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  display: block;
+}
+.epay2-merchant-txt {
+  flex: 1;
+  min-width: 0;
+}
+.epay2-merchant-txt strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+}
+.epay2-merchant-txt small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Amount */
+.epay2-amount {
+  margin: 1.75rem 0 1.25rem;
+}
+.epay2-amount-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.epay2-amount-value {
+  font-size: 2.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.epay2-amount-value .npr {
+  color: var(--esw-green-dark);
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-right: 0.25rem;
+}
+
+/* Breakdown */
+.epay2-breakdown {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.epay2-breakdown .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  font-size: 0.92rem;
+}
+.epay2-breakdown .row + .row {
+  border-top: 1px dashed var(--line);
+}
+.epay2-breakdown .row span {
+  color: var(--slate);
+  font-weight: 600;
+}
+.epay2-breakdown .row b {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.epay2-breakdown .row.total {
+  background: var(--esw-green-soft);
+}
+.epay2-breakdown .row.total b {
+  color: var(--esw-green-dark);
+}
+
+/* Flight ref */
+.epay2-flight {
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+}
+.epay2-flight i {
+  color: var(--esw-green);
+  margin-right: 0.35rem;
+}
+
+/* Divider */
+.epay2-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 1.9rem 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.epay2-divider::before,
+.epay2-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+
+/* ---------- Form ---------- */
+.epay2-field {
+  margin-bottom: 1.15rem;
+}
+.epay2-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 0.45rem;
+}
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-wrap > i {
+  position: absolute;
+  left: 1rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+.input-wrap input {
+  width: 100%;
+  background: #fbfcfb;
+  border: 1.5px solid var(--field-line);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 0.95rem 1rem 0.95rem 2.65rem;
+  outline: none;
+  transition: var(--transition);
+}
+.input-wrap input::placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+.input-wrap input:focus {
+  border-color: var(--esw-green);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(96, 185, 78, 0.15);
+}
+.eye {
+  position: absolute;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.4rem;
+  transition: var(--transition);
+}
+.eye:hover {
+  color: var(--ink);
+}
+
+.field-err {
+  color: var(--err);
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-height: 1.15rem;
+  margin: 0.35rem 0.2rem 0;
+}
+
+/* Mock reCAPTCHA (Google-style light box) */
+.captcha {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: #f9f9f9;
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+  padding: 0.95rem 1rem;
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+}
+.captcha:hover {
+  border-color: #b5b5b5;
+}
+.cb {
+  width: 24px;
+  height: 24px;
+  border-radius: 2px;
+  background: #fff;
+  border: 2px solid #c1c1c1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a9c48;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.captcha.loading .cb {
+  border-color: transparent;
+  color: #4a90d9;
+}
+.cb-label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #282828;
+  flex: 1;
+}
+.rc-brand {
+  text-align: center;
+  color: #9a9a9a;
+  line-height: 1.25;
+}
+.rc-icon {
+  font-size: 1.5rem;
+  display: block;
+  margin: 0 auto 0.2rem;
+}
+.rc-brand small {
+  font-size: 0.58rem;
+}
+.captcha.verified .cb {
+  border-color: transparent;
+}
+.captcha.verified {
+  border-color: #1a9c48;
+}
+
+.form-err {
+  color: var(--err);
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-height: 1.2rem;
+  margin: 0.6rem 0 0;
+}
+
+/* Primary button */
+.epay2-btn {
+  width: 100%;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--esw-green);
+  border: none;
+  border-radius: 12px;
+  padding: 1.05rem;
+  cursor: pointer;
+  margin-top: 0.85rem;
+  transition: var(--transition);
+}
+.epay2-btn:hover:not(:disabled) {
+  background: var(--esw-green-dark);
+}
+.epay2-btn:active:not(:disabled) {
+  background: var(--esw-green-dark);
+}
+.epay2-btn:disabled {
+  opacity: 0.75;
+  cursor: wait;
+  transform: none;
+}
+
+/* Links */
+.epay2-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.6rem;
+}
+.epay2-link {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--slate);
+  transition: var(--transition);
+}
+.epay2-link:hover {
+  color: var(--ink);
+}
+.epay2-link.green {
+  color: var(--esw-green-dark);
+}
+.epay2-link.green:hover {
+  color: var(--esw-green);
+}
+
+.cancel-pay {
+  display: block;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 2rem;
+  transition: var(--transition);
+}
+.cancel-pay:hover {
+  color: var(--err);
+}
+
+/* ---------- Note ---------- */
+.epay2-note {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.72rem;
+  padding: 0.25rem 1rem 0;
+}
+
+/* ---------- Footer ---------- */
+.epay2-foot {
+  margin-top: 2.25rem;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.4rem clamp(1rem, 4vw, 3rem);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.epay2-foot nav {
+  display: flex;
+  gap: 2rem;
+}
+.epay2-foot a:hover {
+  color: var(--esw-green-dark);
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .epay2-main {
+    padding-top: 1.5rem;
+  }
+  .epay2-card {
+    padding: 1.5rem 1.15rem;
+  }
+  .epay2-secure span {
+    display: none;
+  }
+  .epay2-steps li + li::before {
+    width: 18px;
+  }
+  .epay2-foot {
+    justify-content: center;
+    text-align: center;
+  }
+}

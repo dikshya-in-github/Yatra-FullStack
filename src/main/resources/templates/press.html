@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Press &amp; Media | Yatra — Newsroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/press.css">
+</head>
+<body>
+
+    <!-- Navigation Bar (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html" style="color: var(--primary);"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- ==========================================
+         PAGE HERO
+    =========================================== -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+        <div class="container">
+            <nav class="breadcrumb reveal active">
+                <a href="./homeLogged.html">Home</a> <i class="fa-solid fa-chevron-right"></i> <span class="current">Press &amp; Media</span>
+            </nav>
+            <h1 class="hero-title reveal active">The Yatra <span>Newsroom</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                Announcements, milestones, and media coverage — everything newsworthy
+                from Nepal's trusted flight booking platform.
+            </p>
+            <div class="hero-stats reveal active delay-2">
+                <div class="hero-stat"><strong>40+</strong><span>Press Releases</span></div>
+                <div class="hero-stat"><strong>25</strong><span>Media Mentions</span></div>
+                <div class="hero-stat"><strong>12</strong><span>Publications</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         FEATURED ARTICLE
+    =========================================== -->
+    <section class="featured-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-star"></i> Featured Story</span>
+                <h2>Latest From Yatra</h2>
+            </div>
+            <article class="featured-card reveal">
+                <div class="featured-media">
+                    <span class="featured-badge"><i class="fa-solid fa-bolt"></i> Press Release</span>
+                </div>
+                <div class="featured-content">
+                    <div class="featured-meta">
+                        <span><i class="fa-regular fa-calendar"></i> Sep 10, 2026</span>
+                        <span><i class="fa-regular fa-clock"></i> 4 min read</span>
+                    </div>
+                    <h2>Yatra Takes Off: Nepal's Flight Booking Gets a Major Upgrade</h2>
+                    <p>
+                        Yatra today announced the launch of Yatra — a complete rebuild of its
+                        booking platform featuring secure eSewa payments, real-time flight status,
+                        group booking support, and instant email confirmations. The release marks
+                        the biggest milestone in the platform's history and reinforces its mission
+                        to make domestic travel in Nepal seamless and secure.
+                    </p>
+                    <a href="#newsroom" class="read-link">Read Full Story <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         NEWSROOM GRID
+    =========================================== -->
+    <section class="news-section section-padding" id="newsroom">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Newsroom</span>
+                <h2>All Stories &amp; Releases</h2>
+                <p>Browse by category to find press releases, media coverage, and company updates.</p>
+            </div>
+
+            <div class="filter-bar reveal" id="newsFilters">
+                <button class="filter-chip active" data-filter="all">All Stories</button>
+                <button class="filter-chip" data-filter="press">Press Releases</button>
+                <button class="filter-chip" data-filter="coverage">Media Coverage</button>
+                <button class="filter-chip" data-filter="company">Company News</button>
+            </div>
+
+            <div class="news-grid" id="newsGrid">
+                <!-- Story 1 -->
+                <article class="news-card reveal" data-category="company">
+                    <div class="news-banner banner-green"><i class="fa-solid fa-users"></i></div>
+                    <div class="news-body">
+                        <div class="news-meta">
+                            <span class="cat-chip cat-company">Company News</span>
+                            <span class="news-date"><i class="fa-regular fa-calendar"></i> Aug 18, 2026</span>
+                        </div>
+                        <h3>Yatra Crosses 50,000 Booked Travelers</h3>
+                        <p>A major milestone — more than 50,000 travelers have now booked domestic flights through Yatra since launch.</p>
+                        <a href="#newsroom" class="read-link">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <!-- Story 2 -->
+                <article class="news-card reveal delay-1" data-category="coverage">
+                    <div class="news-banner banner-dark"><i class="fa-solid fa-newspaper"></i></div>
+                    <div class="news-body">
+                        <div class="news-meta">
+                            <span class="cat-chip cat-coverage">Media Coverage</span>
+                            <span class="news-date"><i class="fa-regular fa-calendar"></i> Jul 25, 2026</span>
+                        </div>
+                        <h3>The Kathmandu Post: "How Yatra Is Reshaping Domestic Travel"</h3>
+                        <p>A feature story on how Yatra's digital-first approach is simplifying air travel across Nepal's busiest routes.</p>
+                        <a href="#newsroom" class="read-link">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <!-- Story 3 -->
+                <article class="news-card reveal delay-2" data-category="press">
+                    <div class="news-banner banner-teal"><i class="fa-solid fa-route"></i></div>
+                    <div class="news-body">
+                        <div class="news-meta">
+                            <span class="cat-chip cat-press">Press Release</span>
+                            <span class="news-date"><i class="fa-regular fa-calendar"></i> Jun 30, 2026</span>
+                        </div>
+                        <h3>Yatra Adds Biratnagar &amp; Mountain View Routes</h3>
+                        <p>Two new destinations join the platform — the industrial capital Biratnagar and the scenic Everest Experience route.</p>
+                        <a href="#newsroom" class="read-link">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <!-- Story 4 -->
+                <article class="news-card reveal" data-category="coverage">
+                    <div class="news-banner banner-red"><i class="fa-solid fa-trophy"></i></div>
+                    <div class="news-body">
+                        <div class="news-meta">
+                            <span class="cat-chip cat-coverage">Media Coverage</span>
+                            <span class="news-date"><i class="fa-regular fa-calendar"></i> May 12, 2026</span>
+                        </div>
+                        <h3>Dikshya Ghising Featured Among Young Tech Innovators</h3>
+                        <p>Yatra's creator is spotlighted by national media for building one of Nepal's most promising travel-tech projects.</p>
+                        <a href="#newsroom" class="read-link">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <!-- Story 5 -->
+                <article class="news-card reveal delay-1" data-category="press">
+                    <div class="news-banner banner-green"><i class="fa-solid fa-people-group"></i></div>
+                    <div class="news-body">
+                        <div class="news-meta">
+                            <span class="cat-chip cat-press">Press Release</span>
+                            <span class="news-date"><i class="fa-regular fa-calendar"></i> Apr 08, 2026</span>
+                        </div>
+                        <h3>Group Booking Feature Goes Live</h3>
+                        <p>Families, tour operators, and organizations can now request quotes for group travel directly through Yatra.</p>
+                        <a href="#newsroom" class="read-link">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <!-- Story 6 -->
+                <article class="news-card reveal delay-2" data-category="company">
+                    <div class="news-banner banner-dark"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="news-body">
+                        <div class="news-meta">
+                            <span class="cat-chip cat-company">Company News</span>
+                            <span class="news-date"><i class="fa-regular fa-calendar"></i> Mar 15, 2026</span>
+                        </div>
+                        <h3>One Year of Yatra: By the Numbers</h3>
+                        <p>From first booking to 98% on-time performance — a transparent look back at our first year of operations.</p>
+                        <a href="#newsroom" class="read-link">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+            </div>
+
+            <div class="empty-news" id="emptyNews" style="display: none;">
+                <i class="fa-solid fa-folder-open" style="font-size: 2rem; margin-bottom: 0.75rem; display: block;"></i>
+                No stories in this category right now — check back soon.
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         MEDIA MENTIONS STRIP
+    =========================================== -->
+    <section class="mentions-section">
+        <div class="container reveal">
+            <p class="mentions-title">As Featured In</p>
+            <div class="mentions-logos">
+                <span class="mention-badge"><i class="fa-solid fa-newspaper"></i> The Kathmandu Post</span>
+                <span class="mention-badge"><i class="fa-solid fa-newspaper"></i> Republica</span>
+                <span class="mention-badge"><i class="fa-solid fa-newspaper"></i> OnlineKhabar</span>
+                <span class="mention-badge"><i class="fa-solid fa-newspaper"></i> Setopati</span>
+                <span class="mention-badge"><i class="fa-solid fa-laptop-code"></i> TechPana</span>
+                <span class="mention-badge"><i class="fa-solid fa-newspaper"></i> eKantipur</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         MEDIA KIT
+    =========================================== -->
+    <section class="mediakit-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-folder-open"></i> Media Kit</span>
+                <h2>Brand Assets &amp; Resources</h2>
+                <p>Everything journalists and partners need to cover Yatra — logos, guidelines, and facts.</p>
+            </div>
+            <div class="kit-grid">
+                <div class="kit-card reveal">
+                    <div class="kit-icon"><i class="fa-solid fa-image"></i></div>
+                    <h3>Logo Pack</h3>
+                    <div class="kit-meta">ZIP · 4.2 MB · PNG &amp; SVG</div>
+                    <button class="kit-btn" data-file="yatra-logo-pack.zip">
+                        <i class="fa-solid fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="kit-card reveal delay-1">
+                    <div class="kit-icon"><i class="fa-solid fa-palette"></i></div>
+                    <h3>Brand Guidelines</h3>
+                    <div class="kit-meta">PDF · 1.8 MB · 24 pages</div>
+                    <button class="kit-btn" data-file="yatra-brand-guidelines.pdf">
+                        <i class="fa-solid fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="kit-card reveal delay-2">
+                    <div class="kit-icon"><i class="fa-solid fa-file-lines"></i></div>
+                    <h3>Company Fact Sheet</h3>
+                    <div class="kit-meta">PDF · 320 KB · 2 pages</div>
+                    <button class="kit-btn" data-file="yatra-fact-sheet.pdf">
+                        <i class="fa-solid fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="kit-card reveal delay-3">
+                    <div class="kit-icon"><i class="fa-solid fa-camera"></i></div>
+                    <h3>Press Photos</h3>
+                    <div class="kit-meta">ZIP · 18.5 MB · High-res</div>
+                    <button class="kit-btn" data-file="yatra-press-photos.zip">
+                        <i class="fa-solid fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         PRESS CONTACT + NEWSLETTER
+    =========================================== -->
+    <section class="contact-section section-padding">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-text reveal">
+                    <span class="eyebrow"><i class="fa-solid fa-envelope-open-text"></i> Press Inquiries</span>
+                    <h2>Writing About <span>Yatra?</span></h2>
+                    <p>
+                        Our media team is happy to help with interviews, statements, data requests,
+                        and anything else you need for your story. We aim to respond within two
+                        business days.
+                    </p>
+                    <ul class="contact-list">
+                        <li>
+                            <div class="c-icon"><i class="fa-solid fa-envelope"></i></div>
+                            <div>
+                                <strong>press@yatra2.0.com</strong>
+                                <span>For all press &amp; media inquiries</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="c-icon"><i class="fa-solid fa-phone"></i></div>
+                            <div>
+                                <strong>+977 1 4XXXXXX</strong>
+                                <span>Media hotline · Sun–Fri, 9 AM – 6 PM NPT</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="c-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div>
+                                <strong>New Baneshwor, Kathmandu</strong>
+                                <span>Nepal, 44600</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="newsletter-card reveal delay-2">
+                    <h3><i class="fa-solid fa-bell" style="color: var(--primary); margin-right: 0.5rem;"></i>Press Updates Newsletter</h3>
+                    <p>Get press releases and major announcements delivered straight to your inbox — no spam, ever.</p>
+                    <form class="newsletter-form" id="newsletterForm">
+                        <input type="email" id="newsletterEmail" placeholder="your@email.com" required>
+                        <button type="submit" class="btn btn-primary" id="newsletterBtn">Subscribe</button>
+                    </form>
+                    <div class="newsletter-note">
+                        <i class="fa-solid fa-lock"></i>
+                        We respect your privacy. Unsubscribe anytime.
+                    </div>
+                    <div class="newsletter-success" id="newsletterSuccess">
+                        <i class="fa-solid fa-circle-check"></i>
+                        You're subscribed! Welcome aboard.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER (same as homeLogged.html)
+    =========================================== -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>press@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth layer: the session the navbar chip + "Log Out" read (config → auth) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+
+    <!-- Shared JS (navbar scroll, mobile menu, reveal, counters) -->
+    <script src="assets/js/homeLogged.js"></script>
+    <!-- Page-specific JS (news filters, media kit, newsletter) -->
+    <script src="assets/js/press.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+</html>

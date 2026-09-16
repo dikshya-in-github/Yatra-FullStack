@@ -1,0 +1,424 @@
+/* =====================================================
+   E-TICKET (wizard step 4) — page styles only.
+   Tokens, reset, navbar, menu, buttons, reveal, wizard
+   band, stepper and slim footer come from homeLogged.css.
+   ===================================================== */
+
+/* Small base rules this page relies on (kept here because
+   the shared file does not carry a bare img/a/ul/h reset) */
+img {
+  max-width: 100%;
+  display: block;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+ul,
+ol {
+  list-style: none;
+}
+h1,
+h2,
+h3,
+h4 {
+  color: var(--dark);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+/* Shared .btn-outline is the transparent navbar variant;
+   these buttons sit on a light background */
+.et-actions .btn-outline {
+  background: var(--white);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+.et-actions .btn-outline:hover {
+  background: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+/* ---------- Success banner ---------- */
+.et-wrap {
+  padding: 2.5rem 1.5rem 5rem;
+}
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark) 0%,
+    var(--primary) 100%
+  );
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  color: var(--white);
+  margin-bottom: 2.5rem;
+  box-shadow: 0 15px 40px rgba(14, 163, 113, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+.success-banner::before {
+  content: "";
+  position: absolute;
+  top: -70px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+.sb-icon {
+  font-size: 2.6rem;
+  flex-shrink: 0;
+}
+.success-banner h1 {
+  color: var(--white);
+  font-size: 1.5rem;
+  margin-bottom: 0.15rem;
+}
+.success-banner p {
+  opacity: 0.95;
+  font-size: 0.98rem;
+}
+.success-banner b {
+  font-weight: 800;
+}
+
+/* ---------- Ticket card ---------- */
+.ticket {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  max-width: 880px;
+  margin: 0 auto;
+}
+.t-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--dark);
+  color: var(--white);
+  padding: 1.75rem 2.25rem;
+}
+.t-route {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  flex: 1;
+}
+.t-port {
+  display: flex;
+  flex-direction: column;
+}
+.t-port.right {
+  text-align: right;
+}
+.t-port strong {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.t-port span {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+.t-port .t-time {
+  color: var(--white);
+  font-weight: 800;
+  font-size: 1rem;
+  margin-top: 0.15rem;
+}
+.t-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.t-airline {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+}
+
+.t-flightno {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #6ee7b7;
+}
+.t-plane-line {
+  color: var(--primary);
+  font-size: 1.1rem;
+  position: relative;
+  width: 110px;
+  text-align: center;
+}
+.t-plane-line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 2px dashed rgba(14, 163, 113, 0.5);
+}
+.t-plane-line i {
+  position: relative;
+  background: var(--dark);
+  padding: 0 0.35rem;
+}
+.t-dur {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+.t-status {
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  color: #6ee7b7;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.t-body {
+  padding: 2rem 2.25rem;
+}
+.t-grid,
+.t-pay {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem 1.5rem;
+}
+.t-pay {
+  border-top: 1px dashed var(--border);
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+}
+.t-cell small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--slate-light);
+  margin-bottom: 0.15rem;
+}
+.t-cell b {
+  color: var(--dark);
+  font-size: 0.98rem;
+}
+
+.t-fare {
+  border-top: 1px dashed var(--border);
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  max-width: 380px;
+  margin-left: auto;
+}
+.tf-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  font-size: 0.95rem;
+}
+.tf-row span {
+  color: var(--slate);
+}
+.tf-row b {
+  color: var(--dark);
+}
+.tf-green {
+  color: var(--primary) !important;
+}
+.tf-row.total {
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+  padding-top: 0.65rem;
+  font-size: 1.05rem;
+}
+.tf-row.total b {
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+/* ---------- Perforation + stub ---------- */
+.t-perf {
+  position: relative;
+  height: 26px;
+}
+.t-perf span {
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--off-white);
+  transform: translateY(-50%);
+}
+.t-perf span:first-child {
+  left: -13px;
+}
+.t-perf span:last-child {
+  right: -13px;
+}
+.t-perf::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 50%;
+  border-top: 2px dashed var(--border);
+}
+.t-stub {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0 2.25rem 2rem;
+  flex-wrap: wrap;
+}
+.barcode {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  height: 56px;
+}
+.barcode i {
+  display: block;
+  width: 3px;
+  background: var(--dark);
+}
+.barcode i:nth-child(3n) {
+  width: 2px;
+}
+.barcode i:nth-child(4n) {
+  width: 5px;
+}
+.barcode i:nth-child(5n) {
+  width: 2px;
+  opacity: 0.8;
+}
+.stub-note {
+  font-size: 0.82rem;
+  color: var(--slate-light);
+  max-width: 480px;
+}
+.stub-note b {
+  color: var(--dark);
+}
+
+/* ---------- Actions ---------- */
+.et-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+}
+
+/* ---------- Authentic ticket details ---------- */
+.t-head-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+.t-pnr-badge {
+  background: rgba(110, 231, 183, 0.12);
+  border: 1px solid rgba(110, 231, 183, 0.4);
+  color: #6ee7b7;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.9rem;
+  border-radius: var(--radius-full);
+}
+.t-pnr-badge b {
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.stub-text {
+  flex: 1;
+  min-width: 240px;
+}
+.issued-by {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--slate-light);
+  letter-spacing: 0.04em;
+}
+.issued-by b {
+  color: var(--primary-dark);
+}
+.airport-copy .barcode {
+  height: 44px;
+}
+.airport-copy .stub-note {
+  font-size: 0.85rem;
+}
+
+/* ---------- Print ---------- */
+@media print {
+  .navbar,
+  .wizard-band,
+  .et-actions,
+  .wizard-footer,
+  .mobile-menu,
+  .success-banner {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .et-wrap {
+    padding: 0;
+  }
+  .ticket {
+    box-shadow: none;
+    border: 1px solid var(--border);
+    break-inside: avoid;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .success-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+  .t-head,
+  .t-body,
+  .t-stub {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+  .t-route {
+    gap: 1.25rem;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .t-grid,
+  .t-pay {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 480px) {
+  .t-grid,
+  .t-pay {
+    grid-template-columns: 1fr;
+  }
+  .t-fare {
+    margin-left: 0;
+    max-width: none;
+  }
+  .et-actions .btn {
+    width: 100%;
+  }
+}

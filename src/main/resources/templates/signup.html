@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra - Sign Up</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #0ea371;
+            --primary-dark: #086936;
+            --primary-light: #e6f7f0;
+            --accent: #e63946;
+
+            --dark: #0f172a;
+            --slate: #475569;
+            --slate-light: #94a3b8;
+            --white: #ffffff;
+            --off-white: #e8ecef;
+            --line: #e2e8f0;
+            --field-bg: #f8fafc;
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --radius-full: 9999px;
+
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.12);
+
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            background: linear-gradient(160deg, #f7f9fb 0%, var(--off-white) 55%, #dce8e3 100%);
+            color: var(--slate);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(0.6rem, 2vh, 1.25rem) 1.25rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .bg-decor {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+        }
+
+        .blob-1 {
+            width: 520px;
+            height: 520px;
+            background: rgba(14, 163, 113, 0.24);
+            top: -190px;
+            left: -150px;
+            animation: float1 18s ease-in-out infinite;
+        }
+
+        .blob-2 {
+            width: 440px;
+            height: 440px;
+            background: rgba(8, 105, 54, 0.16);
+            bottom: -170px;
+            right: -130px;
+            animation: float2 22s ease-in-out infinite;
+        }
+
+        .decor-plane {
+            position: absolute;
+            top: 26%;
+            left: -12%;
+            font-size: 1.9rem;
+            color: rgba(14, 163, 113, 0.28);
+            animation: fly 28s linear infinite;
+        }
+
+        @keyframes float1 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(40px, 50px) scale(1.08);
+            }
+        }
+
+        @keyframes float2 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(-50px, -40px) scale(1.1);
+            }
+        }
+
+        @keyframes fly {
+            0% {
+                transform: translate(0, 0) rotate(18deg);
+                opacity: 0;
+            }
+
+            8% {
+                opacity: 1;
+            }
+
+            88% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(125vw, -32vh) rotate(18deg);
+                opacity: 0;
+            }
+        }
+
+        .card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 750px;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem 3rem;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-dark), var(--primary), #45d39a);
+        }
+
+        .reveal {
+            animation: fadeUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+            animation-delay: var(--d, 0s);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(22px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-head {
+            text-align: center;
+        }
+
+        .logo-link {
+            display: inline-block;
+            margin-bottom: 0.6rem;
+        }
+
+        .logo {
+            height: 50px;
+            transition: var(--transition);
+        }
+
+        .logo-link:hover .logo {
+            transform: scale(1.06);
+        }
+
+        .card-head h1 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--dark);
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--slate);
+            max-width: 420px;
+            margin: 0.25rem auto 0;
+        }
+
+        .tabs {
+            position: relative;
+            display: flex;
+            background: var(--off-white);
+            border-radius: var(--radius-full);
+            padding: 5px;
+            margin: 1rem 0 1.5rem;
+        }
+
+        .tab-btn {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 46px;
+            padding: 0.75rem;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-full);
+            font: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--slate);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.3s ease;
+        }
+
+        .tab-btn i {
+            font-size: 0.9rem;
+            color: var(--slate-light);
+            transition: var(--transition);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-dark);
+        }
+
+        .tab-btn.active i {
+            color: var(--primary);
+        }
+
+        .tab-btn:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .tab-indicator {
+            position: absolute;
+            z-index: 1;
+            top: 5px;
+            left: 5px;
+            width: calc(50% - 5px);
+            height: calc(100% - 10px);
+            background: var(--white);
+            border-radius: var(--radius-full);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tabs[data-active="email"] .tab-indicator {
+            transform: translateX(100%);
+        }
+
+        .label-short {
+            display: none;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: clamp(0.55rem, 1.5vh, 0.85rem) 1.1rem;
+            animation: panelIn 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes panelIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            min-width: 0;
+        }
+
+        .field label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .control {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--field-bg);
+            border: 1.5px solid var(--line);
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .control:focus-within {
+            border-color: var(--primary);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(14, 163, 113, 0.13);
+        }
+
+        .control input,
+        .control select {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font: inherit;
+            font-size: 0.9rem;
+            color: var(--dark);
+            padding: 0.62rem 0.9rem;
+            outline: none;
+        }
+
+        .control input::placeholder {
+            color: var(--slate-light);
+        }
+
+        .control select {
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            padding-right: 2.75rem;
+        }
+
+        .control select:required:invalid {
+            color: var(--slate-light);
+        }
+
+        .caret {
+            position: absolute;
+            right: 1rem;
+            font-size: 0.78rem;
+            color: var(--slate-light);
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .control:focus-within .caret {
+            color: var(--primary);
+        }
+
+        .control input[type="date"] {
+            cursor: pointer;
+        }
+
+        .control input[type="date"]:required:invalid:not(:focus) {
+            color: var(--slate-light);
+        }
+
+        .dial {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            align-self: stretch;
+            padding: 0 0.7rem;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            font-size: 0.85rem;
+            font-weight: 700;
+            white-space: nowrap;
+            border-right: 1.5px solid var(--line);
+        }
+
+        .dial .flag {
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .control.has-toggle input {
+            padding-right: 2.7rem;
+        }
+
+        .toggle {
+            position: absolute;
+            right: 0.3rem;
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--slate-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .toggle:hover {
+            color: var(--primary);
+            background: rgba(14, 163, 113, 0.1);
+        }
+
+        .strength {
+            display: flex;
+            gap: 6px;
+            margin-top: 0;
+        }
+
+        .strength span {
+            flex: 1;
+            height: 4px;
+            border-radius: var(--radius-full);
+            background: var(--line);
+            transition: background 0.3s ease;
+        }
+
+        .strength.level-1 span:nth-child(1) {
+            background: var(--accent);
+        }
+
+        .strength.level-2 span:nth-child(-n+2) {
+            background: #f0a33c;
+        }
+
+        .strength.level-3 span:nth-child(-n+3) {
+            background: #4cc38a;
+        }
+
+        .strength.level-4 span {
+            background: var(--primary);
+        }
+
+        .field.has-error .control {
+            border-color: var(--accent);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.1);
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        .error-msg {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .error-msg::before {
+            content: "\f06a";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            font-size: 0.72rem;
+        }
+
+        .btn-submit {
+            position: relative;
+            grid-column: 1 / -1;
+            justify-self: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            max-width: 170px;
+            min-height: 44px;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            font: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(14, 163, 113, 0.3);
+            transition: var(--transition);
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px rgba(14, 163, 113, 0.4);
+        }
+
+        .btn-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.85;
+            cursor: not-allowed;
+        }
+
+        .btn-submit::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-submit:hover:not(:disabled)::after {
+            left: 130%;
+        }
+
+        .legal {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--slate-light);
+            line-height: 1.6;
+        }
+
+        .legal a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .legal a:hover {
+            text-decoration: underline;
+        }
+
+        .login-line {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--slate);
+        }
+
+        .login-line a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .login-line a:hover {
+            color: var(--primary-dark);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0.9rem 0 0.65rem;
+            font-size: 0.72rem;
+            color: var(--slate-light);
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--line), transparent);
+        }
+
+        .socials {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+        }
+
+        .social {
+            display: grid;
+            place-items: center;
+            min-height: 38px;
+            border: 1.5px solid var(--line);
+            border-radius: var(--radius-md);
+            background: var(--white);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .social:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .social img {
+            height: 17px;
+            transition: var(--transition);
+        }
+
+        .social:hover img {
+            transform: scale(1.08);
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 2rem;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.9rem 1.4rem;
+            border-radius: var(--radius-full);
+            background: var(--dark);
+            color: var(--white);
+            font-size: 0.88rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            transform: translate(-50%, 150%);
+            pointer-events: none;
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        .toast.success i {
+            color: #4ade80;
+        }
+
+        .toast.error i {
+            color: #f87171;
+        }
+
+        @media (min-width: 821px) and (max-height: 820px) {
+            body {
+                padding: 0.5rem 1.25rem;
+            }
+
+            .card {
+                padding: 0.9rem 2rem 1.1rem;
+            }
+
+            .logo-link {
+                margin-bottom: 0.4rem;
+            }
+
+            .card-head h1 {
+                font-size: 1.3rem;
+            }
+
+            .subtitle {
+                font-size: 0.78rem;
+                margin-top: 0.1rem;
+            }
+
+            .tabs {
+                margin: 0.55rem 0 0.75rem;
+            }
+
+            .tab-btn {
+                min-height: 36px;
+                font-size: 0.84rem;
+            }
+
+            .panel.active {
+                gap: 0.5rem 1.1rem;
+            }
+
+            .field {
+                gap: 0.2rem;
+            }
+
+            .field label {
+                font-size: 0.75rem;
+            }
+
+            .control input,
+            .control select {
+                padding: 0.5rem 0.85rem;
+                font-size: 0.88rem;
+            }
+
+            .btn-submit {
+                min-height: 40px;
+                padding: 0.65rem 1.5rem;
+            }
+
+            .divider {
+                margin: 0.6rem 0 0.5rem;
+            }
+
+            .social {
+                min-height: 32px;
+            }
+
+            .social img {
+                height: 15px;
+            }
+        }
+
+        @media (max-width: 820px) {
+            body {
+                padding: 1.5rem 1rem;
+            }
+
+            .card {
+                padding: 2rem 1.5rem 2.25rem;
+            }
+
+            .logo {
+                height: 46px;
+            }
+
+            .logo-link {
+                margin-bottom: 1.25rem;
+            }
+
+            .card-head h1 {
+                font-size: 1.6rem;
+            }
+
+            .subtitle {
+                font-size: 0.95rem;
+                margin-top: 0.6rem;
+            }
+
+            .tabs {
+                padding: 6px;
+                margin: 1.85rem 0 2rem;
+            }
+
+            .tab-btn {
+                min-height: 46px;
+                font-size: 0.95rem;
+            }
+
+            .tab-indicator {
+                top: 6px;
+                left: 6px;
+                width: calc(50% - 6px);
+                height: calc(100% - 12px);
+            }
+
+            .panel.active {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .field {
+                gap: 0.45rem;
+            }
+
+            .field label {
+                font-size: 0.85rem;
+            }
+
+            .control input,
+            .control select {
+                padding: 0.9rem 1rem;
+                font-size: 0.95rem;
+            }
+
+            .toggle {
+                width: 38px;
+                height: 38px;
+            }
+
+            .control.has-toggle input {
+                padding-right: 3rem;
+            }
+
+            .btn-submit {
+                min-height: 54px;
+            }
+
+            .social {
+                min-height: 48px;
+            }
+
+            .social img {
+                height: 22px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .tab-btn {
+                font-size: 0.85rem;
+                padding: 0.6rem 0.5rem;
+            }
+
+            .tab-btn i {
+                display: none;
+            }
+
+            .label-long {
+                display: none;
+            }
+
+            .label-short {
+                display: inline;
+            }
+
+            .logo {
+                height: 40px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-decor" aria-hidden="true">
+        <span class="blob blob-1"></span>
+        <span class="blob blob-2"></span>
+        <i class="fa-solid fa-plane decor-plane"></i>
+    </div>
+
+    <main class="card">
+
+        <div class="card-head reveal" style="--d:0s">
+            <a href="./home.html" class="logo-link" aria-label="Yatra home">
+                <img src="assets/imgs/Yatra-logo-black.png" alt="Yatra" class="logo">
+            </a>
+        </div>
+
+        <div class="tabs reveal" data-active="number" role="tablist" aria-label="Choose how to sign up"
+            style="--d:0.1s">
+            <span class="tab-indicator" aria-hidden="true"></span>
+
+            <button type="button" class="tab-btn active" id="tab-number" role="tab" aria-selected="true"
+                aria-controls="panel-number" data-tab="number" tabindex="0">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+                <span class="label-long">Register with Number</span>
+                <span class="label-short">Number</span>
+            </button>
+
+            <button type="button" class="tab-btn" id="tab-email" role="tab" aria-selected="false"
+                aria-controls="panel-email" data-tab="email" tabindex="-1">
+                <i class="fa-solid fa-envelope"></i>
+                <span class="label-long">Register with Email</span>
+                <span class="label-short">Email</span>
+            </button>
+        </div>
+
+        <form class="panel active signup-form" id="panel-number" role="tabpanel" aria-labelledby="tab-number"
+            data-method="number" novalidate>
+
+            <div class="field">
+                <label for="numTitle">Courtesy Title</label>
+                <div class="control">
+                    <select id="numTitle" name="title" required>
+                        <option value="" selected disabled>Select title</option>
+                        <option value="Mr">Mr.</option>
+                        <option value="Mrs">Mrs.</option>
+                        <option value="Ms">Ms.</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down caret"></i>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="numLastName">Last Name</label>
+                <div class="control">
+                    <input type="text" id="numLastName" name="lastName" placeholder="Last Name"
+                        autocomplete="family-name" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="numFirstName">First Name</label>
+                <div class="control">
+                    <input type="text" id="numFirstName" name="firstName" placeholder="First Name"
+                        autocomplete="given-name" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="numMiddleName">Middle Name</label>
+                <div class="control">
+                    <input type="text" id="numMiddleName" name="middleName" placeholder="Middle Name"
+                        autocomplete="additional-name">
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="numDob">Date of Birth</label>
+                <div class="control">
+                    <input type="date" id="numDob" name="dob" class="js-dob" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="numPhone">Contact Number</label>
+                <div class="control">
+                    <span class="dial" aria-hidden="true"><span class="flag">🇳🇵</span> +977</span>
+                    <input type="tel" id="numPhone" name="phone" class="js-phone" inputmode="numeric" maxlength="10"
+                        placeholder="98XXXXXXXX" autocomplete="tel-national" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="numPassword">Enter Password</label>
+                <div class="control has-toggle">
+                    <input type="password" id="numPassword" name="password" class="js-pw" minlength="8"
+                        placeholder="Enter Password" autocomplete="new-password" required>
+                    <button type="button" class="toggle" data-pw-toggle="numPassword" aria-label="Show password">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+                <div class="strength" data-strength-for="numPassword" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="numConfirm">Confirm Password</label>
+                <div class="control has-toggle">
+                    <input type="password" id="numConfirm" name="confirmPassword" class="js-confirm"
+                        placeholder="Confirm Password" autocomplete="new-password" required>
+                    <button type="button" class="toggle" data-pw-toggle="numConfirm" aria-label="Show password">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <p class="legal">By signing up you agree to Yatra's <a href="#">Terms of Service</a> and
+                <a href="#">Privacy Policy</a>.
+            </p>
+
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-user-plus"></i> Sign Up
+            </button>
+
+            <p class="login-line">Already have an account? <a href="./login.html">Log In</a></p>
+        </form>
+
+        <form class="panel signup-form" id="panel-email" role="tabpanel" aria-labelledby="tab-email" data-method="email"
+            novalidate>
+
+            <div class="field">
+                <label for="mailTitle">Courtesy Title</label>
+                <div class="control">
+                    <select id="mailTitle" name="title" required>
+                        <option value="" selected disabled>Select title</option>
+                        <option value="Mr">Mr</option>
+                        <option value="Mrs">Mrs</option>
+                        <option value="Ms">Ms</option>
+                        <option value="Miss">Miss</option>
+                        <option value="Dr">Dr</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down caret"></i>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="mailLastName">Last Name</label>
+                <div class="control">
+                    <input type="text" id="mailLastName" name="lastName" placeholder="Last Name"
+                        autocomplete="family-name" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="mailFirstName">First Name</label>
+                <div class="control">
+                    <input type="text" id="mailFirstName" name="firstName" placeholder="First Name"
+                        autocomplete="given-name" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="mailMiddleName">Middle Name</label>
+                <div class="control">
+                    <input type="text" id="mailMiddleName" name="middleName" placeholder="Middle Name"
+                        autocomplete="additional-name">
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="mailDob">Date of Birth</label>
+                <div class="control">
+                    <input type="date" id="mailDob" name="dob" class="js-dob" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="mailPhone">Contact Number</label>
+                <div class="control">
+                    <span class="dial" aria-hidden="true"><span class="flag">🇳🇵</span> +977</span>
+                    <input type="tel" id="mailPhone" name="phone" class="js-phone" inputmode="numeric" maxlength="10"
+                        placeholder="98XXXXXXXX" autocomplete="tel-national" required>
+                </div>
+            </div>
+
+            <div class="field full">
+                <label for="mailEmail">Email Address</label>
+                <div class="control">
+                    <input type="email" id="mailEmail" name="email" placeholder="you@example.com" autocomplete="email"
+                        required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="mailPassword">Enter Password</label>
+                <div class="control has-toggle">
+                    <input type="password" id="mailPassword" name="password" class="js-pw" minlength="8"
+                        placeholder="Enter Password" autocomplete="new-password" required>
+                    <button type="button" class="toggle" data-pw-toggle="mailPassword" aria-label="Show password">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+                <div class="strength" data-strength-for="mailPassword" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="mailConfirm">Confirm Password</label>
+                <div class="control has-toggle">
+                    <input type="password" id="mailConfirm" name="confirmPassword" class="js-confirm"
+                        placeholder="Confirm Password" autocomplete="new-password" required>
+                    <button type="button" class="toggle" data-pw-toggle="mailConfirm" aria-label="Show password">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <p class="legal">By signing up you agree to Yatra's <a href="#">Terms of Service</a> and
+                <a href="#">Privacy Policy</a>.
+            </p>
+
+            <button type="submit" class="btn-submit">
+                <i class="fa-solid fa-user-plus"></i> Sign Up
+            </button>
+
+            <p class="login-line">Already have an account? <a href="./login.html">Log In</a></p>
+        </form>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Shared layer: config → mock data → API → validation (§35) → auth (§35) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/validation.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const $ = (s, c = document) => c.querySelector(s);
+            const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
+
+            /* §35 validation.js — paint errors with the .field.has-error +
+               .error-msg convention this page styles inline. */
+            YatraValidation.errorStyle = 'field';
+
+            const tabsWrap = $('.tabs');
+            const tabBtns = $$('.tab-btn');
+            const panels = $$('.panel');
+
+            function activateTab(btn, focusTab = true) {
+                tabBtns.forEach(b => {
+                    const on = b === btn;
+                    b.classList.toggle('active', on);
+                    b.setAttribute('aria-selected', on);
+                    b.tabIndex = on ? 0 : -1;
+                });
+
+                tabsWrap.dataset.active = btn.dataset.tab;
+
+                panels.forEach(p => {
+                    const on = p.id === 'panel-' + btn.dataset.tab;
+                    p.classList.toggle('active', on);
+                    p.hidden = !on;
+                });
+
+                if (focusTab) btn.focus();
+            }
+
+            panels.forEach(p => { p.hidden = !p.classList.contains('active'); });
+            tabBtns.forEach(btn => btn.addEventListener('click', () => activateTab(btn, false)));
+
+            tabsWrap.addEventListener('keydown', (e) => {
+                const i = tabBtns.indexOf(document.activeElement);
+                if (i < 0) return;
+
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const next = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabBtns.length) % tabBtns.length;
+                    activateTab(tabBtns[next]);
+                }
+                if (e.key === 'Home') { e.preventDefault(); activateTab(tabBtns[0]); }
+                if (e.key === 'End') { e.preventDefault(); activateTab(tabBtns[tabBtns.length - 1]); }
+            });
+
+            $$('[data-pw-toggle]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = document.getElementById(btn.dataset.pwToggle);
+                    const show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    btn.innerHTML = `<i class="fa-regular ${show ? 'fa-eye-slash' : 'fa-eye'}"></i>`;
+                    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    input.focus({ preventScroll: true });
+                });
+            });
+
+            function strengthScore(pw) {
+                let s = 0;
+                if (pw.length >= 8) s++;
+                if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) s++;
+                if (/\d/.test(pw)) s++;
+                if (/[^A-Za-z0-9]/.test(pw)) s++;
+                return Math.min(s, 4);
+            }
+
+            $$('.js-pw').forEach(input => {
+                const meter = document.querySelector(`[data-strength-for="${input.id}"]`);
+                input.addEventListener('input', () => {
+                    if (!meter) return;
+                    const level = input.value ? strengthScore(input.value) : 0;
+                    meter.className = 'strength' + (level ? ` level-${level}` : '');
+                });
+            });
+
+            /* Shared date helper (§35 validation.js) — local date, not UTC:
+               in Nepal (UTC+05:45) a UTC "today" is already tomorrow. */
+            const today = YatraValidation.todayISO();
+            $$('.js-dob').forEach(el => { el.max = today; });
+
+            /* Field errors are painted by assets/js/validation.js (§35) — the
+               shared layer owns the required/email/phone/DOB/password rules. */
+            $$('.panel input, .panel select').forEach(el => {
+                el.addEventListener('input', () => YatraValidation.clearFieldError(el));
+                el.addEventListener('change', () => YatraValidation.clearFieldError(el));
+            });
+
+            $$('.signup-form').forEach(form => {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    const check = YatraValidation.validateRegistration({ form });
+                    if (!check.valid) {
+                        toast('Please fix the highlighted fields.', 'error');
+                        return;
+                    }
+
+                    const btn = form.querySelector('.btn-submit');
+                    const originalHTML = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating your account…';
+
+                    const payload = Object.fromEntries(new FormData(form).entries());
+                    payload.method = form.dataset.method;
+                    delete payload.confirmPassword; // confirm never leaves the page
+
+                    /* §35 auth.js → POST /api/auth/register through api.js. The
+                       mock never stores the password (BCrypt hashing is the
+                       backend's job, Master Plan §3.4) and answers 409
+                       EMAIL_EXISTS for a duplicate — the same contract Spring
+                       Security will fulfil. Registering signs the customer in,
+                       so we land on the logged-in home page. */
+                    YatraAuth.register(payload)
+                        .then((user) => {
+                            btn.innerHTML = '<i class="fa-solid fa-check"></i> Account created';
+                            toast('Welcome to Yatra' + (user && user.name ? ', ' + user.name : '') + '!', 'success');
+
+                            setTimeout(() => {
+                                btn.disabled = false;
+                                btn.innerHTML = originalHTML;
+                                form.reset();
+                                form.querySelectorAll('.strength').forEach(m => { m.className = 'strength'; });
+                                window.location.href = './homeLogged.html';
+                            }, 1600);
+                        })
+                        .catch((err) => {
+                            btn.disabled = false;
+                            btn.innerHTML = originalHTML;
+                            toast((err && err.message) || 'Could not create your account. Please try again.', 'error');
+                        });
+                });
+            });
+
+            const toastEl = $('#toast');
+            let toastTimer;
+
+            function toast(message, type = 'success') {
+                toastEl.className = 'toast ' + type;
+                toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
+                requestAnimationFrame(() => toastEl.classList.add('show'));
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4000);
+            }
+        });
+    </script>
+</body>
+
+</html>

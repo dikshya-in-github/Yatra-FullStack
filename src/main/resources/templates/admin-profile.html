@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra Admin - Profile</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared admin design system (admin pages do NOT load homeLogged.css) -->
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+
+<body class="admin-body" data-admin-page="profile">
+
+    <div class="admin-shell">
+        <!-- ===== Sidebar (copied from admin-users.html; JS sets active item) ===== -->
+        <aside class="admin-sidebar">
+            <div class="admin-brand">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Admin" class="admin-brand-logo">
+                <span class="admin-brand-name">YATRA <em>ADMIN</em></span>
+            </div>
+
+            <nav class="admin-nav" aria-label="Admin navigation">
+                <a href="./admin-dashboard.html" class="admin-nav-item" data-page="dashboard"><i
+                        class="fa-solid fa-gauge-high"></i> Dashboard</a>
+
+                <span class="admin-nav-label">Manage</span>
+                <a href="./admin-flights.html" class="admin-nav-item" data-page="flights"><i
+                        class="fa-solid fa-plane"></i> Flights</a>
+                <a href="./admin-airlines.html" class="admin-nav-item" data-page="airlines"><i
+                        class="fa-solid fa-building"></i> Airlines</a>
+                <a href="./admin-bookings.html" class="admin-nav-item" data-page="bookings"><i
+                        class="fa-solid fa-book"></i> Bookings</a>
+                <a href="./admin-users.html" class="admin-nav-item" data-page="users"><i class="fa-solid fa-users"></i>
+                    Users</a>
+                <a href="./admin-destinations.html" class="admin-nav-item" data-page="destinations"><i
+                        class="fa-solid fa-location-dot"></i> Destinations</a>
+                <a href="./admin-payments.html" class="admin-nav-item" data-page="payments"><i
+                        class="fa-solid fa-credit-card"></i>
+                    Payments</a>
+                <a href="./admin-tickets.html" class="admin-nav-item" data-page="tickets"><i
+                        class="fa-solid fa-ticket"></i>
+                    Tickets</a>
+
+                <span class="admin-nav-label">Account</span>
+                <a href="./admin-profile.html" class="admin-nav-item" data-page="profile"><i
+                        class="fa-solid fa-user-gear"></i>
+                    Profile</a>
+                <button type="button" class="admin-nav-item admin-logout" id="adminLogout"><i
+                        class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <div class="admin-sidebar-user">
+                    <span class="admin-avatar admin-avatar-sm" id="sidebarAvatar">A</span>
+                    <span class="admin-sidebar-user-info">
+                        <strong id="sidebarName">Admin</strong>
+                        <small id="sidebarEmail">admin@yatra.com</small>
+                    </span>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+        <!-- ===== Main ===== -->
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
+                    aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+                <span class="topbar-title" id="topbarTitle">Profile</span>
+                <div class="topbar-actions">
+                    <a href="./homeLogged.html" class="topbar-link"><i
+                            class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>View site</span></a>
+                    <span class="admin-chip"><span class="admin-avatar admin-avatar-sm"
+                            id="adminAvatar">A</span><span id="adminName">Admin</span></span>
+                </div>
+            </header>
+
+            <main class="admin-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Profile</h1>
+                        <p class="page-sub">Your own administrator account and session (Master Plan §2.1 #10). The
+                            account row lives in the shared user roster (<code>yatra_admin_users</code>), which is the
+                            same store <a href="./admin-users.html">Users</a> manages — edit it here and the admin
+                            roster reflects it immediately. When Spring Security lands, this page reads and writes
+                            <code>/api/admin/profile</code> behind <code>@PreAuthorize("hasRole('ADMIN')")</code>.</p>
+                    </div>
+                    <div class="page-actions">
+                        <a href="./admin-dashboard.html" class="a-btn a-btn-outline"><i
+                                class="fa-solid fa-gauge-high"></i> Dashboard</a>
+                    </div>
+                </div>
+
+                <!-- ===== Identity ===== -->
+                <section class="admin-card">
+                    <div class="profile-head">
+                        <span class="admin-avatar admin-avatar-lg" id="profileAvatar">A</span>
+                        <div class="profile-head-info">
+                            <h2 id="profileName">Admin</h2>
+                            <p id="profileEmail">admin@yatra.com</p>
+                            <div class="profile-head-badges">
+                                <span class="badge badge-success" id="profileRole">ADMIN</span>
+                                <span class="badge badge-info" id="profileStatus">Active</span>
+                                <span class="badge badge-neutral" id="profileMember">Member since —</span>
+                            </div>
+                        </div>
+                        <div class="profile-head-actions">
+                            <button type="button" class="a-btn a-btn-outline" id="profileSignOut">
+                                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== Account details ===== -->
+                <section class="admin-card">
+                    <h2><i class="fa-solid fa-id-card"></i> Account Details</h2>
+                    <p class="card-sub">The email and mobile number are unique across Yatra accounts — no two accounts
+                        can share one, and the backend enforces that at the database level.</p>
+
+                    <form id="profileForm" novalidate>
+                        <div class="form-grid">
+                            <div class="a-field">
+                                <label for="pfName">Full name <span class="req">*</span></label>
+                                <input type="text" class="a-input" id="pfName" autocomplete="name"
+                                    placeholder="e.g. Dikshya Ghising">
+                            </div>
+                            <div class="a-field">
+                                <label for="pfPhone">Mobile number <span class="req">*</span></label>
+                                <input type="tel" class="a-input" id="pfPhone" autocomplete="tel"
+                                    placeholder="98XXXXXXXX">
+                                <small class="form-hint">Nepali mobile — 10 digits starting 96/97/98.</small>
+                            </div>
+                            <div class="a-field span-2">
+                                <label for="pfEmail">Email address <span class="req">*</span></label>
+                                <input type="email" class="a-input" id="pfEmail" autocomplete="email"
+                                    placeholder="name@example.com">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="a-btn a-btn-outline" id="profileResetBtn">Reset</button>
+                            <button type="submit" class="a-btn" id="profileSaveBtn"><i
+                                    class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- ===== Password ===== -->
+                <section class="admin-card">
+                    <h2><i class="fa-solid fa-lock"></i> Change Password</h2>
+                    <p class="card-sub">Passwords are hashed by the backend with BCrypt — the demo store never holds
+                        one, so this form does not persist anything yet. It validates the real rules and will POST
+                        <code>/api/admin/profile/password</code> in Phase 3.</p>
+
+                    <form id="passwordForm" novalidate>
+                        <div class="form-grid">
+                            <div class="a-field span-2">
+                                <label for="pwCurrent">Current password <span class="req">*</span></label>
+                                <div class="pw-field">
+                                    <input type="password" class="a-input" id="pwCurrent"
+                                        autocomplete="current-password">
+                                    <button type="button" class="pw-toggle" data-pw-toggle="pwCurrent"
+                                        aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                                </div>
+                            </div>
+                            <div class="a-field">
+                                <label for="pwNew">New password <span class="req">*</span></label>
+                                <div class="pw-field">
+                                    <input type="password" class="a-input" id="pwNew" autocomplete="new-password"
+                                        minlength="8">
+                                    <button type="button" class="pw-toggle" data-pw-toggle="pwNew"
+                                        aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                                </div>
+                            </div>
+                            <div class="a-field">
+                                <label for="pwConfirm">Confirm new password <span class="req">*</span></label>
+                                <div class="pw-field">
+                                    <input type="password" class="a-input" id="pwConfirm"
+                                        autocomplete="new-password">
+                                    <button type="button" class="pw-toggle" data-pw-toggle="pwConfirm"
+                                        aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="pw-meter" id="pwMeter" hidden>
+                            <span class="pw-meter-bar"><i id="pwMeterFill"></i></span>
+                            <span class="pw-meter-text" id="pwMeterText">—</span>
+                        </p>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="a-btn" id="passwordSaveBtn"><i class="fa-solid fa-key"></i>
+                                Update Password</button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- ===== Session & access ===== -->
+                <section class="admin-card">
+                    <h2><i class="fa-solid fa-shield-halved"></i> Session &amp; Access</h2>
+                    <p class="card-sub">Where this admin session lives and what the backend will enforce once the
+                        JWT + role check land.</p>
+
+                    <div class="detail-grid">
+                        <div class="detail-block">
+                            <h3>Current session</h3>
+                            <dl>
+                                <dt>Signed in as</dt>
+                                <dd id="sessName">—</dd>
+                                <dt>Role</dt>
+                                <dd id="sessRole">—</dd>
+                                <dt>Account ID</dt>
+                                <dd id="sessId">—</dd>
+                                <dt>Session token</dt>
+                                <dd id="sessToken">—</dd>
+                            </dl>
+                        </div>
+                        <div class="detail-block">
+                            <h3>Handled by the backend (Phase 3)</h3>
+                            <ul class="profile-list">
+                                <li><i class="fa-solid fa-check"></i> Password hashing + the credential check
+                                    (BCryptPasswordEncoder)</li>
+                                <li><i class="fa-solid fa-check"></i> The ADMIN role check on every <code>/api/admin/*</code>
+                                    route</li>
+                                <li><i class="fa-solid fa-check"></i> Unique email / mobile constraints</li>
+                                <li><i class="fa-solid fa-check"></i> Session expiry (the mock JWT carries an 8-hour
+                                    <code>exp</code>)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="a-btn a-btn-danger" id="sessionSignOut">
+                            <i class="fa-solid fa-right-from-bracket"></i> Sign Out of Admin
+                        </button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="assets/js/admin.js"></script>
+    <!-- Mock API layer (item 16): config → mock-data → api → validation → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <!-- Shared §35 rules (email / Nepali mobile / password length) — this page
+         is the first admin page to use them instead of a third copy of the
+         regexes; the CRUD modals can follow the same pattern (see §50). -->
+    <script src="assets/js/validation.js"></script>
+    <script src="assets/js/admin-profile.js"></script>
+</body>
+
+</html>

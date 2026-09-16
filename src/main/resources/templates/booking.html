@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Passenger Details — Yatra</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="assets/css/homeLogged.css" />
+    <link rel="stylesheet" href="assets/css/booking.css" />
+</head>
+
+<body>
+
+    <!-- =========================================
+         NAVBAR (same as homeLogged)
+    ========================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="./assets/imgs/Yatra-logo-all-white.png" alt="Yatra" class="logo" id="navLogo" />
+            </a>
+            <div class="nav-actions">
+                <a href="./ticketStatus.html" class="status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <div class="user-chip">
+                    <div class="user-avatar">D</div>
+                    <span class="user-name">Dikshya Ghising</span>
+                </div>
+                <a href="./home.html" class="btn btn-logout">Log Out</a>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- =========================================
+         WIZARD BAND — Stepper + Timer (shared style)
+    ========================================== -->
+    <section class="wizard-band">
+        <div class="container">
+            <!-- Stepper -->
+            <div class="stepper">
+                <div class="step completed">
+                    <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+                    <span class="step-label">Select Flights</span>
+                </div>
+                <div class="step-line done"></div>
+                <div class="step active">
+                    <div class="step-circle">2</div>
+                    <span class="step-label">Passenger Details</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-circle">3</div>
+                    <span class="step-label">Payment Method</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-circle">4</div>
+                    <span class="step-label">Your E-ticket</span>
+                </div>
+            </div>
+
+            <!-- Timer -->
+            <div class="timer-bar">
+                <i class="fa-regular fa-clock"></i>
+                <span>You have <strong id="timerDisplay">14 minutes 56 seconds</strong> to confirm this booking.</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================================
+         MAIN BOOKING LAYOUT
+    ========================================== -->
+    <main class="booking-main">
+        <div class="container booking-grid">
+
+            <!-- LEFT — Forms -->
+            <div class="booking-forms">
+
+                <!-- Contact Information -->
+                <div class="form-card reveal">
+                    <h2 class="form-card-title">Contact Information</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Courtesy Title</label>
+                            <div class="select-wrapper">
+                                <select id="contactTitle">
+                                    <option value="">Title</option>
+                                    <option value="Mr">Mr.</option>
+                                    <option value="Ms" selected>Ms.</option>
+                                    <option value="Mrs">Mrs.</option>
+                                    <option value="Dr">Dr.</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="contactLastName" placeholder="Last Name" value="Ghising" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="contactFirstName" placeholder="First Name" value="Dikshya" />
+                        </div>
+                        <div class="form-group">
+                            <label>Middle Name</label>
+                            <input type="text" id="contactMiddleName" placeholder="Middle Name" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Contact Number</label>
+                            <div class="phone-input">
+                                <span class="phone-flag">
+                                    <img src="https://flagcdn.com/w40/np.png" alt="Nepal" />
+                                    <span class="phone-code">+977</span>
+                                    <button type="button" class="phone-clear"><i class="fa-solid fa-xmark"></i></button>
+                                </span>
+                                <input type="tel" id="contactPhone" placeholder="98XXXXXXXX" value="9803660660" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="contactEmail" placeholder="Email Address"
+                                value="ghisingdeeku@gmail.com" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Invoice Party</label>
+                            <input type="text" id="invoiceParty" placeholder="Invoice Party" />
+                        </div>
+                        <div class="form-group">
+                            <label>Pan No.</label>
+                            <input type="text" id="panNo" placeholder="Pan No" />
+                        </div>
+                    </div>
+
+                    <!-- Invoice Warning -->
+                    <div class="invoice-warning">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <p>Invoice details cannot be changed once generated. Blank fields will default to the first
+                            passenger's name.</p>
+                    </div>
+
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="imPassenger" />
+                        <span class="checkmark"></span>
+                        <span>I'm a passenger in the flight.</span>
+                    </label>
+                </div>
+
+                <!-- Passenger 1..N (Adult/Child) — rendered by booking.js
+                     from flightSearchData / yatra_selected_flight -->
+                <div id="passengerForms"></div>
+
+                <!-- Special Service + Terms -->
+                <div class="form-card reveal delay-2">
+                    <label class="checkbox-row ssr-row">
+                        <input type="checkbox" id="ssrCheck" />
+                        <span class="checkmark"></span>
+                        <span>Special Service Request</span>
+                    </label>
+                    <div class="ssr-options" id="ssrOptions">
+                        <label class="ssr-chip"><input type="checkbox" name="ssr" value="wheelchair" /> <i
+                                class="fa-solid fa-wheelchair"></i> Wheelchair</label>
+                        <label class="ssr-chip"><input type="checkbox" name="ssr" value="meal" /> <i
+                                class="fa-solid fa-utensils"></i> Special Meal</label>
+                        <label class="ssr-chip"><input type="checkbox" name="ssr" value="infant" /> <i
+                                class="fa-solid fa-baby"></i> Infant</label>
+                        <label class="ssr-chip"><input type="checkbox" name="ssr" value="medical" /> <i
+                                class="fa-solid fa-briefcase-medical"></i> Medical Assistance</label>
+                    </div>
+
+                    <label class="checkbox-row terms-row">
+                        <input type="checkbox" id="termsCheck" />
+                        <span class="checkmark"></span>
+                        <span>I have read and agree to the fare rules and <a href="./terms.html">terms &
+                                conditions</a>.</span>
+                    </label>
+                </div>
+
+            </div>
+
+            <!-- RIGHT — Booking Details Sidebar -->
+            <aside class="booking-sidebar">
+                <div class="sidebar-card reveal delay-2">
+                    <h3 class="sidebar-title">Booking Details</h3>
+
+                    <div class="flight-summary">
+                        <div class="flight-time" id="sbTime">07:15 AM – 07:45 AM</div>
+                        <div class="flight-date" id="sbDate">Thu, 01 Oct 2026</div>
+                        <div class="flight-route" id="sbRoute">Kathmandu (KTM) – Bhairahawa (BWA)</div>
+                    </div>
+
+                    <div class="price-row">
+                        <div>
+                            <div class="price-label">Total Price</div>
+                            <div class="price-sub" id="sbPaxSub">(1 Adult)</div>
+                        </div>
+                        <div class="price-value">
+                            <div class="price-amount" id="sbPrice">NPR 6,300</div>
+                            <div class="price-tag" id="sbTag">Non Refundable</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary full-width continue-btn" id="continueBtn">
+                        Continue <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    
+
+                    <button class="price-breakdown-btn" id="breakdownBtn">
+                        View price breakdown <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+
+                    <div class="price-breakdown" id="priceBreakdown">
+                        <div id="sbBreakdown">
+                            <!-- Rows rendered by booking.js from the selected flight -->
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+    </main>
+
+    <!-- =========================================
+         WIZARD SLIM FOOTER (© line only)
+    ========================================== -->
+    <footer class="wizard-footer">
+        <div class="container">
+            <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button class="back-to-top" id="backToTop"><i class="fa-solid fa-plane-up"></i></button>
+
+    <!-- Mock API layer (item 16): config → mock-data → api → auth → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/validation.js"></script>
+    <script src="assets/js/booking.js"></script>
+
+    <!-- Navbar user chip + a "Log Out" that really clears the session.
+         This page's navbar is wired by booking.js, not homeLogged.js, so the
+         shared chrome is called explicitly here (no-op without a session —
+         the chip then reads "Guest" and offers Log In). -->
+    <script>YatraAuth.renderSessionChrome();</script>
+</body>
+
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra Admin - Airlines</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared admin design system (admin pages do NOT load homeLogged.css) -->
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+
+<body class="admin-body" data-admin-page="airlines">
+
+    <div class="admin-shell">
+        <!-- ===== Sidebar (copied from admin-dashboard.html; JS sets active item) ===== -->
+        <aside class="admin-sidebar">
+            <div class="admin-brand">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Admin" class="admin-brand-logo">
+                <span class="admin-brand-name">YATRA <em>ADMIN</em></span>
+            </div>
+
+            <nav class="admin-nav" aria-label="Admin navigation">
+                <a href="./admin-dashboard.html" class="admin-nav-item" data-page="dashboard"><i
+                        class="fa-solid fa-gauge-high"></i> Dashboard</a>
+
+                <span class="admin-nav-label">Manage</span>
+                <a href="./admin-flights.html" class="admin-nav-item" data-page="flights"><i
+                        class="fa-solid fa-plane"></i> Flights</a>
+                <a href="./admin-airlines.html" class="admin-nav-item" data-page="airlines"><i
+                        class="fa-solid fa-building"></i> Airlines</a>
+                <a href="./admin-bookings.html" class="admin-nav-item" data-page="bookings"><i
+                        class="fa-solid fa-book"></i> Bookings</a>
+                <a href="./admin-users.html" class="admin-nav-item" data-page="users"><i class="fa-solid fa-users"></i> Users
+                </a>
+                <a href="./admin-destinations.html" class="admin-nav-item" data-page="destinations"><i
+                        class="fa-solid fa-location-dot"></i> Destinations</a>
+                <a href="./admin-payments.html" class="admin-nav-item" data-page="payments"><i
+                        class="fa-solid fa-credit-card"></i>
+                    Payments</a>
+                <a href="./admin-tickets.html" class="admin-nav-item" data-page="tickets"><i class="fa-solid fa-ticket"></i>
+                    Tickets</a>
+
+                <span class="admin-nav-label">Account</span>
+                <a href="./admin-profile.html" class="admin-nav-item" data-page="profile"><i class="fa-solid fa-user-gear"></i>
+                    Profile</a>
+                <button type="button" class="admin-nav-item admin-logout" id="adminLogout"><i
+                        class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <div class="admin-sidebar-user">
+                    <span class="admin-avatar admin-avatar-sm" id="sidebarAvatar">D</span>
+                    <span class="admin-sidebar-user-info">
+                        <strong id="sidebarName">Admin</strong>
+                        <small id="sidebarEmail">admin@yatra.com</small>
+                    </span>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+        <!-- ===== Main ===== -->
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
+                    aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+                <span class="topbar-title" id="topbarTitle">Airlines</span>
+                <div class="topbar-actions">
+                    <a href="./homeLogged.html" class="topbar-link"><i
+                            class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>View site</span></a>
+                    <span class="admin-chip"><span class="admin-avatar admin-avatar-sm"
+                            id="adminAvatar">D</span><span id="adminName">Admin</span></span>
+                </div>
+            </header>
+
+            <main class="admin-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Airlines</h1>
+                        <p class="page-sub">Manage airline information — logos are stored as DB BLOB/Base64 in the
+                            backend phase (Master Plan §2.6, §3.5). Airline data is separate from flight inventory —
+                            no seat management here (spec §14).</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="a-btn a-btn-primary" id="addAirlineBtn"><i class="fa-solid fa-plus"></i> Add
+                            Airline</button>
+                    </div>
+                </div>
+
+                <section class="admin-card">
+                    <!-- Toolbar: search + status filter (Master Plan §2.4) -->
+                    <div class="table-toolbar">
+                        <div class="search-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" class="a-input" id="airlineSearch" placeholder="Search name or IATA code…"
+                                aria-label="Search airlines">
+                        </div>
+                        <select class="a-select" id="statusFilter" aria-label="Filter by status">
+                            <option value="ALL">All statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                        <span class="result-count" id="resultCount"></span>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Logo</th>
+                                    <th>Name</th>
+                                    <th>IATA</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="airlineTableBody">
+                                <!-- rows rendered by admin-airlines.js -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="empty-state" id="emptyState" hidden>
+                        <i class="fa-solid fa-building"></i>
+                        <p>No airlines match your search.</p>
+                    </div>
+
+                    <div class="pagination">
+                        <span class="page-info" id="pageInfo"></span>
+                        <div class="page-btns" id="pageBtns"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== Add / Edit modal (pattern reused by every CRUD page) ===== -->
+    <div class="modal-overlay" id="airlineModal" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Airline</h2>
+                <button type="button" class="modal-close" id="modalClose" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="airlineForm" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" id="airlineId">
+
+                    <div class="a-field">
+                        <label for="airlineName">Airline Name <span class="req">*</span></label>
+                        <input type="text" class="a-input" id="airlineName" placeholder="e.g. Buddha Air">
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="a-field">
+                            <label for="airlineIata">IATA Code <span class="req">*</span></label>
+                            <input type="text" class="a-input" id="airlineIata" placeholder="e.g. U4" maxlength="2"
+                                style="text-transform: uppercase;">
+                        </div>
+                        <div class="a-field">
+                            <label for="airlineStatus">Status</label>
+                            <select class="a-select" id="airlineStatus">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="a-field">
+                        <label for="airlineDesc">Description</label>
+                        <textarea class="a-textarea" id="airlineDesc"
+                            placeholder="Short description of the airline…"></textarea>
+                    </div>
+
+                    <div class="a-field">
+                        <label>Airline Logo</label>
+                        <div class="upload-row">
+                            <div class="upload-preview" id="logoPreview"><span>No file</span></div>
+                            <div>
+                                <div class="upload-btns">
+                                    <button type="button" class="a-btn a-btn-outline"
+                                        id="uploadLogoBtn"><i class="fa-solid fa-upload"></i> Upload</button>
+                                    <button type="button" class="a-btn a-btn-outline" id="removeLogoBtn"
+                                        hidden><i class="fa-solid fa-trash"></i> Remove</button>
+                                </div>
+                                <p class="upload-hint">PNG/JPG/SVG · stored as DB BLOB/Base64 in the backend (Master
+                                    Plan §3.5) — preview is mocked client-side for now.</p>
+                            </div>
+                        </div>
+                        <input type="file" id="logoInput" accept="image/png,image/jpeg,image/svg+xml"
+                            class="visually-hidden">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="a-btn a-btn-outline" id="modalCancel">Cancel</button>
+                    <button type="submit" class="a-btn a-btn-primary" id="modalSave"><i
+                            class="fa-solid fa-floppy-disk"></i> Save Airline</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="assets/js/admin.js"></script>
+    <!-- Mock API layer (item 16): config → mock-data → api → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/admin-airlines.js"></script>
+</body>
+
+</html>

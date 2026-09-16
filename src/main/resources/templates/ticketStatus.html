@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Status - Yatra</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/ticketStatus.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link active-page">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html" style="color: var(--primary);"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- Page Banner -->
+    <header class="page-banner">
+        <div class="page-banner-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+
+        <div class="container page-banner-content reveal">
+            <span class="page-banner-kicker"><i class="fa-solid fa-ticket"></i> Booking Services</span>
+            <h1 class="page-banner-title">Ticket Status</h1>
+            <p class="page-banner-subtitle">Enter your Ticket Number or PNR to check your booking in real time</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="ts-main section-padding">
+        <div class="container">
+
+            <!-- Search Card -->
+            <section class="ts-card search-card reveal active">
+                <form class="ts-search-form" id="ticketSearchForm" novalidate>
+                    <div class="ts-input-group">
+                        <label for="ticketNoInput" class="ts-label">Ticket Number</label>
+                        <div class="ts-input-wrapper">
+                            <i class="fa-solid fa-ticket ts-input-icon"></i>
+                            <input type="text" id="ticketNoInput" placeholder="Enter Ticket No" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="ts-input-group">
+                        <label for="pnrInput" class="ts-label">PNR Number</label>
+                        <div class="ts-input-wrapper">
+                            <i class="fa-solid fa-barcode ts-input-icon"></i>
+                            <input type="text" id="pnrInput" placeholder="Enter PNR No" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="search-btn ts-search-btn" id="tsSearchBtn">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search
+                    </button>
+                </form>
+                <p class="ts-hint" id="tsHint">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Try demo: Ticket <strong>YTR-2026-001234</strong> or PNR <strong>YTRA2X</strong>
+                </p>
+            </section>
+
+            <!-- ================================================== -->
+            <!-- RESULTS (hidden until a search is made)            -->
+            <!-- ================================================== -->
+            <div id="tsResults" hidden>
+
+                <!-- Flight Details -->
+                <section class="ts-section reveal active">
+                    <h2 class="ts-section-title">Flight Details</h2>
+                    <div class="ts-card" id="flightDetailsCard">
+                        <!-- Populated by ticketStatus.js -->
+                    </div>
+                </section>
+
+                <!-- Contact Details -->
+                <section class="ts-section reveal active">
+                    <h2 class="ts-section-title">Contact Details</h2>
+                    <div class="ts-card table-card">
+                        <div class="table-scroll">
+                            <table class="ts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Contact Name</th>
+                                        <th>Email</th>
+                                        <th>Contact Number</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contactTableBody">
+                                    <tr class="empty-row">
+                                        <td colspan="3" class="empty-cell">NO RECORD FOUND</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Passenger and Fee Details -->
+                <section class="ts-section reveal active">
+                    <h2 class="ts-section-title">Passenger and Fee Details</h2>
+                    <div class="ts-card table-card">
+                        <div class="table-scroll">
+                            <table class="ts-table passengers-table">
+                                <thead>
+                                    <tr>
+                                        <th>S/N</th>
+                                        <th>Passenger Name</th>
+                                        <th>Type</th>
+                                        <th>Nationality</th>
+                                        <th>Sector</th>
+                                        <th>Ticket No</th>
+                                        <th>Cur</th>
+                                        <th>Fare</th>
+                                        <th>FSC</th>
+                                        <th>PSC</th>
+                                        <th>VAT</th>
+                                        <th>Discount Amt</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="passengerTableBody">
+                                    <tr class="empty-row">
+                                        <td colspan="14" class="empty-cell">NO RECORD FOUND</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer (same as homeLogged.html) -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth layer (config → auth) — the navbar chip + "Log Out" need it -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/ticketStatus.js"></script>
+
+    <!-- Navbar user chip + a "Log Out" that really clears the session.
+         This page's navbar is wired by ticketStatus.js, not homeLogged.js, so
+         the shared chrome is called explicitly here (no-op without a session —
+         the chip then reads "Guest" and offers Log In). -->
+    <script>YatraAuth.renderSessionChrome();</script>
+
+    <!-- Back to top (shared styles in homeLogged.css) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+
+</html>

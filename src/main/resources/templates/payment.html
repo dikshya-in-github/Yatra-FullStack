@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Method — Yatra</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link rel="stylesheet" href="assets/css/homeLogged.css" />
+    <link rel="stylesheet" href="assets/css/payment.css" />
+</head>
+<body>
+
+    <!-- =========================================
+         NAVBAR (same as homeLogged)
+    ========================================== -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="./assets/imgs/Yatra-logo-all-white.png" alt="Yatra" class="logo" id="navLogo" />
+            </a>
+            <div class="nav-actions">
+                <a href="./ticketStatus.html" class="status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <div class="user-chip">
+                    <div class="user-avatar">D</div>
+                    <span class="user-name">Dikshya Ghising</span>
+                </div>
+                <a href="./home.html" class="btn btn-logout">Log Out</a>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- =========================================
+         WIZARD BAND — Stepper + Timer (shared style)
+    ========================================== -->
+    <section class="wizard-band">
+        <div class="container">
+            <div class="stepper">
+                <div class="step completed">
+                    <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+                    <span class="step-label">Select Flights</span>
+                </div>
+                <div class="step-line done"></div>
+                <div class="step completed">
+                    <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+                    <span class="step-label">Passenger Details</span>
+                </div>
+                <div class="step-line done"></div>
+                <div class="step active">
+                    <div class="step-circle">3</div>
+                    <span class="step-label">Payment Method</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-circle">4</div>
+                    <span class="step-label">Your E-ticket</span>
+                </div>
+            </div>
+
+            <div class="timer-bar">
+                <i class="fa-regular fa-clock"></i>
+                <span>You have <strong id="timerDisplay">14 minutes 27 seconds</strong> to confirm this booking.</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================================
+         MAIN LAYOUT
+    ========================================== -->
+    <main class="booking-main">
+        <div class="container booking-grid">
+
+            <!-- LEFT — Payment Methods -->
+            <div class="booking-forms">
+
+                <!-- Payment Mode Selection -->
+                <div class="form-card reveal">
+                    <h2 class="form-card-title">Select Payment Mode</h2>
+
+                    <!-- Credit / Debit Card -->
+                    <div class="payment-section">
+                        <div class="payment-section-header">
+                            <h3 class="payment-section-title">Credit or Debit Card</h3>
+                            <div class="card-brands">
+                                <span class="card-brand"><i class="fa-brands fa-cc-visa"></i></span>
+                                <span class="card-brand"><i class="fa-brands fa-cc-mastercard"></i></span>
+                                <span class="card-brand"><i class="fa-brands fa-cc-amex"></i></span>
+                            </div>
+                        </div>
+                        <p class="payment-note">Payments can be done with any card through the banks below.</p>
+
+                        <div class="payment-options">
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="hbl" />
+                                <div class="payment-option-inner">
+                                    <div class="radio-circle"></div>
+                                    <div class="payment-logo-wrap">
+                                        <span class="powered-by">Powered by</span>
+                                        <div class="bank-logo hbl-logo">HBL</div>
+                                        <div class="mini-brands">
+                                            <i class="fa-brands fa-cc-visa"></i>
+                                            <i class="fa-brands fa-cc-mastercard"></i>
+                                            <i class="fa-brands fa-cc-amex"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="nmb" />
+                                <div class="payment-option-inner">
+                                    <div class="radio-circle"></div>
+                                    <div class="payment-logo-wrap">
+                                        <span class="powered-by">Powered by</span>
+                                        <div class="bank-logo nmb-logo">NMB BANK</div>
+                                        <div class="mini-brands">
+                                            <i class="fa-brands fa-cc-visa"></i>
+                                            <i class="fa-brands fa-cc-mastercard"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="nabil" />
+                                <div class="payment-option-inner">
+                                    <div class="radio-circle"></div>
+                                    <div class="payment-logo-wrap">
+                                        <span class="powered-by">Powered by</span>
+                                        <div class="bank-logo nabil-logo">NABIL BANK</div>
+                                        <div class="mini-brands">
+                                            <i class="fa-brands fa-cc-visa"></i>
+                                            <i class="fa-brands fa-cc-mastercard"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Digital Wallet / QR -->
+                    <div class="payment-section">
+                        <h3 class="payment-section-title">Digital Wallet or QR</h3>
+
+                        <div class="payment-options wallet-grid">
+                            <!-- Checked by default: eSewa is the only gateway that is
+                                 actually integrated, so the preselected option is a
+                                 working path instead of a blocked one. -->
+                            <label class="payment-option wallet-option">
+                                <input type="radio" name="payment" value="esewa" checked />
+                                <div class="payment-option-inner">
+                                    <div class="radio-circle"></div>
+                                    <div class="wallet-logo esewa-logo">eSewa</div>
+                                </div>
+                            </label>
+
+                            <label class="payment-option wallet-option">
+                                <input type="radio" name="payment" value="khalti" />
+                                <div class="payment-option-inner">
+                                    <div class="radio-circle"></div>
+                                    <div class="wallet-logo khalti-logo">Khalti</div>
+                                </div>
+                            </label>
+
+                            <label class="payment-option wallet-option">
+                                <input type="radio" name="payment" value="imepay" />
+                                <div class="payment-option-inner">
+                                    <div class="radio-circle"></div>
+                                    <div class="wallet-logo imepay-logo">IME Pay</div>
+                                </div>
+                            </label>
+
+                            <label class="payment-option wallet-option">
+                                <input type="radio" name="payment" value="connectips" />
+                                <div class="payment-option-inner">
+                                    <div class="radio-circle"></div>
+                                    <div class="wallet-logo connectips-logo">ConnectIPS</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking Details (inline, below payment) -->
+                <div class="form-card reveal delay-1">
+                    <h2 class="form-card-title">Booking Details</h2>
+                    <div class="booking-details-grid">
+                        <div class="detail-block">
+                            <div class="detail-label">Booking Code</div>
+                            <div class="detail-value code-value" id="bookingCode">RC2792</div>
+                        </div>
+                        <div class="detail-block">
+                            <div class="detail-label">Booking Personal</div>
+                            <div class="detail-value" id="bookingPersonal">Ms. Dikshya Ghising<br />Nepal</div>
+                        </div>
+                        <div class="detail-block">
+                            <div class="detail-label">Contact Detail</div>
+                            <div class="detail-value" id="bookingContact">977 9803660660<br />ghisingdeeku@gmail.com</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Passenger Details -->
+                <div class="form-card reveal delay-2">
+                    <h2 class="form-card-title">Passenger Details</h2>
+                    <div class="passenger-table-wrap">
+                        <table class="passenger-table">
+                            <thead>
+                                <tr>
+                                    <th>Sn</th>
+                                    <th>Type</th>
+                                    <th>Name</th>
+                                    <th>Country</th>
+                                </tr>
+                            </thead>
+                            <tbody id="passengerRows">
+                                <tr>
+                                    <td>1</td>
+                                    <td>Adult</td>
+                                    <td>Ms. Dikshya Ghising</td>
+                                    <td>Nepal</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT — Sidebar -->
+            <aside class="booking-sidebar">
+                <div class="sidebar-card reveal delay-2">
+                    <h3 class="sidebar-title">Booking Details</h3>
+
+                    <!-- Promo Code -->
+                    <div class="promo-row">
+                        <div class="promo-input-wrap">
+                            <i class="fa-solid fa-plus"></i>
+                            <input type="text" id="promoInput" placeholder="Add Promo Code" />
+                        </div>
+                        <button class="promo-apply-btn" id="promoApplyBtn">Apply</button>
+                    </div>
+
+                    <div class="flight-summary">
+                        <div class="flight-time" id="sbTime">06:50 AM – 07:35 AM</div>
+                        <div class="flight-date" id="sbDate">Wed, 16 Sep 2026</div>
+                        <div class="flight-route" id="sbRoute">Kathmandu (KTM) – Bhadrapur (BDP)</div>
+                    </div>
+
+                    <div class="price-row">
+                        <div>
+                            <div class="price-label">Total Price</div>
+                            <div class="price-sub" id="sbPaxSub">(1 Adult)</div>
+                        </div>
+                        <div class="price-value">
+                            <div class="price-amount" id="sbPrice">NPR 8,299.99</div>
+                            <div class="price-tag" id="sbTag">Non Refundable</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary full-width continue-btn" id="continueBtn">
+                        Continue <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    
+
+                    <button class="price-breakdown-btn" id="breakdownBtn">
+                        View price breakdown <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+
+                    <div class="price-breakdown" id="priceBreakdown">
+                        <div class="breakdown-row"><span>Base Fare</span><span>NPR 7,200</span></div>
+                        <div class="breakdown-row"><span>Airport Tax</span><span>NPR 850</span></div>
+                        <div class="breakdown-row"><span>Service Fee</span><span>NPR 249.99</span></div>
+                        <div class="breakdown-row total"><span>Total</span><span>NPR 8,299.99</span></div>
+                    </div>
+                </div>
+            </aside>
+
+        </div>
+    </main>
+
+    <!-- =========================================
+         WIZARD SLIM FOOTER (© line only)
+    ========================================== -->
+    <footer class="wizard-footer">
+        <div class="container">
+            <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button class="back-to-top" id="backToTop"><i class="fa-solid fa-plane-up"></i></button>
+
+    <!-- Mock API layer (item 16): config → mock-data → api → auth → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/payment.js"></script>
+
+    <!-- Navbar user chip + a "Log Out" that really clears the session.
+         This page's navbar is wired by payment.js, not homeLogged.js, so the
+         shared chrome is called explicitly here (no-op without a session —
+         the chip then reads "Guest" and offers Log In). -->
+    <script>YatraAuth.renderSessionChrome();</script>
+</body>
+</html>

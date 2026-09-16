@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra Admin - Bookings</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared admin design system (admin pages do NOT load homeLogged.css) -->
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+
+<body class="admin-body" data-admin-page="bookings">
+
+    <div class="admin-shell">
+        <!-- ===== Sidebar (copied from admin-dashboard.html; JS sets active item) ===== -->
+        <aside class="admin-sidebar">
+            <div class="admin-brand">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Admin" class="admin-brand-logo">
+                <span class="admin-brand-name">YATRA <em>ADMIN</em></span>
+            </div>
+
+            <nav class="admin-nav" aria-label="Admin navigation">
+                <a href="./admin-dashboard.html" class="admin-nav-item" data-page="dashboard"><i
+                        class="fa-solid fa-gauge-high"></i> Dashboard</a>
+
+                <span class="admin-nav-label">Manage</span>
+                <a href="./admin-flights.html" class="admin-nav-item" data-page="flights"><i
+                        class="fa-solid fa-plane"></i> Flights</a>
+                <a href="./admin-airlines.html" class="admin-nav-item" data-page="airlines"><i
+                        class="fa-solid fa-building"></i> Airlines</a>
+                <a href="./admin-bookings.html" class="admin-nav-item" data-page="bookings"><i
+                        class="fa-solid fa-book"></i> Bookings</a>
+                <a href="./admin-users.html" class="admin-nav-item" data-page="users"><i class="fa-solid fa-users"></i> Users
+                </a>
+                <a href="./admin-destinations.html" class="admin-nav-item" data-page="destinations"><i
+                        class="fa-solid fa-location-dot"></i> Destinations</a>
+                <a href="./admin-payments.html" class="admin-nav-item" data-page="payments"><i
+                        class="fa-solid fa-credit-card"></i>
+                    Payments</a>
+                <a href="./admin-tickets.html" class="admin-nav-item" data-page="tickets"><i
+                        class="fa-solid fa-ticket"></i>
+                    Tickets</a>
+
+                <span class="admin-nav-label">Account</span>
+                <a href="./admin-profile.html" class="admin-nav-item" data-page="profile"><i class="fa-solid fa-user-gear"></i>
+                    Profile</a>
+                <button type="button" class="admin-nav-item admin-logout" id="adminLogout"><i
+                        class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <div class="admin-sidebar-user">
+                    <span class="admin-avatar admin-avatar-sm" id="sidebarAvatar">D</span>
+                    <span class="admin-sidebar-user-info">
+                        <strong id="sidebarName">Admin</strong>
+                        <small id="sidebarEmail">admin@yatra.com</small>
+                    </span>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+        <!-- ===== Main ===== -->
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
+                    aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+                <span class="topbar-title" id="topbarTitle">Bookings</span>
+                <div class="topbar-actions">
+                    <a href="./homeLogged.html" class="topbar-link"><i
+                            class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>View site</span></a>
+                    <span class="admin-chip"><span class="admin-avatar admin-avatar-sm"
+                            id="adminAvatar">D</span><span id="adminName">Admin</span></span>
+                </div>
+            </header>
+
+            <main class="admin-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Bookings</h1>
+                        <p class="page-sub">Customer bookings from the storefront — completed eSewa checkouts are saved
+                            here automatically (Master Plan §2.1 #5). Cancelling a booking is a
+                            <strong>status change</strong>: seats stay counted on the flight.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="a-btn a-btn-outline" id="resetBtn"><i class="fa-solid fa-rotate-left"></i>
+                            Reset demo data</button>
+                    </div>
+                </div>
+
+                <section class="admin-card">
+                    <!-- Toolbar: search + filters (Master Plan §2.4) -->
+                    <div class="table-toolbar">
+                        <div class="search-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" class="a-input" id="bookingSearch"
+                                placeholder="Search PNR, ID, customer or flight no…" aria-label="Search bookings">
+                        </div>
+                        <select class="a-select" id="bookingStatusFilter" aria-label="Filter by booking status">
+                            <option value="ALL">All bookings</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <select class="a-select" id="payStatusFilter" aria-label="Filter by payment status">
+                            <option value="ALL">All payments</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Refunded">Refunded</option>
+                        </select>
+                        <span class="result-count" id="resultCount"></span>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>PNR</th>
+                                    <th>Customer</th>
+                                    <th>Flight</th>
+                                    <th>Route &amp; Date</th>
+                                    <th>Pax</th>
+                                    <th>Amount</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingTableBody">
+                                <!-- rows rendered by admin-bookings.js -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="empty-state" id="emptyState" hidden>
+                        <i class="fa-solid fa-book"></i>
+                        <p>No bookings match your search.</p>
+                    </div>
+
+                    <div class="pagination">
+                        <span class="page-info" id="pageInfo"></span>
+                        <div class="page-btns" id="pageBtns"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== Booking detail modal (read-only; mirrors eticket.js data) ===== -->
+    <div class="modal-overlay" id="bookingModal" hidden>
+        <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+            <div class="modal-header">
+                <h2 id="bookingModalTitle">Booking</h2>
+                <button type="button" class="modal-close" id="bookingModalClose" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-block">
+                        <h3><i class="fa-solid fa-book"></i> Booking</h3>
+                        <dl>
+                            <dt>Booking ID</dt>
+                            <dd id="dBkgId">—</dd>
+                            <dt>PNR</dt>
+                            <dd id="dPnr">—</dd>
+                            <dt>Ticket No.</dt>
+                            <dd id="dTicketNo">—</dd>
+                            <dt>Status</dt>
+                            <dd id="dStatus">—</dd>
+                            <dt>Booked on</dt>
+                            <dd id="dCreated">—</dd>
+                        </dl>
+                    </div>
+                    <div class="detail-block">
+                        <h3><i class="fa-solid fa-plane"></i> Flight</h3>
+                        <dl>
+                            <dt>Flight</dt>
+                            <dd id="dFlightNo">—</dd>
+                            <dt>Airline</dt>
+                            <dd id="dAirline">—</dd>
+                            <dt>Route</dt>
+                            <dd id="dRoute">—</dd>
+                            <dt>Date</dt>
+                            <dd id="dDate">—</dd>
+                            <dt>Times</dt>
+                            <dd id="dTimes">—</dd>
+                            <dt>Class</dt>
+                            <dd id="dClass">—</dd>
+                        </dl>
+                    </div>
+                    <div class="detail-block">
+                        <h3><i class="fa-solid fa-user"></i> Contact</h3>
+                        <dl>
+                            <dt>Name</dt>
+                            <dd id="dName">—</dd>
+                            <dt>Phone</dt>
+                            <dd id="dPhone">—</dd>
+                            <dt>Email</dt>
+                            <dd id="dEmail">—</dd>
+                        </dl>
+                    </div>
+                    <div class="detail-block">
+                        <h3><i class="fa-solid fa-credit-card"></i> Payment</h3>
+                        <dl>
+                            <dt>Method</dt>
+                            <dd id="dMethod">—</dd>
+                            <dt>Txn ID</dt>
+                            <dd id="dTxn">—</dd>
+                            <dt>Paid at</dt>
+                            <dd id="dPaidAt">—</dd>
+                            <dt>Fare</dt>
+                            <dd id="dFare">—</dd>
+                            <dt>Total</dt>
+                            <dd id="dTotal">—</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <h3 class="pax-heading"><i class="fa-solid fa-users"></i> Passengers</h3>
+                <div class="table-wrap">
+                    <table class="data-table pax-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Nationality</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dPaxBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="a-btn a-btn-outline" id="dCancelBtn"
+                    hidden><i class="fa-solid fa-ban"></i> Cancel Booking</button>
+                <button type="button" class="a-btn" id="bookingModalDone">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Styled confirm modal (replaces confirm() on this page) ===== -->
+    <div class="modal-overlay" id="confirmModal" hidden>
+        <div class="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Are you sure?</h2>
+                <button type="button" class="modal-close" id="confirmClose" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="confirm-msg" id="confirmMsg">This action cannot be undone in the demo.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="a-btn a-btn-outline" id="confirmNo">Keep it</button>
+                <button type="button" class="a-btn a-btn-danger" id="confirmYes">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="assets/js/admin.js"></script>
+    <!-- Mock API layer (item 16): config → mock-data → api → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/admin-bookings.js"></script>
+</body>
+
+</html>

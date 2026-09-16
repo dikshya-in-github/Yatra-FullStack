@@ -1,0 +1,581 @@
+/* =====================================================
+   FLIGHT SEARCH PAGE (wizard step 1)
+   Tokens, reset, navbar, buttons, reveal, wizard band,
+   stepper and slim footer come from homeLogged.css.
+   This file: page-specific listing styles only.
+   ===================================================== */
+
+/* ---------- Summary bar ---------- */
+.results-wrap {
+  padding: 2.5rem 1.5rem 5rem;
+}
+.summary-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 1.15rem 1.75rem;
+  box-shadow: var(--shadow-sm);
+}
+.sum-type {
+  font-size: 1.05rem;
+  color: var(--dark);
+}
+.sum-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.sum-route i {
+  color: var(--primary);
+  margin: 0 0.35rem;
+  font-size: 0.85rem;
+}
+.sum-meta .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--slate-light);
+  display: inline-block;
+}
+.btn-modify {
+  margin-left: auto;
+}
+/* Shared .btn-outline is the transparent navbar variant (white
+   text); the Modify button sits on a light card, so give it the
+   light-background look (same treatment as eticket .et-actions) */
+.btn-modify.btn-outline {
+  background: var(--white);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+.btn-modify.btn-outline:hover {
+  background: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+/* ---------- Title + date strip ---------- */
+.results-title {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  margin: 2.75rem 0 1.75rem;
+}
+.date-strip {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+.date-btn {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--dark);
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  padding: 0.7rem 1.35rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.date-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+.date-btn.selected {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  background: var(--white);
+  box-shadow:
+    0 0 0 4px rgba(14, 163, 113, 0.12),
+    var(--shadow-sm);
+}
+
+/* ---------- Flight cards ---------- */
+.flights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.flights-list.fading {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.flight-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: var(--transition);
+}
+.flight-card:hover {
+  box-shadow: var(--shadow-md);
+}
+.flight-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.1fr 0.8fr 0.7fr 0.7fr 1.2fr auto;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.5rem 1.75rem;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+.fc-times h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.2rem;
+}
+.fc-times p {
+  font-size: 0.92rem;
+}
+.fc-airline {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+.al-mark {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+/* Logo shows only once the image has loaded; until then (or if the
+   file is missing) the IATA code badge remains — no broken images */
+.al-mark .al-logo {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--white);
+}
+.al-mark.has-logo {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+}
+.al-mark.has-logo .al-code {
+  display: none;
+}
+.al-mark.has-logo .al-logo {
+  display: block;
+}
+.al-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.al-txt strong {
+  font-size: 0.95rem;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.al-sub {
+  font-size: 0.75rem;
+  color: var(--slate);
+  display: block;
+}
+.fc-cell strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--dark);
+}
+.fc-cell span {
+  font-size: 0.85rem;
+  color: var(--slate);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.fc-price strong {
+  font-size: 1.25rem;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.fc-price p {
+  font-size: 0.88rem;
+  color: var(--slate);
+}
+.fc-price s {
+  color: var(--slate-light);
+  margin-right: 0.45rem;
+}
+.badge-low {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.22rem 0.65rem;
+  border-radius: var(--radius-full);
+}
+.fc-chev {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--off-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--slate);
+  transition: var(--transition);
+}
+.flight-card.open .fc-chev {
+  transform: rotate(180deg);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.tl-flight {
+  white-space: nowrap;
+}
+
+/* Expandable detail panel */
+.flight-expand {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.45s ease;
+}
+.fe-inner {
+  border-top: 1px dashed var(--border);
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+.fe-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+.fe-head h4 {
+  font-size: 1.1rem;
+}
+.fe-head h4 span {
+  color: var(--primary);
+}
+.fe-price {
+  font-size: 1.15rem;
+  color: var(--dark);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.fe-refund {
+  font-size: 0.85rem;
+  color: var(--slate);
+  font-weight: 600;
+}
+.fe-body {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 2.5rem;
+}
+
+/* Route timeline */
+.fe-timeline {
+  position: relative;
+  padding-left: 1.9rem;
+}
+.fe-timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 14px;
+  bottom: 14px;
+  border-left: 3px dotted rgba(14, 163, 113, 0.45);
+}
+.tl-row {
+  position: relative;
+}
+.tl-row::before {
+  content: "";
+  position: absolute;
+  left: -1.9rem;
+  top: 8px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--white);
+  box-shadow: 0 0 0 2px rgba(14, 163, 113, 0.5);
+}
+.tl-time {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--dark);
+  margin-right: 0.5rem;
+}
+.tl-place {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+.tl-mid {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 0 1.1rem 0.25rem;
+  font-size: 0.9rem;
+  color: var(--slate);
+}
+.tl-flight {
+  font-weight: 800;
+  color: var(--dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tl-flight i {
+  color: var(--primary);
+}
+.tl-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+}
+
+/* Ticket config */
+.fe-label {
+  font-weight: 800;
+  color: var(--dark);
+  margin-bottom: 0.75rem;
+}
+.class-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.pill {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--slate);
+  background: var(--off-white);
+  border: 1.5px solid var(--border);
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.pill:hover {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+.pill.active {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(14, 163, 113, 0.1);
+}
+.fe-bag {
+  margin: 1.25rem 0 0;
+  font-size: 0.95rem;
+}
+.fe-bag i {
+  color: var(--primary);
+  margin-right: 0.35rem;
+}
+.fe-bag strong {
+  color: var(--dark);
+}
+.fe-bag .gap {
+  display: inline-block;
+  width: 1.5rem;
+}
+
+.fe-foot {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  grid-column: 1 / -1;
+}
+
+.linklike {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.linklike:hover {
+  text-decoration: underline;
+}
+.btn-select {
+  margin-left: auto;
+}
+
+/* ---------- Empty state ---------- */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--slate-light);
+}
+.empty-state i {
+  font-size: 2.75rem;
+  color: var(--border);
+  margin-bottom: 1rem;
+}
+.empty-state p {
+  margin-top: 0.35rem;
+}
+
+/* ---------- Modal ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+.modal-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+.modal-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  max-width: 520px;
+  width: 100%;
+  transform: translateY(18px);
+  transition: transform 0.3s ease;
+  box-shadow: var(--shadow-lg);
+}
+.modal-backdrop.show .modal-card {
+  transform: translateY(0);
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4rem 1.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.modal-head h3 {
+  font-size: 1.2rem;
+}
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--slate);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.modal-close:hover {
+  color: var(--dark);
+  transform: rotate(90deg);
+}
+.policy-list {
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+.policy-list li {
+  position: relative;
+  padding-left: 1.3rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.policy-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .flight-row {
+    grid-template-columns: 1.4fr 1.3fr 1fr auto;
+  }
+  .fc-hand,
+  .fc-bag {
+    display: none;
+  }
+  .fe-body {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+}
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+  .nav-actions .nav-link,
+  .nav-actions .auth-buttons {
+    display: none;
+  }
+  .step + .step::before {
+    width: 28px;
+    margin: 0 0.6rem;
+  }
+  .step-label {
+    display: none;
+  }
+  .step.active .step-label {
+    display: inline;
+  }
+  .flight-row {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 1rem;
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+  .fc-chev {
+    position: absolute;
+    top: 1.1rem;
+    right: 1.1rem;
+  }
+  .fc-price {
+    grid-column: 1 / -1;
+  }
+  .btn-modify {
+    margin-left: 0;
+    width: 100%;
+  }
+  .btn-select {
+    margin-left: 0;
+    width: 100%;
+  }
+}

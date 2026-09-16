@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra - Discover Nepal's Skies</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="#" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html" style="color: var(--primary);"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+
+        <div class="container hero-content reveal">
+            <h1 class="hero-title">Your Journey Begins Here</h1>
+            <p class="hero-subtitle">Discover the best flights to Nepal's most breathtaking destinations</p>
+        </div>
+
+        <!-- UPDATED FLIGHT SEARCH BOX -->
+        <div class="search-wrapper reveal delay-1">
+            <div class="search-box">
+                <!-- Unified Tabs -->
+                <div class="search-tabs">
+                    <button class="tab-btn active" data-tab="book">
+                        <i class="fa-solid fa-plane-up"></i> Book a Flight
+                    </button>
+                    <button class="tab-btn" data-tab="group">
+                        <i class="fa-solid fa-users"></i> Group Booking
+                    </button>
+                    <button class="tab-btn" data-tab="status">
+                        <i class="fa-solid fa-magnifying-glass-location"></i> Flight Status
+                    </button>
+                </div>
+
+                <!-- Fixed Height Content Wrapper -->
+                <div class="tab-content-wrapper">
+
+                    <!-- BOOK A FLIGHT TAB -->
+                    <!-- BOOK A FLIGHT TAB -->
+                    <div class="tab-content active" id="bookTab">
+                        <form class="book-flight-form" id="flightSearchForm">
+
+                            <!-- === ROW 1: Main Inputs === -->
+
+                            <!-- From -->
+                            <div class="input-block">
+                                <div class="input-wrapper">
+                                    <select id="origin" required>
+                                        <option value="" disabled selected>Departure City</option>
+                                        <option value="KTM">Kathmandu (KTM)</option>
+                                        <option value="PKR">Pokhara (PKR)</option>
+                                        <option value="BWA">Bhairahawa (BWA)</option>
+                                        <option value="KEP">Nepalgunj (KEP)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Swap Button -->
+                            <div class="swap-container">
+                                <button type="button" class="swap-btn" id="swapRouteBtn">
+                                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                                </button>
+                            </div>
+
+                            <!-- To -->
+                            <div class="input-block">
+                                <div class="input-wrapper">
+                                    <select id="destination" required>
+                                        <option value="" disabled selected>Arrival City</option>
+                                        <option value="PKR">Pokhara (PKR)</option>
+                                        <option value="KTM">Kathmandu (KTM)</option>
+                                        <option value="BWA">Bhairahawa (BWA)</option>
+                                        <option value="KEP">Nepalgunj (KEP)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Nationality (New) -->
+                            <div class="input-block">
+                                <div class="input-wrapper">
+                                    <select id="nationality" required>
+                                        <option value="" disabled selected>Select Nationality</option>
+                                        <option value="NP">Nepali</option>
+                                        <option value="IN">Indian</option>
+                                        <option value="US">American</option>
+                                        <option value="UK">British</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Passengers -->
+                            <div class="input-block">
+                                <div class="input-wrapper passenger-trigger" id="passengerTrigger"
+                                    style="cursor: pointer;">
+                                    <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                                        <span
+                                            style="font-size: 0.65rem; color: var(--slate-light); font-weight: 600;">Passenger</span>
+                                        <span id="passengerDisplay"
+                                            style="font-size: 0.95rem; color: var(--dark); font-weight: 500;">1
+                                            Passenger</span>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-down"
+                                        style="margin-left: auto; color: var(--slate-light); font-size: 0.8rem;"></i>
+                                </div>
+                            </div>
+
+                            <!-- Departure Date (with inner label) -->
+                            <div class="input-block">
+                                <div class="input-wrapper date-field-wrapper">
+                                    <span class="inner-label">Departure Date</span>
+                                    <input type="date" id="depDate" required>
+                                </div>
+                            </div>
+
+                            <!-- Return Date (space is RESERVED, just invisible when One Way) -->
+                            <div class="input-block field-hidden" id="retDateBlock">
+                                <div class="input-wrapper date-field-wrapper">
+                                    <span class="inner-label">Return Date</span>
+                                    <input type="date" id="retDate">
+                                </div>
+                            </div>
+
+                            <!-- === ROW 2: Toggles and Actions === -->
+
+                            <!-- Trip Type Toggle -->
+                            <div class="trip-type-container row-2-left">
+                                <span class="trip-type-label active" id="oneWayLabel">One Way</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="roundTripToggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="trip-type-label" id="roundTripLabel">Round trip</span>
+                            </div>
+
+                            <!-- Promo Code -->
+                            <div class="promo-container row-2-right">
+                                <div class="input-wrapper promo-input-wrapper">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <input type="text" id="promoCode" placeholder="Add Promo Code">
+                                </div>
+                            </div>
+
+                            <!-- Search Button -->
+                            <div class="search-btn-container row-2-right">
+                                <button type="submit" class="search-btn">
+                                    Search Flights
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+
+                    <!-- GROUP BOOKING TAB -->
+                    <div class="tab-content" id="groupTab">
+                        <div class="group-booking-container">
+                            <form class="group-booking-form" id="groupBookingForm">
+                                <!-- From -->
+                                <div class="input-block">
+                                    <div class="input-wrapper">
+                                        <select id="groupOrigin" required>
+                                            <option value="" disabled selected>Departure City</option>
+                                            <option value="KTM">Kathmandu (KTM)</option>
+                                            <option value="PKR">Pokhara (PKR)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- To -->
+                                <div class="input-block">
+                                    <div class="input-wrapper">
+                                        <select id="groupDestination" required>
+                                            <option value="" disabled selected>Arrival City</option>
+                                            <option value="DEL">Delhi (DEL)</option>
+                                            <option value="DXB">Dubai (DXB)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Nationality -->
+                                <div class="input-block">
+                                    <div class="input-wrapper">
+                                        <select id="groupNationality" required>
+                                            <option value="" disabled selected>Select Nationality</option>
+                                            <option value="NP">Nepali</option>
+                                            <option value="IN">Indian</option>
+                                            <option value="US">American</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Travellers (inner label, like "Passenger") -->
+                                <div class="input-block">
+                                    <div class="input-wrapper date-field-wrapper">
+                                        <span class="inner-label">Travellers</span>
+                                        <input type="number" id="groupTravellers" min="10" max="50" placeholder="Min 10"
+                                            required>
+                                    </div>
+                                </div>
+
+                                <!-- Departure Date (inner label) -->
+                                <div class="input-block">
+                                    <div class="input-wrapper date-field-wrapper">
+                                        <span class="inner-label">Departure Date</span>
+                                        <input type="date" id="groupDepDate" required>
+                                    </div>
+                                </div>
+
+                                <!-- Button on row 2, right side (like Search Flights) -->
+                                <div class="group-btn-container">
+                                    <button type="button" class="search-btn" id="groupActionBtn"
+                                        style="background: var(--dark);">
+                                        Add More Details <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Hidden extra fields (revealed by Add More Details) -->
+                                <div id="groupExtraFields" style="display: none; grid-column: 1 / -1; gap: 1rem;">
+                                    <div class="input-block" style="flex: 1;">
+                                        <div class="input-wrapper">
+                                            <input type="text" id="groupLeaderName" placeholder="Group Leader Name">
+                                        </div>
+                                    </div>
+                                    <div class="input-block" style="flex: 1;">
+                                        <div class="input-wrapper">
+                                            <input type="text" id="groupContact" placeholder="Contact Email / Phone">
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- FLIGHT STATUS TAB -->
+                    <div class="tab-content" id="statusTab">
+                        <div class="status-header">
+                            <h3>Track real-time flight status</h3>
+                        </div>
+                        <form class="flight-status-form" id="flightStatusForm">
+                            <!-- From -->
+                            <div class="input-block">
+                                <div class="input-wrapper">
+                                    <select required>
+                                        <option value="" disabled selected>Departure City</option>
+                                        <option value="KTM">Kathmandu (KTM)</option>
+                                        <option value="PKR">Pokhara (PKR)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- To -->
+                            <div class="input-block">
+                                <div class="input-wrapper">
+                                    <select required>
+                                        <option value="" disabled selected>Arrival City</option>
+                                        <option value="PKR">Pokhara (PKR)</option>
+                                        <option value="KTM">Kathmandu (KTM)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Search Button -->
+                            <button type="submit" class="search-btn">
+                                Search Flights <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Passenger Modal -->
+    <div class="modal-backdrop" id="passengerModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h4>Passengers & Class</h4>
+                <button class="close-modal" id="closePassengerModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="counter-row">
+                    <div><strong>Adults</strong><small>(12+ years)</small></div>
+                    <div class="counter-controls">
+                        <button class="count-btn minus" data-target="adult">-</button>
+                        <span class="count-val" id="adultCount">1</span>
+                        <button class="count-btn plus" data-target="adult">+</button>
+                    </div>
+                </div>
+                <div class="counter-row">
+                    <div><strong>Children</strong><small>(2-12 years)</small></div>
+                    <div class="counter-controls">
+                        <button class="count-btn minus" data-target="child">-</button>
+                        <span class="count-val" id="childCount">0</span>
+                        <button class="count-btn plus" data-target="child">+</button>
+                    </div>
+                </div>
+                <div class="counter-row">
+                    <div><strong>Infants</strong><small>(&lt;2 years)</small></div>
+                    <div class="counter-controls">
+                        <button class="count-btn minus" data-target="infant">-</button>
+                        <span class="count-val" id="infantCount">0</span>
+                        <button class="count-btn plus" data-target="infant">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary full-width" id="savePassengers">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Why Book With Yatra Section -->
+    <section class="features-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <h2>Why Book With Yatra?</h2>
+                <p>We're Nepal's trusted flight booking platform</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card reveal delay-1">
+                    <div class="feature-icon"><i class="fa-solid fa-tag"></i></div>
+                    <h3>Best Price Guarantee</h3>
+                    <p>Find the lowest fares on domestic and international flights</p>
+                </div>
+
+                <div class="feature-card reveal delay-2">
+                    <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3>Secure Booking</h3>
+                    <p>Safe and secure payment with eSewa integration</p>
+                </div>
+
+                <div class="feature-card reveal delay-3">
+                    <div class="feature-icon"><i class="fa-solid fa-headset"></i></div>
+                    <h3>24/7 Support</h3>
+                    <p>Round-the-clock customer support for all your queries</p>
+                </div>
+
+                <div class="feature-card reveal delay-4">
+                    <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <h3>Instant Confirmation</h3>
+                    <p>Get immediate booking confirmation via email</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Explore Domestic Gems Section (Premium Slider) -->
+    <section class="destinations-section section-padding">
+        <div class="container">
+            <div class="section-header-flex reveal">
+                <div class="section-text">
+                    <h2>Explore Domestic Gems</h2>
+                    <p>Handpicked routes across the Himalayas</p>
+                </div>
+                <a href="./destinations.html" class="explore-all-btn">
+                    Explore All Destinations <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Horizontal Scroll Container -->
+            <div class="dest-slider-container">
+                <div class="dest-slider">
+
+                    <!-- Card 1: Pokhara -->
+                    <div class="dest-slide reveal delay-1">
+                        <div class="slide-img-wrap">
+                            <img src="assets/imgs/pokhara.jpg" alt="Pokhara">
+                            <div class="slide-overlay"></div>
+                            <div class="slide-content">
+                                <span class="slide-code">PKR</span>
+                                <h3 class="slide-title">POKHARA</h3>
+                                <p class="slide-desc">City of Lakes & Mountains</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Bhairahawa -->
+                    <div class="dest-slide reveal delay-2">
+                        <div class="slide-img-wrap">
+                            <img src="assets/imgs/bhairahawa.jpeg" alt="Bhairahawa">
+                            <div class="slide-overlay"></div>
+                            <div class="slide-content">
+                                <span class="slide-code">BWA</span>
+                                <h3 class="slide-title">BHAIRAHAWA</h3>
+                                <p class="slide-desc">Gateway to Lumbini</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Nepalgunj -->
+                    <div class="dest-slide reveal delay-3">
+                        <div class="slide-img-wrap">
+                            <img src="assets/imgs/nepalgunj.jpeg" alt="Nepalgunj">
+                            <div class="slide-overlay"></div>
+                            <div class="slide-content">
+                                <span class="slide-code">KEP</span>
+                                <h3 class="slide-title">NEPALGUNJ</h3>
+                                <p class="slide-desc">Heart of the Terai</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Mountain View -->
+                    <div class="dest-slide reveal delay-4">
+                        <div class="slide-img-wrap">
+                            <img src="assets/imgs/mountainview.jpg" alt="Mountain View">
+                            <div class="slide-overlay"></div>
+                            <div class="slide-content">
+                                <span class="slide-code">MTN</span>
+                                <h3 class="slide-title">MOUNTAIN VIEW</h3>
+                                <p class="slide-desc">Everest Experience</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Biratnagar (Extra for scrolling effect) -->
+                    <div class="dest-slide reveal delay-5">
+                        <div class="slide-img-wrap">
+                            <img src="assets/imgs/biratnagar.png" alt="Biratnagar">
+                            <div class="slide-overlay"></div>
+                            <div class="slide-content">
+                                <span class="slide-code">BIR</span>
+                                <h3 class="slide-title">BIRATNAGAR</h3>
+                                <p class="slide-desc">Industrial Capital</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats / Trust Section -->
+    <section class="stats-section section-padding">
+        <div class="container stats-container">
+            <div class="stats-text reveal">
+                <h2>Soaring Higher Since Day One</h2>
+                <p>We continue to bring people and places together with care, comfort, and safety. Yatra is built on
+                    trust, leveraging modern technology to make domestic travel in Nepal seamless and secure.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item reveal delay-1">
+                    <i class="fa-solid fa-plane-departure stat-icon"></i>
+                    <div class="stat-number" data-target="15000">0</div>
+                    <div class="stat-label">Flights Managed</div>
+                </div>
+
+                <div class="stat-item reveal delay-2">
+                    <i class="fa-solid fa-users stat-icon"></i>
+                    <div class="stat-number" data-target="85000">0</div>
+                    <div class="stat-label">Happy Travelers</div>
+                </div>
+
+                <div class="stat-item reveal delay-3">
+                    <i class="fa-solid fa-percent stat-icon"></i>
+                    <div class="stat-number" data-target="99">0%</div>
+                    <div class="stat-label">On-Time Performance</div>
+                </div>
+
+                <div class="stat-item reveal delay-4">
+                    <i class="fa-solid fa-map-location-dot stat-icon"></i>
+                    <div class="stat-number" data-target="12">0</div>
+                    <div class="stat-label">Domestic Routes</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth layer: the session the navbar chip + "Log Out" read (config → auth) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+
+    <!-- §35 validation layer (dependency-free) — powers validateSearchForm() -->
+    <script src="assets/js/validation.js"></script>
+    <script src="assets/js/homeLogged.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+
+</html>

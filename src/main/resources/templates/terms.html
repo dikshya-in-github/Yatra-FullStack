@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms &amp; Conditions | Yatra — Discover Nepal's Skies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/terms.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./terms.html" style="color: var(--primary);"><i class="fa-solid fa-file-contract"></i> Terms &amp; Conditions</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- PAGE HERO -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+        <div class="container">
+            <nav class="breadcrumb reveal active">
+                <a href="./homeLogged.html">Home</a> <i class="fa-solid fa-chevron-right"></i> <span class="current">Terms &amp; Conditions</span>
+            </nav>
+            <h1 class="hero-title reveal active">Terms &amp; <span>Conditions</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                The ground rules for booking with Yatra — plain language, no surprises, matching the fare rules of our partner airlines.
+            </p>
+            <p class="doc-meta reveal active delay-2">
+                <i class="fa-solid fa-calendar"></i> Effective date: January 2026 &nbsp;·&nbsp; <i class="fa-solid fa-shield-halved"></i> Domestic flights within Nepal
+            </p>
+        </div>
+    </header>
+
+    <!-- QUICK SUMMARY -->
+    <section class="summary-section section-padding">
+        <div class="container">
+            <div class="summary-grid">
+                <div class="summary-card reveal delay-1">
+                    <div class="summary-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                    <h3>Book &amp; Fly Domestic</h3>
+                    <p>Book scheduled flights with Buddha Air, Yeti Airlines, Shree Airlines and Sita Air across Nepal's domestic network. An e-ticket with your PNR is issued once payment succeeds.</p>
+                </div>
+                <div class="summary-card reveal delay-2">
+                    <div class="summary-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <h3>15-Minute Booking Window</h3>
+                    <p>Seats you select are held for 15 minutes while you complete passenger details and payment. When the timer runs out the session expires and the seats are released.</p>
+                </div>
+                <div class="summary-card reveal delay-3">
+                    <div class="summary-icon"><i class="fa-solid fa-file-contract"></i></div>
+                    <h3>Transparent Fare Rules</h3>
+                    <p>Fare classes and cancellation charges follow the operating airline's published rules — check the refund policy for the full fee table before you book.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DOCUMENT -->
+    <section class="doc-section section-padding">
+        <div class="container">
+            <div class="doc-layout">
+                <!-- Table of contents -->
+                <aside class="doc-toc reveal" aria-label="On this page">
+                    <h4>On this page</h4>
+                    <a href="#sec-1"><span class="toc-num">01</span> About these terms</a>
+                    <a href="#sec-2"><span class="toc-num">02</span> Booking a flight</a>
+                    <a href="#sec-3"><span class="toc-num">03</span> Fares &amp; payment</a>
+                    <a href="#sec-4"><span class="toc-num">04</span> E-ticket &amp; check-in</a>
+                    <a href="#sec-5"><span class="toc-num">05</span> Changes &amp; cancellations</a>
+                    <a href="#sec-6"><span class="toc-num">06</span> Liability</a>
+                </aside>
+
+                <!-- Sections -->
+                <div class="doc-content">
+                    <article class="terms-card reveal" id="sec-1">
+                        <div class="sec-head">
+                            <span class="sec-num">01</span>
+                            <h2>About these terms</h2>
+                        </div>
+                        <p>
+                            Yatra 2.0 is a booking platform for scheduled flights of Nepali domestic airlines — Buddha Air, Yeti Airlines, Shree Airlines and Sita Air. By completing a booking on Yatra you agree to these terms alongside the operating airline's own conditions of carriage.
+                        </p>
+                        <p>
+                            Where these terms and an airline's fare rule differ, the operating airline's rule controls the flight; these terms govern how Yatra presents, processes and supports the booking.
+                        </p>
+                    </article>
+
+                    <article class="terms-card reveal" id="sec-2">
+                        <div class="sec-head">
+                            <span class="sec-num">02</span>
+                            <h2>Booking a flight</h2>
+                        </div>
+                        <ul class="terms-list">
+                            <li><i class="fa-solid fa-check"></i> Passenger names must match the government-issued photo ID presented at check-in — enter them exactly as they appear on the ID.</li>
+                            <li><i class="fa-solid fa-check"></i> Provide a reachable phone number and email; the e-ticket and any schedule changes go to the contact you enter.</li>
+                            <li><i class="fa-solid fa-check"></i> Infants not occupying a seat travel on an adult's lap and pay no fare; each adult may accompany at most one lap infant.</li>
+                            <li><i class="fa-solid fa-check"></i> Seats you select are held for <strong>15 minutes</strong> between choosing a flight and completing payment; after that the hold expires and the session restarts.</li>
+                        </ul>
+                        <div class="terms-callout">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <p>
+                                A booking is confirmed only after payment succeeds. A pending booking that is never paid expires automatically and never appears in your booking history.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="terms-card reveal" id="sec-3">
+                        <div class="sec-head">
+                            <span class="sec-num">03</span>
+                            <h2>Fares &amp; payment</h2>
+                        </div>
+                        <ul class="terms-list">
+                            <li><i class="fa-solid fa-check"></i> Fares are quoted in NPR, per paying passenger (adults + children), and are shown per fare class with the applicable refundability.</li>
+                            <li><i class="fa-solid fa-check"></i> Fares, schedules and availability can change until the booking is confirmed; the fare shown when you select a flight is the fare held for your 15-minute window.</li>
+                            <li><i class="fa-solid fa-check"></i> Payments are accepted through eSewa. Other payment methods (cards, bank transfer, other wallets) are shown for demonstration and are not enabled yet.</li>
+                            <li><i class="fa-solid fa-check"></i> Your transaction reference is your payment receipt; quote it together with your booking ID in any support request.</li>
+                        </ul>
+                    </article>
+
+                    <article class="terms-card reveal" id="sec-4">
+                        <div class="sec-head">
+                            <span class="sec-num">04</span>
+                            <h2>E-ticket &amp; check-in</h2>
+                        </div>
+                        <ul class="terms-list">
+                            <li><i class="fa-solid fa-check"></i> On successful payment Yatra issues an e-ticket with a booking reference (PNR) and ticket number — view, download and print it from the confirmation screen or My Bookings.</li>
+                            <li><i class="fa-solid fa-check"></i> The e-ticket is your proof of booking; carry the same photo ID for every passenger at the airline's check-in counter.</li>
+                            <li><i class="fa-solid fa-check"></i> Report at the airport before the airline's check-in cutoff — passengers arriving after cutoff are handled as no-shows under the airline's rules.</li>
+                            <li><i class="fa-solid fa-check"></i> Baggage allowance is shown per flight card (checked 15 kg + 5 kg hand carry on typical domestic services, per the operating airline).</li>
+                        </ul>
+                    </article>
+
+                    <article class="terms-card reveal" id="sec-5">
+                        <div class="sec-head">
+                            <span class="sec-num">05</span>
+                            <h2>Changes &amp; cancellations</h2>
+                        </div>
+                        <p>
+                            Cancellation windows, fees and reschedule rules depend on your fare class and follow the operating airline's published fare rules — see the
+                            <a href="./refundPolicy.html">Refund Policy</a> for the full fee table and the fee estimator.
+                        </p>
+                        <ul class="terms-list">
+                            <li><i class="fa-solid fa-check"></i> Cancellations are processed against the fare class you booked; non-refundable fares still allow the unutilized airport tax (PSC) to be claimed.</li>
+                            <li><i class="fa-solid fa-check"></i> If the airline cancels your flight, or delays it beyond one hour, you are entitled to a full refund regardless of fare class.</li>
+                            <li><i class="fa-solid fa-check"></i> Refunds always return to the original payment method — wallets within 2–3 working days, cards/bank within 7–8 working days.</li>
+                        </ul>
+                    </article>
+
+                    <article class="terms-card reveal" id="sec-6">
+                        <div class="sec-head">
+                            <span class="sec-num">06</span>
+                            <h2>Liability</h2>
+                        </div>
+                        <p>
+                            Yatra presents airline schedules and fares in good faith. The operating airline is responsible for the flight itself — including schedule changes, delays, diversions and carriage of passengers and baggage.
+                        </p>
+                        <p>
+                            Yatra is not liable for losses arising from events outside its reasonable control (weather, air-traffic restrictions, airport closures, force majeure) or from passenger-side issues such as incorrect passenger details, missed check-in cutoffs or invalid travel documents.
+                        </p>
+                        <div class="terms-callout">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <p>
+                                This page is part of an academic project and does not constitute a legally binding consumer contract. Airlines, fares, schedules and payment flows are simulated for demonstration.
+                            </p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RELATED DOCUMENTS -->
+    <section class="related-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-folder-open"></i> Good to Read</span>
+                <h2>Related Policies</h2>
+            </div>
+            <div class="related-grid">
+                <a href="./refundPolicy.html" class="related-card reveal delay-1">
+                    <div class="related-icon"><i class="fa-solid fa-rotate-left"></i></div>
+                    <h3>Refund Policy</h3>
+                    <p>Fare-class cancellation charges, the 100%-refund cases, refund timelines by payment method and the fee estimator.</p>
+                    <span class="related-link">Read the policy <i class="fa-solid fa-arrow-right"></i></span>
+                </a>
+                <a href="./helpCenter.html" class="related-card reveal delay-2">
+                    <div class="related-icon"><i class="fa-solid fa-circle-question"></i></div>
+                    <h3>Help Center</h3>
+                    <p>Searchable answers about bookings, payments, e-tickets and baggage — with popular topics one tap away.</p>
+                    <span class="related-link">Find an answer <i class="fa-solid fa-arrow-right"></i></span>
+                </a>
+                <a href="./contactUs.html" class="related-card reveal delay-3">
+                    <div class="related-icon"><i class="fa-solid fa-headset"></i></div>
+                    <h3>Contact Us</h3>
+                    <p>Support channels, office hours and the contact form — reach a human when the documents don't cover it.</p>
+                    <span class="related-link">Get in touch <i class="fa-solid fa-arrow-right"></i></span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section section-padding">
+        <div class="container reveal">
+            <div class="cta-card">
+                <h2>Ready When You Are.</h2>
+                <p>The rules above travel with every booking — fair fares, honest hold times and refunds that follow the airline's own rules.</p>
+                <div class="cta-buttons">
+                    <a href="./homeLogged.html" class="btn btn-white">
+                        <i class="fa-solid fa-plane"></i> Book a Flight
+                    </a>
+                    <a href="./refundPolicy.html" class="btn btn-outline-white">
+                        <i class="fa-solid fa-rotate-left"></i> Refund Policy
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER (same as homeLogged.html) -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                    <li><a href="./terms.html">Terms &amp; Conditions</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth layer: the session the navbar chip + "Log Out" read (config → auth) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+
+    <!-- Shared JS (navbar scroll, mobile menu, reveal, counters) -->
+    <script src="assets/js/homeLogged.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+
+</html>

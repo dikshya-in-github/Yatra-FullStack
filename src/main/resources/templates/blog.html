@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog | Yatra — Stories From Nepal's Skies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/blog.css">
+</head>
+<body>
+
+    <!-- Navigation Bar (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html" style="color: var(--primary);"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- ==========================================
+         PAGE HERO
+    =========================================== -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+        <div class="container">
+            <nav class="breadcrumb reveal active">
+                <a href="./homeLogged.html">Home</a> <i class="fa-solid fa-chevron-right"></i> <span class="current">Blog</span>
+            </nav>
+            <h1 class="hero-title reveal active">Stories From <span>the Skies</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                Travel tips, destination guides, and the latest from Yatra — everything you need to explore Nepal, one flight at a time.
+            </p>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         FEATURED POST
+    =========================================== -->
+    <section class="featured-section section-padding">
+        <div class="container">
+            <div class="featured-card reveal">
+                <div class="featured-media">
+                    <span class="featured-flag"><i class="fa-solid fa-star"></i> Featured</span>
+                    <i class="fa-solid fa-mountain-sun"></i>
+                </div>
+                <div class="featured-body">
+                    <span class="eyebrow">Destinations</span>
+                    <h2>Pokhara vs. Kathmandu: Which Should Top Your Nepal Itinerary?</h2>
+                    <p>
+                        The city of lakes or the city of temples? We compare weather, views, culture, and cost
+                        to help you decide where to spend your first days in Nepal — and how to fly there for less.
+                    </p>
+                    <div>
+                        <a href="#latest" class="btn btn-primary">Read Article <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         LATEST ARTICLES
+    =========================================== -->
+    <section class="blog-section section-padding" id="latest">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">The Yatra Journal</span>
+                <h2>Latest Articles</h2>
+                <p>Fresh reads on travel, destinations, and product updates from the Yatra team.</p>
+            </div>
+
+            <!-- Category filters -->
+            <div class="filters reveal" id="filters">
+                <button class="filter-btn active" data-filter="all">All Posts</button>
+                <button class="filter-btn" data-filter="travel-tips">Travel Tips</button>
+                <button class="filter-btn" data-filter="destinations">Destinations</button>
+                <button class="filter-btn" data-filter="flight-updates">Flight Updates</button>
+                <button class="filter-btn" data-filter="news">Yatra News</button>
+            </div>
+
+            <!-- Posts grid -->
+            <div class="posts-grid" id="postsGrid">
+                <article class="post-card reveal" data-category="travel-tips">
+                    <div class="post-thumb g-jade"><i class="fa-solid fa-suitcase-rolling"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Travel Tips</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Jan 12, 2026</span>
+                        </div>
+                        <h3>How to Pack for a Himalayan Flight in Under 20 Minutes</h3>
+                        <p>A no-stress packing system for short domestic hops — carry-on only, weather-proof, and gate-ready.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <article class="post-card reveal delay-1" data-category="destinations">
+                    <div class="post-thumb g-sky"><i class="fa-solid fa-water"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Destinations</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Jan 09, 2026</span>
+                        </div>
+                        <h3>Pokhara: The City of Lakes Through a Traveler's Eyes</h3>
+                        <p>Sunrise at Sarangkot, boats on Phewa, and paragliding over the valley — a weekend guide to Pokhara.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <article class="post-card reveal delay-2" data-category="flight-updates">
+                    <div class="post-thumb g-teal"><i class="fa-solid fa-tower-broadcast"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Flight Updates</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Jan 05, 2026</span>
+                        </div>
+                        <h3>Yatra Now Adds Real-Time Flight Status Tracking</h3>
+                        <p>Track delays, gate changes, and arrivals live — right inside your booking, no refresh needed.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <article class="post-card reveal" data-category="news">
+                    <div class="post-thumb g-violet"><i class="fa-solid fa-users"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Yatra News</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Dec 28, 2025</span>
+                        </div>
+                        <h3>Group Booking Is Here: Fly Together, Save Together</h3>
+                        <p>Planning a family trip or a team retreat? Book up to 10 seats in one go and unlock group fares.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <article class="post-card reveal delay-1" data-category="travel-tips">
+                    <div class="post-thumb g-sunset"><i class="fa-solid fa-sun"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Travel Tips</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Dec 20, 2025</span>
+                        </div>
+                        <h3>Best Time to Fly to the Everest Region for Clear Views</h3>
+                        <p>Season by season, here's when the skies and mountains cooperate — and when to expect cloud cover.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <article class="post-card reveal delay-2" data-category="destinations">
+                    <div class="post-thumb g-deep"><i class="fa-solid fa-landmark-dome"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Destinations</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Dec 15, 2025</span>
+                        </div>
+                        <h3>Bhairahawa: The Gateway to Lumbini and Beyond</h3>
+                        <p>Landing at Gautam Buddha International Airport puts you minutes from the birthplace of Buddha.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <article class="post-card reveal" data-category="flight-updates">
+                    <div class="post-thumb g-jade"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Flight Updates</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Dec 08, 2025</span>
+                        </div>
+                        <h3>Monsoon Travel Guide: How We Keep You On Schedule</h3>
+                        <p>Delays happen, but panic doesn't have to. Here's how Yatra handles weather disruptions end to end.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <article class="post-card reveal delay-1" data-category="news">
+                    <div class="post-thumb g-sky"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Yatra News</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Nov 30, 2025</span>
+                        </div>
+                        <h3>Secure eSewa Payments — Now Faster Than Ever</h3>
+                        <p>Checkout is quicker, safer, and fully encrypted, with instant confirmation by email every time.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+
+                <article class="post-card reveal delay-2" data-category="travel-tips">
+                    <div class="post-thumb g-teal"><i class="fa-solid fa-plane-up"></i></div>
+                    <div class="post-body">
+                        <div class="post-meta">
+                            <span class="post-cat">Travel Tips</span>
+                            <span class="post-date"><i class="fa-regular fa-calendar"></i> Nov 22, 2025</span>
+                        </div>
+                        <h3>First-Time Flyer? A Simple Guide to Domestic Airports in Nepal</h3>
+                        <p>Check-in, security, boarding, baggage — what to expect at Nepal's domestic terminals, step by step.</p>
+                        <a href="#latest" class="read-more">Read More <i class="fa-solid fa-arrow-right"></i></a>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-state" id="emptyState">
+                <i class="fa-regular fa-face-smile-wink"></i>
+                <h3>No articles here yet</h3>
+                <p>We're writing something great for this category. Try another filter in the meantime.</p>
+            </div>
+
+            <!-- Load more -->
+            <div class="load-more-wrap">
+                <button class="btn btn-primary" id="loadMoreBtn">
+                    Load More Articles <i class="fa-solid fa-rotate-down"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         NEWSLETTER CTA BAND
+    =========================================== -->
+    <section class="cta-section section-padding">
+        <div class="container reveal">
+            <h2>Never Miss a Story</h2>
+            <p>Get travel tips, route updates, and exclusive fare drops delivered straight to your inbox.</p>
+            <form class="newsletter-form" id="newsletterForm" novalidate>
+                <input type="email" id="newsletterEmail" placeholder="Enter your email address" aria-label="Email address">
+                <button type="submit" class="btn btn-white"><i class="fa-solid fa-paper-plane"></i> Subscribe</button>
+            </form>
+            <p class="newsletter-msg" id="newsletterMsg" role="status"></p>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER (same as homeLogged.html)
+    =========================================== -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth layer: the session the navbar chip + "Log Out" read (config → auth) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+
+    <!-- Shared JS (navbar scroll, mobile menu, reveal, counters) -->
+    <script src="assets/js/homeLogged.js"></script>
+    <!-- Page-specific JS (filters, load more, newsletter) -->
+    <script src="assets/js/blog.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+</html>

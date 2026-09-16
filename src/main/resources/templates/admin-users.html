@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra Admin - Users</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared admin design system (admin pages do NOT load homeLogged.css) -->
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+
+<body class="admin-body" data-admin-page="users">
+
+    <div class="admin-shell">
+        <!-- ===== Sidebar (copied from admin-payments.html; JS sets active item) ===== -->
+        <aside class="admin-sidebar">
+            <div class="admin-brand">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Admin" class="admin-brand-logo">
+                <span class="admin-brand-name">YATRA <em>ADMIN</em></span>
+            </div>
+
+            <nav class="admin-nav" aria-label="Admin navigation">
+                <a href="./admin-dashboard.html" class="admin-nav-item" data-page="dashboard"><i
+                        class="fa-solid fa-gauge-high"></i> Dashboard</a>
+
+                <span class="admin-nav-label">Manage</span>
+                <a href="./admin-flights.html" class="admin-nav-item" data-page="flights"><i
+                        class="fa-solid fa-plane"></i> Flights</a>
+                <a href="./admin-airlines.html" class="admin-nav-item" data-page="airlines"><i
+                        class="fa-solid fa-building"></i> Airlines</a>
+                <a href="./admin-bookings.html" class="admin-nav-item" data-page="bookings"><i
+                        class="fa-solid fa-book"></i> Bookings</a>
+                <a href="./admin-users.html" class="admin-nav-item" data-page="users"><i class="fa-solid fa-users"></i>
+                    Users</a>
+                <a href="./admin-destinations.html" class="admin-nav-item" data-page="destinations"><i
+                        class="fa-solid fa-location-dot"></i> Destinations</a>
+                <a href="./admin-payments.html" class="admin-nav-item" data-page="payments"><i
+                        class="fa-solid fa-credit-card"></i>
+                    Payments</a>
+                <a href="./admin-tickets.html" class="admin-nav-item" data-page="tickets"><i
+                        class="fa-solid fa-ticket"></i>
+                    Tickets</a>
+
+                <span class="admin-nav-label">Account</span>
+                <a href="./admin-profile.html" class="admin-nav-item" data-page="profile"><i class="fa-solid fa-user-gear"></i>
+                    Profile</a>
+                <button type="button" class="admin-nav-item admin-logout" id="adminLogout"><i
+                        class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <div class="admin-sidebar-user">
+                    <span class="admin-avatar admin-avatar-sm" id="sidebarAvatar">D</span>
+                    <span class="admin-sidebar-user-info">
+                        <strong id="sidebarName">Admin</strong>
+                        <small id="sidebarEmail">admin@yatra.com</small>
+                    </span>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+        <!-- ===== Main ===== -->
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
+                    aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+                <span class="topbar-title" id="topbarTitle">Users</span>
+                <div class="topbar-actions">
+                    <a href="./homeLogged.html" class="topbar-link"><i
+                            class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>View site</span></a>
+                    <span class="admin-chip"><span class="admin-avatar admin-avatar-sm"
+                            id="adminAvatar">D</span><span id="adminName">Admin</span></span>
+                </div>
+            </header>
+
+            <main class="admin-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Users</h1>
+                        <p class="page-sub">Registered customers and administrators (Master Plan §2.1 #6) from the mock
+                            store <code>yatra_admin_users</code>. Admin accounts are <strong>protected</strong>: they
+                            can be edited, but never disabled or deleted. When the Spring API lands, this store swaps
+                            for <code>/api/users</code> and signup starts writing real registrations.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="a-btn" id="addUserBtn"><i class="fa-solid fa-plus"></i> Add User</button>
+                    </div>
+                </div>
+
+                <section class="admin-card">
+                    <!-- Toolbar: search + filters (Master Plan §2.4) -->
+                    <div class="table-toolbar">
+                        <div class="search-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" class="a-input" id="userSearch"
+                                placeholder="Search name, email, phone or ID…" aria-label="Search users">
+                        </div>
+                        <select class="a-select" id="roleFilter" aria-label="Filter by role">
+                            <option value="ALL">All roles</option>
+                            <option value="USER">User</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                        <select class="a-select" id="statusFilter" aria-label="Filter by status">
+                            <option value="ALL">All statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                        <span class="result-count" id="resultCount"></span>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Registered</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                <!-- rows rendered by admin-users.js -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="empty-state" id="emptyState" hidden>
+                        <i class="fa-solid fa-users"></i>
+                        <p>No users match your search.</p>
+                    </div>
+
+                    <div class="pagination">
+                        <span class="page-info" id="pageInfo"></span>
+                        <div class="page-btns" id="pageBtns"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== Add/Edit user modal ===== -->
+    <div class="modal-overlay" id="userModal" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add User</h2>
+                <button type="button" class="modal-close" id="modalClose" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form class="modal-body" id="userForm" novalidate>
+                <input type="hidden" id="userId">
+                <div class="form-grid">
+                    <div class="a-field">
+                        <label for="userName">Full name <span class="req">*</span></label>
+                        <input type="text" class="a-input" id="userName" placeholder="e.g. Anju Karki"
+                            autocomplete="off">
+                    </div>
+                    <div class="a-field">
+                        <label for="userEmail">Email <span class="req">*</span></label>
+                        <input type="email" class="a-input" id="userEmail" placeholder="name@example.com"
+                            autocomplete="off">
+                    </div>
+                    <div class="a-field">
+                        <label for="userPhone">Phone</label>
+                        <input type="tel" class="a-input" id="userPhone" placeholder="98XXXXXXXX"
+                            autocomplete="off">
+                        <small class="form-hint">Nepali mobile — 10 digits starting 96/97/98.</small>
+                    </div>
+                    <div class="a-field">
+                        <label for="userRole">Role <span class="req">*</span></label>
+                        <select class="a-select" id="userRole">
+                            <option value="USER">User</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                    </div>
+                    <div class="a-field">
+                        <label for="userStatus">Status <span class="req">*</span></label>
+                        <select class="a-select" id="userStatus">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="form-hint rule">The backend owns passwords (BCrypt hashing) — the demo store never stores
+                    one. New users are registered with today's date.</p>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="a-btn a-btn-outline" id="modalCancel">Cancel</button>
+                <button type="submit" class="a-btn" form="userForm" id="userSaveBtn">Save User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Styled confirm modal (replaces confirm() on this page) ===== -->
+    <div class="modal-overlay" id="confirmModal" hidden>
+        <div class="modal modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+            <div class="modal-header">
+                <h2 id="confirmTitle">Are you sure?</h2>
+                <button type="button" class="modal-close" id="confirmClose" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="confirm-msg" id="confirmMsg">This action cannot be undone in the demo.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="a-btn a-btn-outline" id="confirmNo">Keep it</button>
+                <button type="button" class="a-btn a-btn-danger" id="confirmYes">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="assets/js/admin.js"></script>
+    <!-- Mock API layer (item 16): config → mock-data → api → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/admin-users.js"></script>
+</body>
+
+</html>

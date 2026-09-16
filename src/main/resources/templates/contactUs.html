@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us | Yatra — We're Here to Help</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/contactUs.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay (same as homeLogged.html) -->
+        <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html" style="color: var(--primary);"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- ==========================================
+         PAGE HERO
+    =========================================== -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+        <div class="container">
+            <nav class="breadcrumb reveal active">
+                <a href="./homeLogged.html">Home</a> <i class="fa-solid fa-chevron-right"></i> <span class="current">Contact Us</span>
+            </nav>
+            <h1 class="hero-title reveal active">We're Here to <span>Help</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                Questions about a booking, a refund, or a group trip?
+                Our team responds fast — reach out through any channel below.
+            </p>
+            <div class="hero-stats reveal active delay-2">
+                <div class="hero-stat"><strong>24/7</strong><span>Support Line</span></div>
+                <div class="hero-stat"><strong>&lt; 2 hrs</strong><span>Avg Response</span></div>
+                <div class="hero-stat"><strong>6 days</strong><span>Office Open</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         CONTACT CHANNELS
+    =========================================== -->
+    <section class="channels-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-paper-plane"></i> Reach Us</span>
+                <h2>Choose Your Channel</h2>
+                <p>Phone, email, office visit, or social media — we're everywhere you need us.</p>
+            </div>
+            <div class="channels-grid">
+                <div class="channel-card reveal">
+                    <div class="channel-icon"><i class="fa-solid fa-phone"></i></div>
+                    <h3>Call Us</h3>
+        <p>For urgent booking issues, call our support line — available around the clock.</p>
+                    <ul class="channel-links">
+                        <li><a href="tel:+97714XXXXXX">+977 1 4XXXXXX</a></li>
+                        <li><a href="tel:+97798XXXXXXXX">+977 98XXXXXXXX</a></li>
+                    </ul>
+                </div>
+                <div class="channel-card reveal delay-1">
+                    <div class="channel-icon"><i class="fa-solid fa-envelope"></i></div>
+                    <h3>Email Us</h3>
+                    <p>Best for refund requests, documentation, and anything that needs a paper trail.</p>
+                    <ul class="channel-links">
+                        <li><a href="mailto:support@yatra2.0.com">support@yatra2.0.com</a></li>
+                        <li><a href="mailto:info@yatra2.0.com">info@yatra2.0.com</a></li>
+                    </ul>
+                </div>
+                <div class="channel-card reveal delay-2">
+                    <div class="channel-icon"><i class="fa-solid fa-location-dot"></i></div>
+                    <h3>Visit Us</h3>
+                    <p>Prefer a face-to-face chat? Drop by our office in the heart of Kathmandu.</p>
+                    <ul class="channel-links">
+                        <li><span>New Baneshwor, Kathmandu</span></li>
+                        <li><span>Nepal, 44600</span></li>
+                    </ul>
+                </div>
+                <div class="channel-card reveal delay-3">
+                    <div class="channel-icon"><i class="fa-solid fa-comments"></i></div>
+                    <h3>Social Media</h3>
+                    <p>Quick questions? Message us on social — we usually reply within the hour.</p>
+                    <ul class="channel-links">
+                        <li><a href="#">Facebook / YatraNepal</a></li>
+                        <li><a href="#">Instagram / @yatra2.0</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FORM + OFFICE INFO
+    =========================================== -->
+    <section class="form-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-envelope-open-text"></i> Send a Message</span>
+                <h2>Write to Us Directly</h2>
+            </div>
+            <div class="form-grid">
+                <!-- Form -->
+                <div class="form-card reveal">
+                    <h2>How Can We Help?</h2>
+                    <p>Fill in the form and we'll get back to you within 2 business hours.</p>
+                    <form id="contactForm">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="cName">Full Name</label>
+                                <input type="text" id="cName" required placeholder="Your full name">
+                            </div>
+                            <div class="form-field">
+                                <label for="cEmail">Email Address</label>
+                                <input type="email" id="cEmail" required placeholder="you@example.com">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="cPhone">Phone Number</label>
+                                <input type="tel" id="cPhone" placeholder="+977 98XXXXXXXX">
+                            </div>
+                            <div class="form-field">
+                                <label for="cSubject">Subject</label>
+                                <select id="cSubject" required>
+                                    <option value="" disabled selected>Select a topic</option>
+                                    <option value="booking">Booking Issue</option>
+                                    <option value="refund">Refund Request</option>
+                                    <option value="group">Group Booking</option>
+                                    <option value="partnership">Partnership Inquiry</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label for="cMessage">Your Message</label>
+                            <textarea id="cMessage" required placeholder="Tell us how we can help..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="contactSubmitBtn" style="width: 100%;">
+                            <i class="fa-solid fa-paper-plane"></i> Send Message
+                        </button>
+                        <div class="form-success" id="contactSuccess">
+                            <i class="fa-solid fa-circle-check"></i>
+                            Message sent! We'll reply within 2 business hours.
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Office side -->
+                <div class="office-stack">
+                    <div class="map-card reveal delay-1">
+                        <div class="map-pin">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <strong>Yatra HQ</strong>
+                            <span>New Baneshwor, Kathmandu, Nepal</span>
+                        </div>
+                    </div>
+                    <div class="hours-card reveal delay-2">
+                        <h3><i class="fa-regular fa-clock"></i> Office Hours</h3>
+                        <ul class="hours-list" id="hoursList">
+                            <li data-day="0"><span>Sunday</span><span>9:00 AM – 6:00 PM</span></li>
+                            <li data-day="1"><span>Monday</span><span>9:00 AM – 6:00 PM</span></li>
+                            <li data-day="2"><span>Tuesday</span><span>9:00 AM – 6:00 PM</span></li>
+                            <li data-day="3"><span>Wednesday</span><span>9:00 AM – 6:00 PM</span></li>
+                            <li data-day="4"><span>Thursday</span><span>9:00 AM – 6:00 PM</span></li>
+                            <li data-day="5"><span>Friday</span><span>9:00 AM – 6:00 PM</span></li>
+                            <li data-day="6" class="closed"><span>Saturday</span><span>Closed</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FAQ
+    =========================================== -->
+    <section class="faq-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-circle-question"></i> FAQ</span>
+                <h2>Frequently Asked Questions</h2>
+                <p>Quick answers to the things travelers ask us most.</p>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item reveal">
+                    <button class="faq-question">
+                        How do I check my ticket status?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Head to the <a href="./ticketStatus.html"><strong>Ticket Status</strong></a> page from the navbar and enter your ticket number / PNR. You'll instantly see flight, contact, and passenger details.</p>
+                    </div>
+                </div>
+                <div class="faq-item reveal delay-1">
+                    <button class="faq-question">
+                        What payment methods do you accept?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>We accept <strong>eSewa</strong>, Khalti, IME Pay, and major cards (Visa &amp; Mastercard). All payments are processed securely and your confirmation email arrives immediately after payment.</p>
+                    </div>
+                </div>
+                <div class="faq-item reveal delay-2">
+                    <button class="faq-question">
+                        Can I get a refund if my flight is canceled?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Yes — if the airline cancels your flight, you're entitled to a <strong>full refund</strong> or a free rebooking on the next available flight. See the <a href="./refundPolicy.html"><strong>Refund Policy</strong></a> for details — refunds go to your original payment method within 5–7 business days.</p>
+                    </div>
+                </div>
+                <div class="faq-item reveal delay-3">
+                    <button class="faq-question">
+                        Do you support group bookings?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Absolutely. Use the <strong>Group Booking</strong> tab on the <a href="./homeLogged.html"><strong>home page</strong></a> to request a quote for 10+ travelers. Our team will get back to you with special group rates within one business day.</p>
+                    </div>
+                </div>
+                <div class="faq-item reveal delay-4">
+                    <button class="faq-question">
+                        How early should I arrive at the airport?
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>For domestic flights in Nepal, we recommend arriving <strong>at least 90 minutes</strong> before departure. Tribhuvan International Airport's domestic terminal is small, but check-in queues can be long during peak season.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         CTA BAND
+    =========================================== -->
+    <section class="cta-section section-padding">
+        <div class="container reveal">
+            <h2>Still Need Something?</h2>
+            <p>Track your booking instantly, or jump back home and plan your next adventure across Nepal's skies.</p>
+            <div class="cta-buttons">
+                <a href="./ticketStatus.html" class="btn btn-white">
+                    <i class="fa-solid fa-ticket"></i> Check Ticket Status
+                </a>
+                <a href="./homeLogged.html" class="btn btn-outline-white">
+                    <i class="fa-solid fa-plane-departure"></i> Book a Flight
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER (same as homeLogged.html)
+    =========================================== -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth layer: the session the navbar chip + "Log Out" read (config → auth) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+
+    <!-- Shared JS (navbar scroll, mobile menu, reveal) -->
+    <script src="assets/js/homeLogged.js"></script>
+    <!-- Page-specific JS (hours highlight, FAQ accordion, form mock) -->
+    <script src="assets/js/contactUs.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+
+</html>

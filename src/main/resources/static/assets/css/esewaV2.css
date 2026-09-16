@@ -1,0 +1,1272 @@
+/* =====================================================
+   TEST REDESIGN — eSewa ePay GATEWAY (shared, light)
+   Used by: esewaOtp.html, esewaBalance.html, esewaConfirm.html
+   Pairs with esewaLoginV2.css (login page uses its own).
+   Revert: point the three HTML files back to their old CSS
+   (esewaOtp.css / esewaLogin.css / esewaConfirm.css).
+   NOTE: .amount-row.total and .otp-expires structure are
+   required by esewaOtp.js — do not rename.
+   ===================================================== */
+:root {
+  --esw-green: #60b94e;
+  --esw-green-dark: #4ea337;
+  --esw-green-soft: #e8f5e4;
+  --ink: #12211a;
+  --slate: #5b6b62;
+  --muted: #5f6f65;
+  --line: #dfe6e1;
+  --field-line: #d3dce0;
+  --bg: #f2f5f3;
+  --card: #ffffff;
+  --err: #e05252;
+  --err-soft: #fdeaea;
+  --radius: 14px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.epay2-body {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  background:
+    radial-gradient(900px 320px at 50% -80px, rgba(96, 185, 78, 0.14), transparent 70%),
+    var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+/* ---------- Top nav ---------- */
+.epay2-nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding: 0.85rem clamp(1rem, 4vw, 2rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.epay2-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.epay2-logo {
+  height: 2.4rem;
+  width: auto;
+  display: block;
+}
+.epay2-chip {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--esw-green-dark);
+  background: var(--esw-green-soft);
+  border-radius: 9999px;
+  padding: 0.28rem 0.7rem;
+}
+.epay2-secure {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--slate);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.epay2-secure i {
+  color: var(--esw-green);
+}
+
+/* ---------- Layout ---------- */
+.epay2-main {
+  flex: 1;
+  width: min(1100px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.25rem 0 3rem;
+}
+
+/* ---------- Steps ---------- */
+.epay2-steps {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-bottom: 1.75rem;
+}
+.epay2-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.epay2-steps li + li::before {
+  content: "";
+  width: 34px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  margin-right: 0.55rem;
+}
+.step-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: #fff;
+  border: 2px solid var(--line);
+  color: var(--muted);
+}
+.epay2-steps li.is-active,
+.epay2-steps li.is-done {
+  color: var(--esw-green-dark);
+}
+.epay2-steps li.is-done .step-dot {
+  background: var(--esw-green-soft);
+  border-color: var(--esw-green);
+  color: var(--esw-green-dark);
+}
+.epay2-steps li.is-active .step-dot {
+  background: var(--esw-green);
+  border-color: var(--esw-green);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(96, 185, 78, 0.4);
+}
+
+/* ---------- Card ---------- */
+.epay2-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgba(18, 33, 26, 0.08);
+  padding: 2rem clamp(1.25rem, 4vw, 2.25rem);
+  animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Merchant row */
+.epay2-merchant {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: #f8faf9;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+.epay2-merchant-logo {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.epay2-merchant-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  display: block;
+}
+.epay2-merchant-txt {
+  flex: 1;
+  min-width: 0;
+}
+.epay2-merchant-txt strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+}
+.epay2-merchant-txt small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Amount */
+.epay2-amount {
+  margin: 1.75rem 0 1.25rem;
+}
+.epay2-amount-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.epay2-amount-value {
+  font-size: 2.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.epay2-amount-value .npr {
+  color: var(--esw-green-dark);
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-right: 0.25rem;
+}
+
+/* Breakdown */
+.epay2-breakdown {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.epay2-breakdown .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  font-size: 0.92rem;
+}
+.epay2-breakdown .row + .row {
+  border-top: 1px dashed var(--line);
+}
+.epay2-breakdown .row span {
+  color: var(--slate);
+  font-weight: 600;
+}
+.epay2-breakdown .row b {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.epay2-breakdown .row.total,
+.epay2-breakdown .row.row-payable {
+  background: #f8faf9;
+}
+.epay2-breakdown .row.total b,
+.epay2-breakdown .row.row-payable b {
+  color: var(--esw-green-dark);
+}
+
+/* Flight ref */
+.epay2-flight {
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+}
+.epay2-flight i {
+  color: var(--esw-green);
+  margin-right: 0.35rem;
+}
+
+/* Divider */
+.epay2-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 1.9rem 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.epay2-divider::before,
+.epay2-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--line);
+  flex: 1;
+}
+
+/* ---------- Buttons ---------- */
+.epay2-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 50px;
+  padding: 0 1.5rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--esw-green);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.epay2-btn:hover:not(:disabled) {
+  background: var(--esw-green-dark);
+}
+.epay2-btn:active:not(:disabled) {
+  background: var(--esw-green-dark);
+}
+.epay2-btn:disabled {
+  opacity: 0.75;
+  cursor: wait;
+  transform: none;
+}
+.epay2-btn.full {
+  width: 100%;
+}
+/* Secondary / ghost buttons */
+.epay2-btn.ghost {
+  background: #fff;
+  color: var(--slate);
+  border: 1.5px solid var(--field-line);
+  box-shadow: none;
+}
+.epay2-btn.ghost:hover:not(:disabled) {
+  border-color: var(--muted);
+  color: var(--ink);
+  box-shadow: none;
+}
+.epay2-btn.danger {
+  background: #fff;
+  color: var(--err);
+  border: 1.5px solid rgba(224, 82, 82, 0.45);
+  box-shadow: none;
+}
+.epay2-btn.danger:hover:not(:disabled) {
+  background: var(--err-soft);
+  box-shadow: none;
+}
+.epay2-btn.solid-red {
+  background: #c0392b;
+}
+.epay2-btn.solid-red:hover:not(:disabled) {
+  background: #a93226;
+}
+
+/* ---------- Links ---------- */
+.epay2-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--slate);
+  transition: var(--transition);
+  padding: 0;
+}
+.epay2-link:hover {
+  color: var(--ink);
+}
+.epay2-link.green {
+  color: var(--esw-green-dark);
+}
+.epay2-link.green:hover {
+  color: var(--esw-green);
+}
+.epay2-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cancel-pay {
+  display: block;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: var(--transition);
+}
+.cancel-pay:hover {
+  color: var(--err);
+}
+
+/* ---------- Toast (shared, light) ---------- */
+.epay2-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translate(-50%, 10px);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 0.7rem 1.4rem;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: var(--transition);
+  z-index: 4000;
+  box-shadow: 0 16px 40px rgba(18, 33, 26, 0.18);
+}
+.epay2-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- Modal (shared, light) ---------- */
+.epay2-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(18, 33, 26, 0.45);
+  backdrop-filter: blur(3px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.epay2-modal-backdrop.open {
+  display: flex;
+  animation: fadeIn 0.25s ease;
+}
+.epay2-modal {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  max-width: 430px;
+  width: 100%;
+  padding: 2.25rem 2rem;
+  text-align: center;
+  box-shadow: 0 30px 70px rgba(18, 33, 26, 0.25);
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes modalPop {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.modal-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  font-size: 1.5rem;
+  display: grid;
+  place-items: center;
+  background: var(--err-soft);
+  color: var(--err);
+}
+.epay2-modal h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.epay2-modal p {
+  font-size: 0.92rem;
+  color: var(--slate);
+  margin-bottom: 1.4rem;
+}
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+.modal-actions .epay2-btn {
+  flex: 1;
+}
+
+/* ---------- Sim note ---------- */
+.epay2-note {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.72rem;
+  padding: 0.25rem 1rem 0;
+}
+
+/* ---------- Field errors ---------- */
+.field-err {
+  color: var(--err);
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-height: 1.15rem;
+  margin: 0.35rem 0.2rem 0;
+}
+
+/* ---------- Footer ---------- */
+.epay2-foot {
+  margin-top: 2.25rem;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.4rem clamp(1rem, 4vw, 3rem);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.epay2-foot nav {
+  display: flex;
+  gap: 2rem;
+}
+.epay2-foot a:hover {
+  color: var(--esw-green-dark);
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .epay2-grid {
+    grid-template-columns: 1fr;
+  }
+  .epay2-summary {
+    order: -1;
+  }
+}
+@media (max-width: 480px) {
+  .epay2-main {
+    padding-top: 1.5rem;
+  }
+  .epay2-card {
+    padding: 1.5rem 1.15rem;
+  }
+  .epay2-secure span {
+    display: none;
+  }
+  .epay2-steps li + li::before {
+    width: 18px;
+  }
+  .epay2-foot {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* =====================================================
+   PAGE-SPECIFIC — esewaOtp.html
+   ===================================================== */
+
+/* Two-column grid: OTP card + sticky summary */
+.epay2-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* OTP input */
+.otp-input-wrap input {
+  width: 100%;
+  height: 58px;
+  background: #fbfcfb;
+  border: 1.5px solid var(--field-line);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  color: var(--ink);
+  font-family: inherit;
+  outline: none;
+  transition: var(--transition);
+}
+.otp-input-wrap input::placeholder {
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.otp-input-wrap input:focus {
+  border-color: var(--esw-green);
+  box-shadow: 0 0 0 4px rgba(96, 185, 78, 0.15);
+}
+.otp-input-wrap input:disabled {
+  background: #f0f2f0;
+  color: var(--muted);
+}
+.otp-input-wrap input.shake {
+  animation: epayShake 0.4s ease;
+}
+@keyframes epayShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+/* OTP title/sub/timer */
+.epay2-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+}
+.epay2-sub {
+  font-size: 0.92rem;
+  color: var(--slate);
+  margin-bottom: 1.1rem;
+}
+.epay2-sub strong {
+  color: var(--ink);
+}
+.otp-expires {
+  font-size: 0.9rem;
+  color: var(--slate);
+  font-weight: 600;
+  margin-bottom: 0.9rem;
+}
+.otp-expires strong {
+  color: var(--esw-green-dark);
+  font-variant-numeric: tabular-nums;
+}
+.otp-expires.expired strong {
+  color: var(--err);
+}
+.demo-hint {
+  font-size: 0.78rem;
+  color: var(--slate);
+  background: #f8faf9;
+  border: 1px dashed var(--field-line);
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.1rem;
+}
+.demo-hint i {
+  color: var(--esw-green);
+}
+
+/* Order summary sidebar */
+.epay2-summary {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgba(18, 33, 26, 0.08);
+  overflow: hidden;
+  position: sticky;
+  top: 90px;
+}
+.epay2-summary::before {
+  content: "";
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, var(--esw-green), #f5b942);
+}
+.summary-head {
+  padding: 1.5rem 1.5rem 1.1rem;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.summary-merchant {
+  flex: 1;
+  min-width: 0;
+}
+.summary-merchant strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+.summary-merchant small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.summary-merchant-logo {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.summary-merchant-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 5px;
+  display: block;
+}
+.summary-total-label {
+  padding: 1rem 1.5rem 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.summary-total {
+  padding: 0 1.5rem 0.75rem;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+/* Required structure for esewaOtp.js (inserts promo rows before .total) */
+.summary-rows {
+  padding: 0.75rem 1.5rem 1.25rem;
+  border-top: 1px solid var(--line);
+}
+.amount-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  font-size: 0.92rem;
+  color: var(--slate);
+}
+.amount-row .promo-val {
+  color: var(--esw-green-dark);
+  font-weight: 700;
+}
+.amount-row.total {
+  border-top: 2px solid var(--ink);
+  margin-top: 0.4rem;
+  padding-top: 0.75rem;
+  font-weight: 800;
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+/* =====================================================
+   PAGE-SPECIFIC — esewaBalance.html
+   ===================================================== */
+.balance-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f8faf9;
+  border: 1px solid rgba(96, 185, 78, 0.35);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.bal-refresh {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: var(--esw-green-dark);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bal-refresh:hover {
+  transform: rotate(90deg);
+}
+.bal-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--slate);
+}
+.bal-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.bal-amount .npr {
+  color: var(--esw-green-dark);
+  font-size: 1rem;
+}
+.bal-amount.updated {
+  animation: balPulse 0.6s ease;
+}
+@keyframes balPulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* User details card */
+.ud-card {
+  position: relative;
+  background: #f8faf9;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.6rem 1.4rem 1.35rem;
+  margin-bottom: 1.5rem;
+}
+.ud-card h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 1.1rem;
+}
+.ud-phone {
+  color: var(--esw-green-dark);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+.ud-name {
+  font-weight: 700;
+  font-size: 0.98rem;
+  margin-bottom: 1rem;
+}
+.ud-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  font-size: 0.9rem;
+  color: var(--slate);
+  margin-bottom: 0.8rem;
+  line-height: 1.5;
+}
+.ud-line i {
+  color: var(--esw-green);
+  margin-top: 0.2rem;
+  width: 16px;
+  text-align: center;
+}
+.ud-edit {
+  position: absolute;
+  top: 1.3rem;
+  right: 1.3rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.ud-edit:hover {
+  color: var(--ink);
+}
+
+/* Promo field */
+.promo-field input {
+  width: 100%;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fbfcfb;
+  border: 1.5px solid var(--field-line);
+  border-radius: 12px;
+  padding: 0.95rem 1.1rem;
+  outline: none;
+  transition: var(--transition);
+}
+.promo-field input::placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+.promo-field input:focus {
+  border-color: var(--esw-green);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(96, 185, 78, 0.15);
+}
+.promo-ok {
+  color: var(--esw-green-dark);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin: 0.4rem 0 0 0.2rem;
+}
+.promo-ok i {
+  margin-right: 0.3rem;
+}
+
+/* =====================================================
+   PAGE-SPECIFIC — esewaConfirm.html
+   ===================================================== */
+.confirm-page {
+  position: relative;
+}
+.confirm-page .epay2-note {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 1.5rem;
+}
+.confirm-steps {
+  position: relative;
+  z-index: 1;
+  padding: 2.25rem 1rem 0;
+}
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(242, 245, 243, 0.72);
+  backdrop-filter: blur(2px);
+  z-index: 0;
+}
+.modal-layer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.75rem 1rem 2rem;
+  animation: cardIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.confirm-card {
+  position: relative;
+  width: min(720px, 100%);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2.25rem 2.5rem 2rem;
+  box-shadow: 0 30px 70px rgba(18, 33, 26, 0.18);
+}
+.confirm-card h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.m-sub {
+  color: var(--slate);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+.m-rule {
+  border: none;
+  border-top: 2px solid rgba(96, 185, 78, 0.5);
+  margin: 1.25rem 0 1.5rem;
+}
+.modal-x {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 1.25rem;
+  transition: var(--transition);
+}
+.modal-x:hover {
+  color: var(--err);
+  transform: rotate(90deg);
+}
+
+/* Payment options */
+.m-label {
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin-bottom: 0.85rem;
+}
+.pay-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  text-align: left;
+  font-family: inherit;
+  background: #fbfcfb;
+  border: 1.5px solid var(--field-line);
+  border-radius: 12px;
+  padding: 0.95rem 1.1rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.opt:hover {
+  border-color: rgba(96, 185, 78, 0.55);
+}
+.opt.selected {
+  border-color: var(--esw-green);
+  background: var(--esw-green-soft);
+}
+.opt-icon {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #eef1ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  color: var(--slate);
+}
+.opt-icon.wallet {
+  background: #1f7a33;
+  color: #fff;
+  font-weight: 800;
+}
+.opt-e {
+  font-style: italic;
+}
+.opt-check {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 0.95rem;
+  color: var(--esw-green-dark);
+  background: #fff;
+  border-radius: 50%;
+  display: none;
+}
+.opt.selected .opt-check {
+  display: block;
+}
+.opt-txt strong {
+  display: block;
+  font-size: 0.95rem;
+}
+.opt-txt small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Details grid */
+.conf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.15rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.conf-grid small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.2rem;
+}
+.conf-grid b {
+  font-size: 0.98rem;
+}
+.conf-grid .wide {
+  grid-column: 1 / -1;
+}
+
+/* Amounts */
+.conf-amounts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.ca-row {
+  display: flex;
+  justify-content: space-between;
+  background: #f8faf9;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+.ca-row span {
+  color: var(--slate);
+  font-weight: 600;
+}
+.ca-row.promo-val,
+.ca-promo b {
+  color: var(--esw-green-dark);
+}
+.ca-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8faf9;
+  border: 1px solid rgba(96, 185, 78, 0.45);
+  border-radius: 10px;
+  padding: 1.15rem 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.ca-total .npr {
+  color: var(--esw-green-dark);
+  margin-right: 0.2rem;
+}
+
+/* Action buttons */
+.m-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.6rem;
+}
+.m-actions.end {
+  justify-content: flex-end;
+}
+.btn-light,
+.btn-white {
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 0.95rem 1.9rem;
+  border: 1.5px solid var(--field-line);
+  color: var(--slate);
+  background: #fff;
+  transition: var(--transition);
+}
+.btn-light:hover,
+.btn-white:hover {
+  border-color: var(--muted);
+  color: var(--ink);
+}
+.btn-white {
+  color: var(--slate);
+}
+.btn-green {
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 0.95rem 1.9rem;
+  border: none;
+  color: #fff;
+  background: var(--esw-green);
+  transition: var(--transition);
+}
+.btn-green:hover:not(:disabled) {
+  background: var(--esw-green-dark);
+}
+.btn-green:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+.btn-red {
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 0.95rem 1.9rem;
+  border: none;
+  color: #fff;
+  background: #c0392b;
+  transition: var(--transition);
+}
+.btn-red:hover {
+  background: #a93226;
+}
+
+/* Stacked modals (insufficient / cancel) */
+.esw-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 7.5rem 1rem 3rem;
+  background: rgba(18, 33, 26, 0.35);
+}
+.esw-modal.on-top {
+  z-index: 20;
+}
+.modal-card {
+  position: relative;
+  width: min(560px, 100%);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 2rem 2.25rem 1.75rem;
+  box-shadow: 0 30px 70px rgba(18, 33, 26, 0.25);
+  animation: modalPop 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.modal-card h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+.modal-card.small {
+  width: min(520px, 100%);
+}
+.m-text {
+  font-size: 0.98rem;
+  line-height: 1.7;
+  margin-top: 1.25rem;
+  color: var(--slate);
+}
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .modal-layer {
+    padding-top: 2rem;
+  }
+  .confirm-card {
+    padding: 1.75rem 1.4rem 1.5rem;
+  }
+  .pay-options,
+  .conf-grid {
+    grid-template-columns: 1fr;
+  }
+  .m-actions {
+    flex-direction: column-reverse;
+  }
+  .m-actions .btn-green,
+  .m-actions .btn-light,
+  .m-actions .btn-white,
+  .m-actions .btn-red {
+    width: 100%;
+  }
+  .esw-modal {
+    padding-top: 5rem;
+  }
+}

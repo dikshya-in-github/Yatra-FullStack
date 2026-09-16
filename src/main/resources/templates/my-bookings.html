@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings | Yatra — Your Booking History</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/myBookings.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar (same as helpCenter.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link" style="color: var(--primary);">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay (same as helpCenter.html, + My Bookings) -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="./my-bookings.html" style="color: var(--primary);"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- ==========================================
+         PAGE HERO
+    =========================================== -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+        <div class="container">
+            <nav class="breadcrumb reveal active">
+                <a href="./homeLogged.html">Home</a> <i class="fa-solid fa-chevron-right"></i> <span
+                    class="current">My Bookings</span>
+            </nav>
+            <h1 class="hero-title reveal active">Your <span>Bookings</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                Every trip you've booked with Yatra — tickets, payments and flight details in one place.
+            </p>
+
+            <div class="booking-stats reveal active delay-2">
+                <div class="b-stat"><strong id="statTotal">0</strong><span>Total bookings</span></div>
+                <div class="b-stat"><strong id="statUpcoming">0</strong><span>Upcoming</span></div>
+                <div class="b-stat"><strong id="statSpent">NPR 0</strong><span>Total spent</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         BOOKINGS LIST
+    =========================================== -->
+    <section class="bookings-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-book"></i> Booking History</span>
+                <h2>All Your Trips</h2>
+            </div>
+
+            <div class="bookings-toolbar reveal">
+                <div class="filter-chips" id="filterChips">
+                    <button class="filter-chip active" data-filter="all">All</button>
+                    <button class="filter-chip" data-filter="Upcoming">Upcoming</button>
+                    <button class="filter-chip" data-filter="Completed">Completed</button>
+                    <button class="filter-chip" data-filter="Cancelled">Cancelled</button>
+                </div>
+                <span class="result-count" id="resultCount"></span>
+            </div>
+
+            <div class="booking-list" id="bookingList">
+                <!-- booking cards rendered by myBookings.js -->
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-bookings" id="emptyBookings" hidden>
+                <i class="fa-solid fa-plane-slash"></i>
+                <p id="emptyMsg">No bookings here yet.</p>
+                <a href="./homeLogged.html" class="btn btn-primary"><i class="fa-solid fa-plane-departure"></i> Book a
+                    Flight</a>
+            </div>
+
+            <div class="list-pagination" id="listPagination" hidden>
+                <span class="page-info" id="pageInfo"></span>
+                <div class="page-btns" id="pageBtns"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         CTA BAND
+    =========================================== -->
+    <section class="cta-section section-padding">
+        <div class="container reveal">
+            <h2>Next Adventure Waiting?</h2>
+            <p>Book your next flight across Nepal's skies in minutes.</p>
+            <div class="cta-buttons">
+                <a href="./homeLogged.html" class="btn btn-white">
+                    <i class="fa-solid fa-plane-departure"></i> Book a Flight
+                </a>
+                <a href="./ticketStatus.html" class="btn btn-outline-white">
+                    <i class="fa-solid fa-ticket"></i> Check Ticket Status
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER (same as helpCenter.html)
+    =========================================== -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==========================================
+         BOOKING DETAIL MODAL (mirrors eticket.html)
+    =========================================== -->
+    <div class="modal-overlay" id="bookingModal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+            <div class="modal-top">
+                <h2 id="bookingModalTitle">Booking</h2>
+                <button type="button" class="modal-close" id="bookingModalClose" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-content">
+                <div class="mb-grid">
+                    <div class="mb-block">
+                        <h3><i class="fa-solid fa-book"></i> Booking</h3>
+                        <dl>
+                            <dt>Booking ID</dt>
+                            <dd id="dBkgId">—</dd>
+                            <dt>PNR</dt>
+                            <dd id="dPnr">—</dd>
+                            <dt>Ticket No.</dt>
+                            <dd id="dTicketNo">—</dd>
+                            <dt>Status</dt>
+                            <dd id="dStatus">—</dd>
+                            <dt>Booked on</dt>
+                            <dd id="dCreated">—</dd>
+                        </dl>
+                    </div>
+                    <div class="mb-block">
+                        <h3><i class="fa-solid fa-plane"></i> Flight</h3>
+                        <dl>
+                            <dt>Flight</dt>
+                            <dd id="dFlightNo">—</dd>
+                            <dt>Airline</dt>
+                            <dd id="dAirline">—</dd>
+                            <dt>Route</dt>
+                            <dd id="dRoute">—</dd>
+                            <dt>Date</dt>
+                            <dd id="dDate">—</dd>
+                            <dt>Times</dt>
+                            <dd id="dTimes">—</dd>
+                            <dt>Class</dt>
+                            <dd id="dClass">—</dd>
+                        </dl>
+                    </div>
+                    <div class="mb-block">
+                        <h3><i class="fa-solid fa-user"></i> Contact</h3>
+                        <dl>
+                            <dt>Name</dt>
+                            <dd id="dName">—</dd>
+                            <dt>Phone</dt>
+                            <dd id="dPhone">—</dd>
+                            <dt>Email</dt>
+                            <dd id="dEmail">—</dd>
+                        </dl>
+                    </div>
+                    <div class="mb-block">
+                        <h3><i class="fa-solid fa-credit-card"></i> Payment</h3>
+                        <dl>
+                            <dt>Method</dt>
+                            <dd id="dMethod">—</dd>
+                            <dt>Txn ID</dt>
+                            <dd id="dTxn">—</dd>
+                            <dt>Paid at</dt>
+                            <dd id="dPaidAt">—</dd>
+                            <dt>Fare</dt>
+                            <dd id="dFare">—</dd>
+                            <dt>Total</dt>
+                            <dd id="dTotal">—</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <h3 class="mb-pax-heading"><i class="fa-solid fa-users"></i> Passengers</h3>
+                <div class="mb-pax-wrap">
+                    <table class="mb-pax-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Nationality</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dPaxBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" id="dEticketBtn"><i
+                        class="fa-solid fa-ticket"></i> View e-ticket</button>
+                <button type="button" class="btn btn-ghost" id="bookingModalDone">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared JS (navbar scroll, mobile menu, reveal) -->
+    <script src="assets/js/homeLogged.js"></script>
+    <!-- Page-specific JS (booking list, filters, detail modal, e-ticket handoff) -->
+    <!-- Mock API layer (item 16): config → mock-data → api → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/myBookings.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+
+</html>

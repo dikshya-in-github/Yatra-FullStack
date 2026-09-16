@@ -1,0 +1,471 @@
+/* =====================================================
+   DESTINATIONS PAGE — page-specific styles
+   Tokens, navbar, mobile menu, footer, buttons, the
+   .reveal system, hero sky layer (clouds + plane) and
+   back-to-top come from assets/css/homeLogged.css
+   (single shared design system for the whole site).
+   ===================================================== */
+
+/* ============ NAV LINK (Ticket Status) ============ */
+.nav-link {
+  color: var(--white);
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: var(--transition);
+}
+.nav-link:hover {
+  color: var(--primary);
+}
+
+/* ============ PAGE HERO ============ */
+.page-hero {
+  position: relative;
+  min-height: 68vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column; /* column so the scroll hint sits BELOW the content */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 170px 0 4.5rem;
+}
+.page-hero .hero-bg {
+  position: absolute;
+  inset: 0;
+  background: url("../imgs/header-top-image.jpg") center/cover no-repeat;
+  transform: scale(1.12); /* start scaled for the Ken Burns effect */
+  z-index: -3;
+  animation: kenBurns 18s ease-in-out infinite alternate;
+}
+@keyframes kenBurns {
+  0% {
+    transform: scale(1.12) translateY(0);
+  }
+  100% {
+    transform: scale(1) translateY(-2%);
+  }
+}
+.page-hero .hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.75) 0%,
+    rgba(15, 23, 42, 0.45) 50%,
+    rgba(15, 23, 42, 0.85) 100%
+  );
+  z-index: -2;
+}
+.page-hero .hero-content {
+  margin-bottom: 0;
+}
+
+/* Drifting clouds + flying plane now come from the
+   shared .hero-sky layer in homeLogged.css */
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--radius-full);
+  margin-bottom: 1.5rem;
+}
+.breadcrumb i {
+  font-size: 0.6rem;
+}
+.breadcrumb .current {
+  color: var(--white);
+}
+
+/* Hero text */
+.page-hero .hero-title {
+  margin-bottom: 1rem;
+}
+.page-hero .hero-title span {
+  color: var(--primary);
+}
+.page-hero .hero-subtitle {
+  max-width: 640px;
+}
+.hero-cta {
+  margin-top: 2.25rem;
+}
+.btn-lg {
+  padding: 1rem 2.2rem;
+  font-size: 1rem;
+}
+.hero-scroll-hint {
+  margin-top: 2.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+  animation: bounceY 1.8s ease-in-out infinite;
+}
+@keyframes bounceY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+/* ============ SECTION HEADER EXTRAS ============ */
+.section-header p {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 0.35rem 1rem;
+  border-radius: var(--radius-full);
+  margin-bottom: 1rem;
+}
+
+/* ============ DESTINATIONS GRID ============ */
+.destinations-section {
+  background: var(--white);
+}
+.dest-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+}
+.dest-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  display: block;
+}
+.dest-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Themed gradient shown if a photo is missing (added by JS) */
+.dest-fallback {
+  position: absolute;
+  inset: 0;
+}
+.dest-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0) 35%,
+    rgba(15, 23, 42, 0.75) 100%
+  );
+  transition: var(--transition);
+}
+.dest-info {
+  position: absolute;
+  left: 1.5rem;
+  right: 1.5rem;
+  bottom: 1.25rem;
+  color: var(--white);
+}
+.dest-info h3 {
+  color: var(--white);
+  font-size: 1.45rem;
+  margin-bottom: 0;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+.dest-tagline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 0.4s ease,
+    opacity 0.4s ease,
+    transform 0.4s ease;
+  transform: translateY(8px);
+}
+.dest-tagline i {
+  margin-left: auto;
+  transition: var(--transition);
+}
+.dest-card:hover img,
+.dest-card:focus-visible img {
+  transform: scale(1.08);
+}
+.dest-card:hover .dest-shade,
+.dest-card:focus-visible .dest-shade {
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.25) 0%,
+    rgba(15, 23, 42, 0.8) 100%
+  );
+}
+.dest-card:hover .dest-tagline,
+.dest-card:focus-visible .dest-tagline {
+  max-height: 3rem;
+  opacity: 1;
+  transform: translateY(0);
+}
+.dest-card:hover .dest-tagline i,
+.dest-card:focus-visible .dest-tagline i {
+  transform: translateX(6px);
+}
+.dest-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+.dest-card:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+/* Cards revealed via Load More */
+.dest-extra[hidden] {
+  display: none;
+}
+.dest-extra {
+  animation: popIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+}
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Load More */
+.load-more-wrap {
+  text-align: center;
+  margin-top: 3.5rem;
+}
+#loadMoreBtn {
+  position: relative;
+  overflow: hidden;
+}
+#loadMoreBtn.loading {
+  pointer-events: none;
+  opacity: 0.75;
+}
+#loadMoreBtn i {
+  transition: var(--transition);
+}
+#loadMoreBtn.loading i {
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* Shine sweep on hover */
+#loadMoreBtn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+}
+#loadMoreBtn:hover::after {
+  left: 130%;
+}
+.load-feedback {
+  font-size: 0.9rem;
+  color: var(--slate-light);
+  margin-top: 1rem;
+  min-height: 1.4rem;
+  font-weight: 500;
+}
+
+/* ============ STATS BAND ============ */
+.stats-band {
+  background: var(--off-white);
+}
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+.stat-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+.stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-md);
+}
+.stat-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin: 0 auto 1rem;
+  transition: var(--transition);
+}
+.stat-card:hover .stat-icon {
+  background: var(--primary);
+  color: var(--white);
+  transform: scale(1.1);
+}
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--dark);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: var(--slate-light);
+  font-weight: 500;
+}
+
+/* ============ CTA BAND ============ */
+.cta-section {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-section::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+.cta-section::after {
+  content: "";
+  position: absolute;
+  bottom: -100px;
+  left: -60px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+.cta-section .container {
+  position: relative;
+  z-index: 1;
+}
+.cta-section h2 {
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 0.75rem;
+}
+.cta-section p {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.1rem;
+  max-width: 560px;
+  margin: 0 auto 2.25rem;
+}
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-white {
+  background: var(--white);
+  color: var(--primary-dark);
+}
+.btn-white:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+.btn-outline-white {
+  background: transparent;
+  color: var(--white);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+}
+.btn-outline-white:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Back-to-top styles are shared — see homeLogged.css */
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 1024px) {
+  .dest-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 4.5rem 0;
+  }
+  .dest-grid {
+    grid-template-columns: 1fr;
+  }
+  .dest-info {
+    left: 1.1rem;
+    right: 1.1rem;
+    bottom: 1rem;
+  }
+  .page-hero {
+    padding-top: 150px;
+  }
+}
+@media (max-width: 480px) {
+  .section-padding {
+    padding: 4rem 0;
+  }
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}

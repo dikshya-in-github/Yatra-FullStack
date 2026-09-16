@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center | Yatra — How Can We Help?</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/helpCenter.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay (same as homeLogged.html) -->
+        <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html" style="color: var(--primary);"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- ==========================================
+         PAGE HERO + LIVE SEARCH
+    =========================================== -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+        <div class="container">
+            <nav class="breadcrumb reveal active">
+                <a href="./homeLogged.html">Home</a> <i class="fa-solid fa-chevron-right"></i> <span class="current">Help Center</span>
+            </nav>
+            <h1 class="hero-title reveal active">How Can We <span>Help?</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                Search our knowledge base or browse by topic — answers to bookings,
+                payments, refunds, baggage, and everything in between.
+            </p>
+
+            <div class="hero-search reveal active delay-2">
+                <input type="text" id="helpSearch" placeholder="Search for answers... e.g. refund, eSewa, baggage" autocomplete="off">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <button class="clear-search" id="clearSearch" aria-label="Clear search"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="popular-row reveal active delay-3">
+                <span>Popular:</span>
+                <button class="pop-chip" data-term="refund">refund</button>
+                <button class="pop-chip" data-term="esewa">eSewa</button>
+                <button class="pop-chip" data-term="baggage">baggage</button>
+                <button class="pop-chip" data-term="cancel">cancel booking</button>
+            </div>
+
+            <div class="hero-stats reveal active delay-4">
+                <div class="hero-stat"><strong>50+</strong><span>Help Articles</span></div>
+                <div class="hero-stat"><strong>24/7</strong><span>Support</span></div>
+                <div class="hero-stat"><strong>&lt; 2 hrs</strong><span>Avg Response</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         CATEGORY CARDS
+    =========================================== -->
+    <section class="categories-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-folder-open"></i> Browse Topics</span>
+                <h2>What Do You Need Help With?</h2>
+                <p>Pick a category to filter the articles below.</p>
+            </div>
+            <div class="categories-grid">
+                <div class="category-card reveal" data-category="booking">
+                    <div class="cat-top">
+                        <div class="cat-icon"><i class="fa-solid fa-ticket"></i></div>
+                        <span class="cat-count">3 articles</span>
+                    </div>
+                    <h3>Booking &amp; Payments</h3>
+                    <p>How to book, payment methods, confirmation emails, and promo codes.</p>
+                    <span class="cat-link">View articles <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+                <div class="category-card reveal delay-1" data-category="refunds">
+                    <div class="cat-top">
+                        <div class="cat-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        <span class="cat-count">3 articles</span>
+                    </div>
+                    <h3>Refunds &amp; Cancellations</h3>
+                    <p>Cancel a booking, track refunds, and airline-cancellation policies.</p>
+                    <span class="cat-link">View articles <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+                <div class="category-card reveal delay-2" data-category="baggage">
+                    <div class="cat-top">
+                        <div class="cat-icon"><i class="fa-solid fa-suitcase-rolling"></i></div>
+                        <span class="cat-count">2 articles</span>
+                    </div>
+                    <h3>Baggage &amp; Check-in</h3>
+                    <p>Baggage allowances, check-in times, and what you can carry onboard.</p>
+                    <span class="cat-link">View articles <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+                <div class="category-card reveal" data-category="status">
+                    <div class="cat-top">
+                        <div class="cat-icon"><i class="fa-solid fa-plane-departure"></i></div>
+                        <span class="cat-count">2 articles</span>
+                    </div>
+                    <h3>Flight Status</h3>
+                    <p>Track flights in real time and understand status codes.</p>
+                    <span class="cat-link">View articles <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+                <div class="category-card reveal delay-1" data-category="account">
+                    <div class="cat-top">
+                        <div class="cat-icon"><i class="fa-solid fa-user-shield"></i></div>
+                        <span class="cat-count">2 articles</span>
+                    </div>
+                    <h3>Account &amp; Security</h3>
+                    <p>Password resets, account safety, and managing your profile.</p>
+                    <span class="cat-link">View articles <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+                <div class="category-card reveal delay-2" data-category="group">
+                    <div class="cat-top">
+                        <div class="cat-icon"><i class="fa-solid fa-users"></i></div>
+                        <span class="cat-count">2 articles</span>
+                    </div>
+                    <h3>Group Travel</h3>
+                    <p>Requesting group quotes, group sizes, and special arrangements.</p>
+                    <span class="cat-link">View articles <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         ARTICLES
+    =========================================== -->
+    <section class="articles-section section-padding" id="articles">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-book-open"></i> Knowledge Base</span>
+                <h2>Help Articles</h2>
+            </div>
+
+            <div class="articles-toolbar reveal">
+                <div class="filter-chips" id="filterChips">
+                    <button class="filter-chip active" data-filter="all">All Topics</button>
+                    <button class="filter-chip" data-filter="booking">Booking &amp; Payments</button>
+                    <button class="filter-chip" data-filter="refunds">Refunds</button>
+                    <button class="filter-chip" data-filter="baggage">Baggage</button>
+                    <button class="filter-chip" data-filter="status">Flight Status</button>
+                    <button class="filter-chip" data-filter="account">Account</button>
+                    <button class="filter-chip" data-filter="group">Group Travel</button>
+                </div>
+                <div class="result-count" id="resultCount">Showing <strong>14</strong> of 14 articles</div>
+            </div>
+
+            <div class="article-list" id="articleList">
+
+                <!-- BOOKING -->
+                <article class="article-item reveal" data-category="booking">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-booking">Booking &amp; Payments</span>
+                            <h3>How do I book a flight on Yatra?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>From the home page, use the <strong>Book a Flight</strong> tab: choose your departure and arrival cities, select nationality, pick your dates, set the passenger count, and hit <strong>Search Flights</strong>. Pick your preferred flight from the results, pay securely, and your confirmation arrives by email instantly.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">32</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">2</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 4.1k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="article-item reveal" data-category="booking">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-booking">Booking &amp; Payments</span>
+                            <h3>What payment methods does Yatra accept?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>We accept <strong>eSewa</strong> (our primary integrated gateway), Khalti, IME Pay, and major cards including Visa and Mastercard. All payments are processed over encrypted connections, and your e-ticket is issued the moment payment succeeds.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">28</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">1</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 3.6k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="article-item reveal" data-category="booking">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-booking">Booking &amp; Payments</span>
+                            <h3>I didn't receive my confirmation email — what should I do?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>First, check your spam/junk folder — automated emails sometimes land there. If it's still missing, use the <a href="./ticketStatus.html"><strong>Ticket Status</strong></a> page to look up your booking with your reference number. You can also contact us at <strong>support@yatra2.0.com</strong> and we'll resend the confirmation within minutes.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">19</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">3</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 2.2k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- REFUNDS -->
+                <article class="article-item reveal" data-category="refunds">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-refunds">Refunds</span>
+                            <h3>How do I cancel my booking?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Go to <a href="./ticketStatus.html"><strong>Ticket Status</strong></a>, enter your booking reference and email, and choose <strong>Cancel Booking</strong>. Cancellations follow the airline's fare rules — see the <a href="./refundPolicy.html"><strong>Refund Policy</strong></a> for the full fee table. You'll get an email confirmation once the cancellation is processed.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">41</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">4</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 5.3k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="article-item reveal" data-category="refunds">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-refunds">Refunds</span>
+                            <h3>When will I receive my refund?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Refunds are processed to your <strong>original payment method</strong> within <strong>5–7 business days</strong> after your cancellation is approved. eSewa and wallet refunds usually arrive faster (2–3 days). If it's been longer, <a href="./contactUs.html"><strong>contact us</strong></a> with your booking reference and we'll trace it immediately.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">35</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">5</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 4.8k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="article-item reveal" data-category="refunds">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-refunds">Refunds</span>
+                            <h3>What happens if the airline cancels my flight?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>If the airline cancels your flight, you're automatically entitled to a <strong>full refund</strong> or a <strong>free rebooking</strong> on the next available flight — your choice. We'll notify you by email and SMS as soon as we're informed by the airline, and our support team can handle the rebooking for you.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">27</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">1</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 3.1k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- BAGGAGE -->
+                <article class="article-item reveal" data-category="baggage">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-baggage">Baggage</span>
+                            <h3>What is the baggage allowance on domestic flights?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Most domestic airlines in Nepal allow <strong>15–20 kg of checked baggage</strong> plus one small carry-on (5–7 kg), but allowances vary by airline and route — mountain-view flights, for example, often allow less. Your exact allowance is shown on your e-ticket and booking confirmation.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">22</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">2</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 2.9k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="article-item reveal" data-category="baggage">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-baggage">Baggage</span>
+                            <h3>How early should I arrive for check-in?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Arrive <strong>at least 90 minutes</strong> before a domestic departure. Check-in counters typically close 30–45 minutes before departure, and security lines at Tribhuvan's domestic terminal can be long during morning peak hours.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">18</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">0</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 1.9k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- STATUS -->
+                <article class="article-item reveal" data-category="status">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-status">Flight Status</span>
+                            <h3>How do I track my flight status in real time?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Use the <strong>Flight Status</strong> tab on the home page or the dedicated <a href="./ticketStatus.html"><strong>Ticket Status</strong></a> page. Enter your departure and arrival cities (or your booking reference) and you'll see live departure times, delays, and boarding updates straight from the airline.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">25</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">1</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 3.4k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="article-item reveal" data-category="status">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-status">Flight Status</span>
+                            <h3>My flight is delayed — will I be notified?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Yes. Once the airline reports a delay, we push an update to your <strong>email and SMS</strong> within minutes, and the change appears instantly on the Ticket Status page. For major delays, our support team will also proactively offer rebooking options.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">16</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">2</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 1.7k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- ACCOUNT -->
+                <article class="article-item reveal" data-category="account">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-account">Account</span>
+                            <h3>How do I reset my password?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>On the <a href="./login.html"><strong>login page</strong></a>, click <strong>"Forgot Password?"</strong>, enter your registered email, and we'll send a secure reset link. The link expires after 30 minutes for your security. If it doesn't arrive, check spam or contact support.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">12</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">1</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 1.1k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="article-item reveal" data-category="account">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-account">Account</span>
+                            <h3>Is my payment information safe on Yatra?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Absolutely. All transactions go through <strong>PCI-compliant gateways</strong> (eSewa, Khalti, IME Pay) — Yatra never stores your card or wallet credentials on our servers. The entire site runs over HTTPS with encrypted connections end to end.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">21</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">0</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 2.5k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- GROUP -->
+                <article class="article-item reveal" data-category="group">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-group">Group Travel</span>
+                            <h3>How do group bookings work?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Use the <strong>Group Booking</strong> tab on the <a href="./homeLogged.html"><strong>home page</strong></a>. Enter your route, dates, and traveller count (10+), then click <strong>Add More Details</strong> to provide a group leader name and contact. Our team responds with a tailored quote — usually with discounted group fares — within one business day.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">14</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">1</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 1.5k views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="article-item reveal" data-category="group">
+                    <button class="article-question">
+                        <div class="aq-left">
+                            <span class="cat-chip cat-group">Group Travel</span>
+                            <h3>Can I book for a school or trekking group with special needs?</h3>
+                        </div>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="article-answer">
+                        <div class="article-answer-inner">
+                            <p>Yes — we regularly arrange travel for school trips, corporate offsites, and trekking groups (including extra baggage for gear). Mention your requirements in the group request, or email <strong>support@yatra2.0.com</strong> and we'll coordinate directly with the airline.</p>
+                            <div class="vote-row">
+                                <span class="vote-label">Was this helpful?</span>
+                                <button class="vote-btn" data-vote="up"><i class="fa-regular fa-thumbs-up"></i> <span class="vote-count">9</span></button>
+                                <button class="vote-btn" data-vote="down"><i class="fa-regular fa-thumbs-down"></i> <span class="vote-count">0</span></button>
+                                <span class="vote-thanks">Thanks for your feedback! ✈️</span>
+                                <span class="article-views"><i class="fa-regular fa-eye"></i> 980 views</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+            </div>
+
+            <!-- Empty state -->
+            <div class="empty-articles" id="emptyArticles" style="display: none;">
+                <i class="fa-solid fa-plane-slash"></i>
+                <p>No articles match your search. Try different keywords or clear the filters.</p>
+                <button class="btn btn-ghost" id="clearFiltersBtn"><i class="fa-solid fa-rotate-left"></i> Clear All Filters</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         CONTACT OPTIONS
+    =========================================== -->
+    <section class="contact-options-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-headset"></i> Still Searching?</span>
+                <h2>Talk to a Human</h2>
+                <p>Can't find your answer? Our support crew is one message away.</p>
+            </div>
+            <div class="options-grid">
+                <div class="option-card reveal">
+                    <div class="option-icon"><i class="fa-solid fa-comments"></i></div>
+                    <h3>Live Chat</h3>
+                    <p>Chat with our support team in real time. Average wait: under 2 minutes during office hours.</p>
+                    <a href="./contactUs.html" class="btn btn-ghost">Start Chat <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <div class="option-card reveal delay-1">
+                    <div class="option-icon"><i class="fa-solid fa-envelope"></i></div>
+                    <h3>Email Support</h3>
+                    <p>Write to support@yatra2.0.com — we reply within 2 business hours, guaranteed.</p>
+                    <a href="./contactUs.html" class="btn btn-ghost">Send Email <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <div class="option-card reveal delay-2">
+                    <div class="option-icon"><i class="fa-solid fa-phone"></i></div>
+                    <h3>Call Us 24/7</h3>
+                    <p>Urgent booking issue? Call +977 1 4XXXXXX any time — day or night, we pick up.</p>
+                    <a href="./contactUs.html" class="btn btn-ghost">See Numbers <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         CTA BAND
+    =========================================== -->
+    <section class="cta-section section-padding">
+        <div class="container reveal">
+            <h2>Everything Sorted? Ready to Fly?</h2>
+            <p>Check your existing booking in seconds, or head home and plan your next trip across Nepal's skies.</p>
+            <div class="cta-buttons">
+                <a href="./ticketStatus.html" class="btn btn-white">
+                    <i class="fa-solid fa-ticket"></i> Check Ticket Status
+                </a>
+                <a href="./homeLogged.html" class="btn btn-outline-white">
+                    <i class="fa-solid fa-plane-departure"></i> Book a Flight
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER (same as homeLogged.html)
+    =========================================== -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth layer: the session the navbar chip + "Log Out" read (config → auth) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+
+    <!-- Shared JS (navbar scroll, mobile menu, reveal) -->
+    <script src="assets/js/homeLogged.js"></script>
+    <!-- Page-specific JS (search, filters, accordion, votes) -->
+    <script src="assets/js/helpCenter.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+
+</html>

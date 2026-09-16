@@ -1,0 +1,452 @@
+/* =====================================================
+   MOCK ESEWA PAYMENT GATEWAY — standalone screen (step 3)
+   Gateway look is intentional (charcoal + eSewa green).
+   Font: Plus Jakarta Sans (loaded by the page); neutral
+   text/radius/transition tokens alias homeLogged.css.
+   ===================================================== */
+:root {
+  --esw-bg: #0f1522;
+  --esw-panel-l: #1c2333;
+  --esw-panel-r: #151b29;
+  --esw-input: #232b3d;
+  --esw-input-border: #323c52;
+  --esw-text: #eef2f7;
+  --esw-muted: #8b95a8;
+  --esw-green: #6fce55;
+  --esw-green-dark: #4ea337;
+  --esw-sage: #a9bf9b;
+  --esw-err: #f87171;
+  --radius: 10px;
+
+  /* Site design-system aliases (homeLogged.css) */
+  --dark: #0f172a;
+  --slate: #475569;
+  --slate-light: #94a3b8;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  background: var(--esw-bg);
+  color: var(--esw-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* ---------- Top bar ---------- */
+.esw-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 1.75rem 1.5rem 1rem;
+}
+.esw-logo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.esw-e {
+  color: var(--esw-green);
+  font-style: italic;
+  margin-right: 1px;
+}
+.esw-logo-img {
+  height: 3rem;
+  width: auto;
+  border-radius: 10px;
+  display: block;
+}
+/* Merchant brand in header — white wordmark for the dark gateway */
+.brand {
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(calc(-50% - 0.375rem));
+  display: inline-flex;
+  align-items: center;
+}
+.brand img {
+  height: 1.65rem;
+  width: auto;
+  display: block;
+}
+
+/* ---------- Card ---------- */
+.esw-card {
+  width: min(1040px, calc(100% - 2.5rem));
+  margin: 2.5rem auto 3rem;
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  border-radius: 4px;
+  overflow: hidden;
+  animation: riseIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Left panel */
+.esw-left {
+  background: var(--esw-panel-l);
+  padding: 4.5rem 3.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.merchant {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 3rem;
+}
+.merchant-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--esw-text);
+  color: #0ea371;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+.merchant-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+  display: block;
+}
+.merchant-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.ta-label {
+  color: var(--esw-muted);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+.ta-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 2.5rem;
+}
+.ta-amount .npr {
+  color: var(--esw-green);
+  margin-right: 0.35rem;
+}
+.breakdown {
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.25rem;
+  font-size: 0.98rem;
+}
+.row span {
+  color: var(--esw-muted);
+  font-weight: 600;
+}
+.row b {
+  font-weight: 700;
+}
+.row-dark {
+  background: rgba(15, 21, 34, 0.55);
+  border-radius: 4px;
+}
+.flight-ref {
+  margin-top: 2.25rem;
+  font-size: 0.85rem;
+  color: var(--esw-muted);
+  font-weight: 600;
+}
+.flight-ref i {
+  color: var(--esw-green);
+  margin-right: 0.35rem;
+}
+
+/* Right panel */
+.esw-right {
+  background: var(--esw-panel-r);
+  padding: 4.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.esw-right h1 {
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 1.75rem;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--esw-input);
+  border: 1px solid var(--esw-input-border);
+  border-radius: var(--radius);
+  padding: 0 1.1rem;
+  transition: var(--transition);
+}
+.field:focus-within {
+  border-color: var(--esw-green);
+}
+.field i {
+  color: var(--esw-green);
+  font-size: 1rem;
+}
+.field input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--esw-text);
+  padding: 1.05rem 0;
+}
+.field input::placeholder {
+  color: var(--esw-muted);
+  font-weight: 500;
+}
+.eye {
+  background: none;
+  border: none;
+  color: var(--esw-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.3rem;
+  transition: var(--transition);
+}
+.eye:hover {
+  color: var(--esw-text);
+}
+
+.field-err {
+  color: var(--esw-err);
+  font-size: 0.78rem;
+  font-weight: 600;
+  min-height: 1.2rem;
+  margin: 0.3rem 0 0.55rem 0.2rem;
+}
+
+/* Mock reCAPTCHA */
+.captcha {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: #232323;
+  border: 1px solid #454545;
+  border-radius: 4px;
+  padding: 0.95rem 1rem;
+  margin-top: 0.4rem;
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+}
+.captcha:hover {
+  border-color: #6b6b6b;
+}
+.cb {
+  width: 24px;
+  height: 24px;
+  border-radius: 2px;
+  background: #fff;
+  border: 2px solid #c1c1c1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a9c48;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.captcha.loading .cb {
+  border-color: transparent;
+  color: #4a90d9;
+}
+.cb-label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #e8e8e8;
+  flex: 1;
+}
+.rc-brand {
+  text-align: center;
+  color: #9a9a9a;
+  line-height: 1.25;
+}
+.rc-icon {
+  font-size: 1.5rem;
+  display: block;
+  margin: 0 auto 0.2rem;
+}
+.rc-brand small {
+  font-size: 0.58rem;
+}
+.captcha.verified .cb {
+  border-color: transparent;
+}
+.captcha.verified {
+  border-color: #1a9c48;
+}
+
+.form-err {
+  color: var(--esw-err);
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-height: 1.2rem;
+  margin: 0.6rem 0 0;
+}
+
+.login-btn {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #182614;
+  background: var(--esw-sage);
+  border: none;
+  border-radius: 6px;
+  padding: 1.05rem;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  transition: var(--transition);
+}
+.login-btn:hover:not(:disabled) {
+  background: var(--esw-green);
+}
+.login-btn:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.forgot {
+  text-align: center;
+  color: var(--esw-green);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-top: 2.25rem;
+  transition: var(--transition);
+}
+.forgot:hover {
+  color: var(--esw-green-dark);
+}
+.register {
+  text-align: center;
+  margin-top: 1.75rem;
+  font-weight: 600;
+}
+.register a {
+  color: var(--esw-green);
+  font-weight: 800;
+}
+.register a:hover {
+  color: var(--esw-green-dark);
+}
+.cancel-pay {
+  display: block;
+  text-align: center;
+  color: var(--esw-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  margin-top: 3.25rem;
+  transition: var(--transition);
+}
+.cancel-pay:hover {
+  color: var(--esw-err);
+}
+
+/* ---------- Footer ---------- */
+.esw-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.75rem 3rem;
+  color: var(--esw-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.esw-foot nav {
+  display: flex;
+  gap: 2.5rem;
+}
+.esw-foot a:hover {
+  color: var(--esw-text);
+}
+.sim-note {
+  text-align: center;
+  color: #556074;
+  font-size: 0.72rem;
+  padding: 0 1rem 1.25rem;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .esw-card {
+    grid-template-columns: 1fr;
+  }
+  .esw-left {
+    padding: 3rem 2rem 2.5rem;
+  }
+  .esw-right {
+    padding: 3rem 2rem;
+  }
+  .esw-foot {
+    padding: 1.5rem 1.5rem;
+    justify-content: center;
+    text-align: center;
+  }
+  .brand {
+    right: 1rem;
+  }
+}

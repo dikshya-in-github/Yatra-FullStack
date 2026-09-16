@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ePay | OTP Verification — Yatra</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+    <!-- TEST REDESIGN — shared light-card styles -->
+    <link rel="stylesheet" href="assets/css/esewaV2.css" />
+</head>
+
+<body class="epay2-body">
+
+    <!-- Top nav -->
+    <header class="epay2-nav">
+        <div class="epay2-nav-brand">
+            <img src="assets/imgs/esewa.webp" alt="eSewa" class="epay2-logo">
+            <span class="epay2-chip">ePay</span>
+        </div>
+        <span class="epay2-secure"><i class="fa-solid fa-shield-halved"></i> <span>100% Secure
+                Payments</span></span>
+    </header>
+
+    <main class="epay2-main">
+
+        <!-- Flow steps -->
+        <ol class="epay2-steps" aria-label="Payment steps">
+            <li class="is-done"><span class="step-dot"><i class="fa-solid fa-check"></i></span><span
+                    class="step-label">Login</span></li>
+            <li class="is-active"><span class="step-dot">2</span><span class="step-label">Verify</span></li>
+            <li><span class="step-dot">3</span><span class="step-label">Confirm</span></li>
+        </ol>
+
+        <div class="epay2-grid">
+
+            <!-- LEFT — OTP card -->
+            <section class="epay2-card">
+                <h1 class="epay2-title">Enter a verification code</h1>
+                <p class="epay2-sub">
+                    Please type a 6-digit verification code sent to your mobile number
+                    <strong id="otpPhone">9803660660</strong>.
+                </p>
+
+                <p class="otp-expires" id="otpExpiresRow">OTP expires in <strong id="otpTimer">01:34</strong></p>
+
+                <div class="otp-input-wrap">
+                    <input type="text" id="otpInput" inputmode="numeric" maxlength="6"
+                        placeholder="Enter verification token" autocomplete="one-time-code" />
+                </div>
+                <p class="field-err" id="otpError"></p>
+
+                <p class="demo-hint">
+                    <i class="fa-solid fa-flask"></i> Demo mode — any 6-digit code works (e.g. 123456)
+                </p>
+
+                <button class="epay2-btn full" id="verifyBtn">VERIFY</button>
+
+                <div class="epay2-links" style="margin-top: 1.5rem;">
+                    <a href="./esewaLogin.html" class="epay2-link green" id="backToLogin">Back To Login</a>
+                    <button type="button" class="epay2-link" id="resendOtp">Resend OTP</button>
+                </div>
+
+                <button type="button" class="epay2-btn danger full" id="cancelPaymentBtn"
+                    style="margin-top: 2rem;">CANCEL PAYMENT</button>
+            </section>
+
+            <!-- RIGHT — order summary -->
+            <aside class="epay2-summary">
+                <div class="summary-head">
+                    <span class="summary-merchant-logo">
+                        <img src="assets/imgs/Yatra-logo-black.png" alt="Yatra">
+                    </span>
+                    <div class="summary-merchant">
+                        <strong>Yatra</strong>
+                        <small>Flight Booking · Nepal</small>
+                    </div>
+                </div>
+                <div class="summary-total-label">Total Amount</div>
+                <div class="summary-total js-amount-total">NPR. 8,299.99</div>
+
+                <div class="summary-rows">
+                    <div class="amount-row"><span>Product Amount</span><span class="js-amount">8,299.99</span></div>
+                    <div class="amount-row total"><span>Total Amount</span><span
+                            class="js-amount-total">NPR. 8,299.99</span></div>
+                </div>
+            </aside>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="epay2-foot">
+        <span>©eSewa Nepal, 2026. All Rights Reserved.</span>
+        <nav>
+            <a href="#">Terms &amp; Conditions</a>
+            <a href="#">Privacy Policies</a>
+        </nav>
+    </footer>
+
+    <!-- =========================================
+         MODAL — CANCEL PAYMENT
+    ========================================== -->
+    <div class="epay2-modal-backdrop" id="cancelModal">
+        <div class="epay2-modal">
+            <div class="modal-icon"><i class="fa-solid fa-ban"></i></div>
+            <h3>Cancel Payment</h3>
+            <p>You are about to cancel your payment via eSewa. You cannot undo this action.
+                Are you sure you want to cancel this payment?</p>
+            <div class="modal-actions">
+                <button class="epay2-btn ghost" id="noClose">NO, CLOSE</button>
+                <button class="epay2-btn solid-red" id="yesCancel">YES, CANCEL IT!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="epay2-toast" id="epayToast"></div>
+
+    <script src="assets/js/esewaOtp.js"></script>
+</body>
+
+</html>

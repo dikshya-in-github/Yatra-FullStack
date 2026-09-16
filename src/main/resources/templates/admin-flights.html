@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra Admin - Flights</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared admin design system (admin pages do NOT load homeLogged.css) -->
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+
+<body class="admin-body" data-admin-page="flights">
+
+    <div class="admin-shell">
+        <!-- ===== Sidebar (copied from admin-dashboard.html; JS sets active item) ===== -->
+        <aside class="admin-sidebar">
+            <div class="admin-brand">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Admin" class="admin-brand-logo">
+                <span class="admin-brand-name">YATRA <em>ADMIN</em></span>
+            </div>
+
+            <nav class="admin-nav" aria-label="Admin navigation">
+                <a href="./admin-dashboard.html" class="admin-nav-item" data-page="dashboard"><i
+                        class="fa-solid fa-gauge-high"></i> Dashboard</a>
+
+                <span class="admin-nav-label">Manage</span>
+                <a href="./admin-flights.html" class="admin-nav-item" data-page="flights"><i
+                        class="fa-solid fa-plane"></i> Flights</a>
+                <a href="./admin-airlines.html" class="admin-nav-item" data-page="airlines"><i
+                        class="fa-solid fa-building"></i> Airlines</a>
+                <a href="./admin-bookings.html" class="admin-nav-item" data-page="bookings"><i
+                        class="fa-solid fa-book"></i> Bookings</a>
+                <a href="./admin-users.html" class="admin-nav-item" data-page="users"><i class="fa-solid fa-users"></i> Users
+                </a>
+                <a href="./admin-destinations.html" class="admin-nav-item" data-page="destinations"><i
+                        class="fa-solid fa-location-dot"></i> Destinations</a>
+                <a href="./admin-payments.html" class="admin-nav-item" data-page="payments"><i
+                        class="fa-solid fa-credit-card"></i>
+                    Payments</a>
+                <a href="./admin-tickets.html" class="admin-nav-item" data-page="tickets"><i class="fa-solid fa-ticket"></i>
+                    Tickets</a>
+
+                <span class="admin-nav-label">Account</span>
+                <a href="./admin-profile.html" class="admin-nav-item" data-page="profile"><i class="fa-solid fa-user-gear"></i>
+                    Profile</a>
+                <button type="button" class="admin-nav-item admin-logout" id="adminLogout"><i
+                        class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <div class="admin-sidebar-user">
+                    <span class="admin-avatar admin-avatar-sm" id="sidebarAvatar">D</span>
+                    <span class="admin-sidebar-user-info">
+                        <strong id="sidebarName">Admin</strong>
+                        <small id="sidebarEmail">admin@yatra.com</small>
+                    </span>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+        <!-- ===== Main ===== -->
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
+                    aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+                <span class="topbar-title" id="topbarTitle">Flights</span>
+                <div class="topbar-actions">
+                    <a href="./homeLogged.html" class="topbar-link"><i
+                            class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>View site</span></a>
+                    <span class="admin-chip"><span class="admin-avatar admin-avatar-sm"
+                            id="adminAvatar">D</span><span id="adminName">Admin</span></span>
+                </div>
+            </header>
+
+            <main class="admin-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Flights</h1>
+                        <p class="page-sub">Manage the mock flight inventory — schedules, fares and seat capacity
+                            (Master Plan §2.1 #4). Available Seats are always calculated as Seat Capacity − Booked
+                            Seats by the backend; they are never entered manually here.</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="a-btn a-btn-primary" id="addFlightBtn"><i class="fa-solid fa-plus"></i> Add
+                            Flight</button>
+                    </div>
+                </div>
+
+                <section class="admin-card">
+                    <!-- Toolbar: search + filters (Master Plan §2.4) -->
+                    <div class="table-toolbar">
+                        <div class="search-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" class="a-input" id="flightSearch"
+                                placeholder="Search flight no, route or airline…" aria-label="Search flights">
+                        </div>
+                        <select class="a-select" id="airlineFilter" aria-label="Filter by airline">
+                            <option value="ALL">All airlines</option>
+                            <!-- options rendered by admin-flights.js from the airlines store -->
+                        </select>
+                        <select class="a-select" id="statusFilter" aria-label="Filter by status">
+                            <option value="ALL">All statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                        <span class="result-count" id="resultCount"></span>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Flight</th>
+                                    <th>Airline</th>
+                                    <th>Route</th>
+                                    <th>Schedule</th>
+                                    <th>Aircraft</th>
+                                    <th>Fare</th>
+                                    <th>Seats</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="flightTableBody">
+                                <!-- rows rendered by admin-flights.js -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="empty-state" id="emptyState" hidden>
+                        <i class="fa-solid fa-plane"></i>
+                        <p>No flights match your search.</p>
+                    </div>
+
+                    <div class="pagination">
+                        <span class="page-info" id="pageInfo"></span>
+                        <div class="page-btns" id="pageBtns"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== Add / Edit modal ===== -->
+    <div class="modal-overlay" id="flightModal" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Flight</h2>
+                <button type="button" class="modal-close" id="modalClose" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="flightForm" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" id="flightId">
+
+                    <div class="form-grid">
+                        <div class="a-field">
+                            <label for="flightNo">Flight Number <span class="req">*</span></label>
+                            <input type="text" class="a-input" id="flightNo" placeholder="e.g. U4 951"
+                                style="text-transform: uppercase;">
+                        </div>
+                        <div class="a-field">
+                            <label for="flightAirline">Airline <span class="req">*</span></label>
+                            <select class="a-select" id="flightAirline" style="width: 100%;">
+                                <option value="">Select airline…</option>
+                                <!-- options rendered by admin-flights.js from the airlines store -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="a-field">
+                            <label for="flightFrom">Origin <span class="req">*</span></label>
+                            <select class="a-select" id="flightFrom" style="width: 100%;"></select>
+                        </div>
+                        <div class="a-field">
+                            <label for="flightTo">Destination <span class="req">*</span></label>
+                            <select class="a-select" id="flightTo" style="width: 100%;"></select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="a-field">
+                            <label for="flightDep">Departure Time <span class="req">*</span></label>
+                            <input type="time" class="a-input" id="flightDep">
+                        </div>
+                        <div class="a-field">
+                            <label for="flightArr">Arrival Time <span class="req">*</span></label>
+                            <input type="time" class="a-input" id="flightArr">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="a-field">
+                            <label for="flightAircraft">Aircraft</label>
+                            <input type="text" class="a-input" id="flightAircraft" placeholder="e.g. ATR 72">
+                        </div>
+                        <div class="a-field">
+                            <label for="flightFare">Base Fare (NPR) <span class="req">*</span></label>
+                            <input type="number" class="a-input" id="flightFare" placeholder="e.g. 8299.99" min="0"
+                                step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="a-field">
+                            <label for="flightSeats">Seat Capacity <span class="req">*</span></label>
+                            <input type="number" class="a-input" id="flightSeats" placeholder="e.g. 70" min="1"
+                                max="999" step="1">
+                            <p class="form-hint rule"><i class="fa-solid fa-lock"></i> Available Seats = Seat Capacity
+                                − Booked Seats — calculated by the backend, never a manual input (Master Plan §2.6,
+                                teacher-flagged rule).</p>
+                        </div>
+                        <div class="a-field">
+                            <label for="flightStatus">Status</label>
+                            <select class="a-select" id="flightStatus" style="width: 100%;">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="a-btn a-btn-outline" id="modalCancel">Cancel</button>
+                    <button type="submit" class="a-btn a-btn-primary" id="modalSave"><i
+                            class="fa-solid fa-floppy-disk"></i> Save Flight</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="assets/js/admin.js"></script>
+    <!-- Mock API layer (item 16): config → mock-data → api → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/admin-flights.js"></script>
+</body>
+
+</html>

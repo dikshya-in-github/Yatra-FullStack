@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | Yatra — Account Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/profile.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar (same as my-bookings.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: the chip is the link to this page -->
+                <div class="auth-buttons">
+                    <a href="./profile.html" class="user-chip active" id="userChip" aria-current="page">
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Traveller</span>
+                    </a>
+                    <a href="./home.html" class="btn btn-logout" data-logout>Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay (same as my-bookings.html) -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html" style="color: var(--primary);"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./home.html" data-logout><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- ==========================================
+         PAGE HERO
+    =========================================== -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+        <div class="container">
+            <nav class="breadcrumb reveal active" aria-label="Breadcrumb">
+                <a href="./homeLogged.html">Home</a> <i class="fa-solid fa-chevron-right"></i> <span
+                    class="current">My Profile</span>
+            </nav>
+            <h1 class="hero-title reveal active">My <span>Profile</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                Your account details, travel history and security settings — all in one place.
+            </p>
+
+            <div class="account-stats reveal active delay-2">
+                <div class="acct-stat"><strong id="statMemberSince">—</strong><span>Member since</span></div>
+                <div class="acct-stat"><strong id="statBookings">0</strong><span>Total bookings</span></div>
+                <div class="acct-stat"><strong id="statUpcoming">0</strong><span>Upcoming trips</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         PROFILE
+    =========================================== -->
+    <section class="profile-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-user-gear"></i> Account</span>
+                <h2>Account Settings</h2>
+            </div>
+
+            <div class="profile-grid">
+                <!-- ---------- Identity card ---------- -->
+                <aside class="profile-card reveal">
+                    <div class="pc-avatar" id="pcAvatar" aria-hidden="true">D</div>
+                    <h3 class="pc-name" id="pcName">Traveller</h3>
+                    <p class="pc-email" id="pcEmail">—</p>
+
+                    <div class="pc-badges">
+                        <span class="pc-badge pc-badge-role" id="pcRole">USER</span>
+                        <span class="pc-badge pc-badge-status" id="pcStatus">Active</span>
+                    </div>
+
+                    <dl class="pc-meta">
+                        <dt>Account ID</dt>
+                        <dd id="pcId">—</dd>
+                        <dt>Mobile</dt>
+                        <dd id="pcPhone">—</dd>
+                        <dt>Member since</dt>
+                        <dd id="pcSince">—</dd>
+                    </dl>
+
+                    <button type="button" class="btn btn-outline pc-logout" id="profileLogout">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                    </button>
+                </aside>
+
+                <!-- ---------- Editable panels ---------- -->
+                <div class="profile-panels">
+                    <!-- Account details -->
+                    <div class="panel reveal">
+                        <div class="panel-head">
+                            <h3><i class="fa-solid fa-id-card"></i> Account Details</h3>
+                            <p>Your name, email and mobile number. The email and mobile are unique — no two
+                                Yatra accounts can share one.</p>
+                        </div>
+
+                        <form class="profile-form" id="detailsForm" novalidate>
+                            <div class="form-row">
+                                <div class="field">
+                                    <label for="pfName">Full name <span class="req">*</span></label>
+                                    <input type="text" id="pfName" name="name" autocomplete="name"
+                                        placeholder="e.g. Anju Karki" required>
+                                </div>
+                                <div class="field">
+                                    <label for="pfPhone">Mobile number <span class="req">*</span></label>
+                                    <input type="tel" id="pfPhone" name="phone" autocomplete="tel"
+                                        class="js-phone" placeholder="98XXXXXXXX" required>
+                                    <small class="hint">Nepali mobile — 10 digits starting 96/97/98.</small>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label for="pfEmail">Email address <span class="req">*</span></label>
+                                <input type="email" id="pfEmail" name="email" autocomplete="email"
+                                    placeholder="name@example.com" required>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="detailsSaveBtn">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                                </button>
+                                <button type="button" class="btn btn-ghost" id="detailsResetBtn">Reset</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="panel reveal">
+                        <div class="panel-head">
+                            <h3><i class="fa-solid fa-lock"></i> Change Password</h3>
+                            <p>Passwords are hashed by the Spring backend (BCrypt) — the demo never stores one.
+                                Rules: at least 8 characters, and the confirmation must match.</p>
+                        </div>
+
+                        <form class="profile-form" id="passwordForm" novalidate>
+                            <div class="field">
+                                <label for="pwCurrent">Current password <span class="req">*</span></label>
+                                <div class="pw-wrap">
+                                    <input type="password" id="pwCurrent" autocomplete="current-password" required>
+                                    <button type="button" class="pw-toggle" data-pw-toggle="pwCurrent"
+                                        aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="field">
+                                    <label for="pwNew">New password <span class="req">*</span></label>
+                                    <div class="pw-wrap">
+                                        <input type="password" id="pwNew" class="js-newpw"
+                                            autocomplete="new-password" minlength="8" required>
+                                        <button type="button" class="pw-toggle" data-pw-toggle="pwNew"
+                                            aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label for="pwConfirm">Confirm new password <span class="req">*</span></label>
+                                    <div class="pw-wrap">
+                                        <input type="password" id="pwConfirm" class="js-confirmpw"
+                                            autocomplete="new-password" required>
+                                        <button type="button" class="pw-toggle" data-pw-toggle="pwConfirm"
+                                            aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="pw-meter" id="pwMeter" hidden>
+                                <span class="pw-meter-bar"><i id="pwMeterFill"></i></span>
+                                <span class="pw-meter-text" id="pwMeterText">—</span>
+                            </p>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="passwordSaveBtn">
+                                    <i class="fa-solid fa-key"></i> Update Password
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Session / sign out -->
+                    <div class="panel reveal">
+                        <div class="panel-head">
+                            <h3><i class="fa-solid fa-shield-halved"></i> Session</h3>
+                            <p>Where you are signed in and how the session is held. Signing out clears the
+                                session token from this tab.</p>
+                        </div>
+
+                        <dl class="session-list">
+                            <dt>Signed in as</dt>
+                            <dd id="sessName">—</dd>
+                            <dt>Session token</dt>
+                            <dd id="sessToken">—</dd>
+                            <dt>Role</dt>
+                            <dd id="sessRole">—</dd>
+                        </dl>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-outline" id="sessionLogoutBtn">
+                                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                            </button>
+                            <a href="./my-bookings.html" class="btn btn-ghost">
+                                <i class="fa-solid fa-book"></i> My Bookings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         CTA BAND
+    =========================================== -->
+    <section class="cta-section section-padding">
+        <div class="container reveal">
+            <h2>Next Adventure Waiting?</h2>
+            <p>Book your next flight across Nepal's skies in minutes.</p>
+            <div class="cta-buttons">
+                <a href="./homeLogged.html" class="btn btn-white">
+                    <i class="fa-solid fa-plane-departure"></i> Book a Flight
+                </a>
+                <a href="./my-bookings.html" class="btn btn-outline-white">
+                    <i class="fa-solid fa-book"></i> View My Bookings
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         FOOTER (same as my-bookings.html)
+    =========================================== -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- Shared JS (navbar scroll, mobile menu, reveal, session chrome) -->
+    <script src="assets/js/homeLogged.js"></script>
+    <!-- Mock API layer (item 16): config → mock-data → api → validation/auth → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/validation.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/profile.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+
+</html>

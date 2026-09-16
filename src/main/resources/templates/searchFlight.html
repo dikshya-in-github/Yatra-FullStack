@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Search | Yatra — Discover Nepal's Skies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <link rel="stylesheet" href="assets/css/searchFlight.css">
+</head>
+<body>
+
+    <!-- NAVBAR (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+            <div class="nav-actions">
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- BOOKING WIZARD BAND (step 1 of 4) -->
+    <header class="wizard-band">
+        <div class="container">
+            <ol class="steps">
+                <li class="step active"><span class="step-num">1</span><span class="step-label">Select Flights</span></li>
+                <li class="step"><span class="step-num">2</span><span class="step-label">Passenger Details</span></li>
+                <li class="step"><span class="step-num">3</span><span class="step-label">Payment Method</span></li>
+                <li class="step"><span class="step-num">4</span><span class="step-label">Your E-ticket</span></li>
+            </ol>
+        </div>
+    </header>
+
+    <!-- RESULTS -->
+    <main class="results-wrap container">
+        <!-- Summary bar -->
+        <div class="summary-bar reveal active">
+            <strong class="sum-type">Departure Flight</strong>
+            <div class="sum-meta">
+                <span class="sum-route"><span id="sumFrom">KTM</span> <i class="fa-solid fa-plane"></i> <span id="sumTo">BDP</span></span>
+                <span class="dot"></span>
+                <span>One Way</span>
+                <span class="dot"></span>
+                <span id="sumPax">1 Adult</span>
+                <span class="dot"></span>
+                <span id="sumDate">Tue, 15 Sep</span>
+            </div>
+            <a href="./homeLogged.html" class="btn btn-outline btn-modify">
+                <i class="fa-solid fa-sliders"></i> Modify Flight
+            </a>
+        </div>
+
+        <h1 class="results-title reveal active" id="resultsTitle">
+            Select your preferred flight from KATHMANDU to BHADRAPUR (JHAPA)
+        </h1>
+
+        <!-- 7-day date strip -->
+        <div class="date-strip" id="dateStrip"></div>
+
+        <!-- Flight cards (rendered by JS) -->
+        <div class="flights-list" id="flightsList"></div>
+
+        <div class="empty-state" id="emptyState" hidden>
+            <i class="fa-regular fa-face-frown"></i>
+            <h3>No flights found</h3>
+            <p>Please modify your search and pick two different airports.</p>
+        </div>
+    </main>
+
+    <!-- WIZARD SLIM FOOTER (© line only) -->
+    <footer class="wizard-footer">
+        <div class="container">
+            <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+        </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fa-solid fa-plane-up"></i></button>
+
+    <!-- CANCELLATION POLICY MODAL -->
+    <div class="modal-backdrop" id="policyModal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="policyTitle">
+            <div class="modal-head">
+                <h3 id="policyTitle">Cancellation Policy</h3>
+                <button class="modal-close" id="policyClose" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <ul class="policy-list" id="policyList"></ul>
+        </div>
+    </div>
+
+    <!-- Mock API layer (item 16): config → mock-data → api → auth → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/searchFlight.js"></script>
+
+    <!-- Navbar user chip + a "Log Out" that really clears the session.
+         This page's navbar is wired by searchFlight.js, not homeLogged.js,
+         so the shared chrome is called explicitly here (no-op without a
+         session — the chip then reads "Guest" and offers Log In). -->
+    <script>YatraAuth.renderSessionChrome();</script>
+</body>
+</html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund Policy | Yatra — Discover Nepal's Skies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared design system (navbar, footer, tokens, animations) -->
+    <link rel="stylesheet" href="assets/css/homeLogged.css">
+    <!-- Page-specific styles -->
+    <link rel="stylesheet" href="assets/css/refundPolicy.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar (same as homeLogged.html) -->
+    <nav class="navbar" id="navbar">
+        <div class="container nav-container">
+            <a href="./homeLogged.html" class="logo-link">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Logo" class="logo" id="navLogo">
+            </a>
+
+            <div class="nav-actions">
+                <a href="./my-bookings.html" class="nav-link status-link">
+                    <i class="fa-solid fa-book"></i> My Bookings
+                </a>
+                <a href="./ticketStatus.html" class="nav-link status-link">
+                    <i class="fa-solid fa-ticket"></i> Ticket Status
+                </a>
+                <!-- LOGGED-IN STATE: user chip (static name for now) + logout -->
+                <div class="auth-buttons">
+                    <span class="user-chip" id="userChip">
+                        <!-- Static placeholder name; will be filled dynamically later -->
+                        <span class="user-avatar" id="userAvatar">D</span>
+                        <span class="user-name" id="userName">Dikshya Ghising</span>
+                    </span>
+                    <a href="./home.html" class="btn btn-logout">Log Out</a>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu" id="mobileMenu">
+        <a href="./homeLogged.html"><i class="fa-solid fa-house"></i> Home</a>
+        <a href="./aboutUs.html"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="./careers.html"><i class="fa-solid fa-briefcase"></i> Careers</a>
+        <a href="./press.html"><i class="fa-solid fa-newspaper"></i> Press</a>
+        <a href="./blog.html"><i class="fa-solid fa-book-open"></i> Blog</a>
+        <a href="./helpCenter.html"><i class="fa-solid fa-circle-question"></i> Help Center</a>
+        <a href="./contactUs.html"><i class="fa-solid fa-envelope"></i> Contact Us</a>
+        <a href="./refundPolicy.html" style="color: var(--primary);"><i class="fa-solid fa-rotate-left"></i> Refund Policy</a>
+        <a href="./my-bookings.html"><i class="fa-solid fa-book"></i> My Bookings</a>
+        <a href="./profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+        <a href="./ticketStatus.html"><i class="fa-solid fa-ticket"></i> Ticket Status</a>
+        <a href="#" class="mobile-user-name"><i class="fa-solid fa-user"></i> Dikshya Ghising</a>
+        <a href="./home.html"><i class="fa-solid fa-right-from-bracket"></i> Log Out</a>
+    </div>
+
+    <!-- PAGE HERO -->
+    <header class="page-hero">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Decorative animated sky layer (shared styles in homeLogged.css) -->
+        <div class="hero-sky" aria-hidden="true">
+            <i class="fa-solid fa-cloud cloud cloud-1"></i>
+            <i class="fa-solid fa-cloud cloud cloud-2"></i>
+            <i class="fa-solid fa-cloud cloud cloud-3"></i>
+            <i class="fa-solid fa-plane sky-plane"></i>
+        </div>
+        <div class="container">
+            <nav class="breadcrumb reveal active">
+                <a href="./homeLogged.html">Home</a> <i class="fa-solid fa-chevron-right"></i> <span class="current">Refund Policy</span>
+            </nav>
+            <h1 class="hero-title reveal active">Refunds, Made <span>Simple</span></h1>
+            <p class="hero-subtitle reveal active delay-1">
+                Clear rules, no hidden fees. Here's exactly when and how you get your money back when plans change.
+            </p>
+        </div>
+    </header>
+
+    <!-- KEY FACTS STRIP -->
+    <section class="facts-section section-padding">
+        <div class="container">
+            <div class="facts-grid">
+                <div class="fact-card reveal delay-1">
+                    <div class="fact-icon"><i class="fa-solid fa-rotate-left"></i></div>
+                    <div class="fact-number">100%</div>
+                    <div class="fact-label">Refund when the airline cancels your flight</div>
+                </div>
+                <div class="fact-card reveal delay-2">
+                    <div class="fact-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div class="fact-number">2 hrs</div>
+                    <div class="fact-label">Reschedule cutoff before departure</div>
+                </div>
+                <div class="fact-card reveal delay-3">
+                    <div class="fact-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="fact-number">7–8<span style="font-size:1rem;"> days</span></div>
+                    <div class="fact-label">Card &amp; bank refund timeline (working days)</div>
+                </div>
+                <div class="fact-card reveal delay-4">
+                    <div class="fact-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                    <div class="fact-number">1 year</div>
+                    <div class="fact-label">Ticket validity — fly or claim a refund</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FARE CLASSES + CANCELLATION CHARGES -->
+    <section class="tables-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow"><i class="fa-solid fa-file-invoice"></i> The Rules</span>
+                <h2>Fare Classes &amp; Cancellation Charges</h2>
+                <p>Yatra follows the fare rules of its partner airlines. The tiers below reflect Buddha Air's
+                    published domestic fare rules — the industry benchmark in Nepal.</p>
+            </div>
+
+            <div class="policy-note reveal">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>
+                    Based on <a href="https://www.buddhaair.com/detail/flight-fare-rules-and-regulations"
+                        target="_blank" rel="noopener">Buddha Air's fare rules</a>
+                    (Normal&nbsp;Y, Apex&nbsp;A, Bravo&nbsp;B, Charlie/Delta/Echo&nbsp;C/D/E) — last checked January
+                    2026.
+                    The operating airline's current fare rule always controls the final refund. "PSC" = Passenger
+                    Service Charge (airport tax).
+                </span>
+            </div>
+
+            <div class="table-wrap reveal">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fare Class</th>
+                            <th>Change / Reschedule</th>
+                            <th>Cancellation Charge</th>
+                            <th>Refundable?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="tier-name">Flexi <span class="tier-code">Y</span></span></td>
+                            <td>Yes, up to 2 hrs before departure (+ fare difference if needed)</td>
+                            <td><strong>10%</strong> &gt;11 hrs before · <strong>33.33%</strong> within 11 hrs ·
+                                <strong>not allowed</strong> within 2 hrs</td>
+                            <td><span class="tag tag-ok"><i class="fa-solid fa-check"></i> Fully, minus fee</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="tier-name">Standard <span class="tier-code">A</span></span></td>
+                            <td>Yes, up to 2 hrs before departure (+ fare difference if needed)</td>
+                            <td><strong>25%</strong> &gt;11 hrs before · <strong>50%</strong> within 11 hrs ·
+                                <strong>not allowed</strong> within 2 hrs</td>
+                            <td><span class="tag tag-ok"><i class="fa-solid fa-check"></i> Yes, minus fee</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="tier-name">Saver <span class="tier-code">B</span></span></td>
+                            <td>Yes, up to 2 hrs before (+ fare difference)</td>
+                            <td>Base fare forfeited — only fuel surcharge &amp; PSC refundable</td>
+                            <td><span class="tag tag-partial"><i class="fa-solid fa-circle-half-stroke"></i> Taxes
+                                    only</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="tier-name">Promo <span class="tier-code">C/D/E</span></span></td>
+                            <td>Not permitted</td>
+                            <td>Non-refundable — unutilized PSC/airport tax claimable on request</td>
+                            <td><span class="tag tag-no"><i class="fa-solid fa-xmark"></i> Taxes only</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-wrap reveal">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>When You Cancel (before departure)</th>
+                            <th>Flexi (Y)</th>
+                            <th>Standard (A)</th>
+                            <th>Saver (B)</th>
+                            <th>Promo (C/D/E)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>More than 11 hours</strong></td>
+                            <td>10% fee</td>
+                            <td>25% fee</td>
+                            <td>Fare forfeited*</td>
+                            <td>Non-refundable*</td>
+                        </tr>
+                        <tr>
+                            <td><strong>2–11 hours</strong></td>
+                            <td>33.33% fee</td>
+                            <td>50% fee</td>
+                            <td>Fare forfeited*</td>
+                            <td>Non-refundable*</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Less than 2 hours</strong></td>
+                            <td>Not permitted</td>
+                            <td>Not permitted</td>
+                            <td>Not permitted</td>
+                            <td>Not permitted</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Airline cancelled or delay &gt;1 hr</strong></td>
+                            <td colspan="4"><span class="tag tag-ok"><i class="fa-solid fa-check"></i> 100% refund — all
+                                    fare classes, fees waived</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size:0.82rem; color: var(--slate-light); margin-top:-2rem; margin-bottom:0;">
+                *Saver &amp; Promo tickets: unutilized Passenger Service Charge / airport tax remains refundable on
+                request.
+                Card refunds may attract the bank's processing charge (approx. 3.5%).
+            </p>
+        </div>
+    </section>
+
+    <!-- FEE ESTIMATOR -->
+    <section class="estimator-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Quick Check</span>
+                <h2>Cancellation Fee Estimator</h2>
+                <p>Enter your fare details to see an estimated refund — before you cancel.</p>
+            </div>
+            <div class="estimator-card reveal">
+                <div class="estimator-grid">
+                    <div class="field">
+                        <label for="estFare">Ticket Fare (NPR)</label>
+                        <input type="number" id="estFare" min="0" step="100" placeholder="e.g. 6500">
+                    </div>
+                    <div class="field">
+                        <label for="estClass">Fare Class</label>
+                        <select id="estClass">
+                            <option value="flexi">Flexi (Y)</option>
+                            <option value="standard">Standard (A)</option>
+                            <option value="saver">Saver (B)</option>
+                            <option value="promo">Promo (C/D/E)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="estHours">Hours Before Departure</label>
+                        <input type="number" id="estHours" min="0" step="1" placeholder="e.g. 24">
+                    </div>
+                    <div class="field">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" id="estBtn" style="width:100%;">
+                            <i class="fa-solid fa-calculator"></i> Estimate
+                        </button>
+                    </div>
+                </div>
+                <div class="estimate-result" id="estResult" role="status">
+                    Fill in the fields above and hit <strong>Estimate</strong> to see your approximate refund.
+                </div>
+                <p class="estimate-fineprint">
+                    Estimates follow the airline's standard fare rules only. If the airline cancels the flight or delays
+                    it
+                    beyond 1 hour, you're entitled to a full refund regardless of fare class. Unutilized PSC/airport tax
+                    is
+                    refundable on all tickets on request. Final amounts are confirmed at cancellation.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- RESCHEDULE & NO-SHOW -->
+    <section class="rules-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Good to Know</span>
+                <h2>Rescheduling &amp; No-Shows</h2>
+            </div>
+            <div class="rules-grid">
+                <div class="rule-card reveal delay-1">
+                    <div class="rule-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
+                    <h3>Rescheduling</h3>
+                    <ul>
+                        <li><i class="fa-solid fa-check"></i> Change your flight up to 2 hours before departure, subject
+                            to seat availability.</li>
+                        <li><i class="fa-solid fa-check"></i> A reschedule charge applies; if your fare tier is sold
+                            out, you pay the fare difference to upgrade.</li>
+                        <li><i class="fa-solid fa-check"></i> Cancel a rescheduled ticket later? Charges apply based on
+                            the <strong>original</strong> fare class, and reschedule fees are non-refundable.</li>
+                    </ul>
+                </div>
+                <div class="rule-card reveal delay-2">
+                    <div class="rule-icon"><i class="fa-solid fa-user-slash"></i></div>
+                    <h3>No-Show</h3>
+                    <ul>
+                        <li><i class="fa-solid fa-check"></i> Miss the airline's airport check-in/reporting deadline and
+                            you're marked a no-show.</li>
+                        <li><i class="fa-solid fa-check"></i> No-show tickets are <strong>not refundable</strong> for
+                            fare or fuel surcharge.</li>
+                        <li><i class="fa-solid fa-check"></i> Unutilized Passenger Service Charge (airport tax) stays
+                            claimable on request.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 100% REFUND BAND -->
+    <section class="full-refund-section section-padding">
+        <div class="container">
+            <div class="full-refund-card reveal">
+                <h2>When You Always Get <span>100% Back</span></h2>
+                <p>
+                    If <strong style="color:var(--white)">the airline cancels your flight</strong> (weather, technical,
+                    or operational),
+                    every fare class is fully refundable — no cancellation fee. If your flight is
+                    <strong style="color:var(--white)">delayed more than 1 hour</strong> and you're at the airport, you
+                    can
+                    cancel on the spot and request a full refund.
+                </p>
+                <span class="full-refund-pill"><i class="fa-solid fa-cloud-bolt"></i> Airline cancellation → full
+                    refund</span>
+                <span class="full-refund-pill"><i class="fa-solid fa-hourglass-half"></i> Delay over 1 hour → full
+                    refund on request</span>
+                <span class="full-refund-pill"><i class="fa-solid fa-receipt"></i> PSC/airport tax → always
+                    claimable</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW TO REQUEST -->
+    <section class="howto-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Step by Step</span>
+                <h2>How to Request a Refund</h2>
+                <p>From your Yatra dashboard — no calls, no queues.</p>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item reveal">
+                    <div class="timeline-dot"><i class="fa-solid fa-user"></i></div>
+                    <div class="timeline-card">
+                        <h4>1. Open Your Booking</h4>
+                        <p>Log in and go to <strong>Ticket Status</strong> → select the booking you want to cancel.</p>
+                    </div>
+                </div>
+                <div class="timeline-item reveal delay-1">
+                    <div class="timeline-dot"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <div class="timeline-card">
+                        <h4>2. Cancel Before the Cutoff</h4>
+                        <p>Tap <strong>Cancel Booking</strong> at least 2 hours before departure. The applicable fee for
+                            your fare class is shown before you confirm.</p>
+                    </div>
+                </div>
+                <div class="timeline-item reveal delay-2">
+                    <div class="timeline-dot"><i class="fa-solid fa-envelope-open-text"></i></div>
+                    <div class="timeline-card">
+                        <h4>3. Get Instant Confirmation</h4>
+                        <p>A cancellation reference is generated and emailed to you immediately — keep it for tracking.
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-item reveal delay-3">
+                    <div class="timeline-dot"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                    <div class="timeline-card">
+                        <h4>4. Receive Your Refund</h4>
+                        <p>Refunds go back to your <strong>original payment method</strong> — eSewa/Khalti in 2–3
+                            working days, cards/bank in 7–8 working days.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- REFUND TIMELINE BY METHOD -->
+    <section class="methods-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">Timelines</span>
+                <h2>When the Money Arrives</h2>
+                <p>Refunds are always returned to the original payment method.</p>
+            </div>
+            <div class="methods-grid">
+                <div class="method-card reveal delay-1">
+                    <div class="method-icon"><i class="fa-solid fa-mobile-screen"></i></div>
+                    <h3>eSewa / Khalti</h3>
+                    <div class="method-days">2–3 days</div>
+                    <p>Working days, credited straight back to your wallet.</p>
+                    <small>No bank charge deducted</small>
+                </div>
+                <div class="method-card reveal delay-2">
+                    <div class="method-icon"><i class="fa-regular fa-credit-card"></i></div>
+                    <h3>Card / Bank / ConnectIPS</h3>
+                    <div class="method-days">7–8 days</div>
+                    <p>Working days, back to the original card or account.</p>
+                    <small>Bank processing charge (~3.5%) may apply</small>
+                </div>
+                <div class="method-card reveal delay-3">
+                    <div class="method-icon"><i class="fa-solid fa-building-columns"></i></div>
+                    <h3>Agency / Counter Bookings</h3>
+                    <div class="method-days">Via agent</div>
+                    <p>Bookings made through a travel agent are refunded by that agent.</p>
+                    <small>Counter cash purchases: immediate cash refund at the sales office</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq-section section-padding">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="eyebrow">FAQ</span>
+                <h2>Refund Questions, Answered</h2>
+            </div>
+            <div class="faq-list">
+                <div class="faq-item reveal">
+                    <button class="faq-q">Can I cancel within 2 hours of departure? <i
+                            class="fa-solid fa-chevron-down"></i></button>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            No — airline fare rules prohibit passenger cancellations within 2 hours of departure for all
+                            fare classes.
+                            If you can't fly, you'll be treated as a no-show (fare forfeited, airport tax still
+                            claimable). The only
+                            exception: airline-initiated cancellations or delays beyond 1 hour, which are always fully
+                            refundable.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item reveal">
+                    <button class="faq-q">I booked a Promo fare — can I get anything back? <i
+                            class="fa-solid fa-chevron-down"></i></button>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            The base fare and fuel surcharge are non-refundable, but the unutilized Passenger Service
+                            Charge
+                            (airport tax) can be claimed on request. If the airline cancels your flight, Promo fares are
+                            refunded 100% like every other class.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item reveal">
+                    <button class="faq-q">I rescheduled my flight, then had to cancel. Which charges apply? <i
+                            class="fa-solid fa-chevron-down"></i></button>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            Cancellation charges are calculated on your <strong>original fare class</strong>, and any
+                            rescheduling
+                            fees you paid are non-refundable. If you upgraded your fare tier to reschedule, the upgrade
+                            stays —
+                            only the base rules apply to the refund.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item reveal">
+                    <button class="faq-q">Is the airport tax refundable on a no-show? <i
+                            class="fa-solid fa-chevron-down"></i></button>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            Yes. Even for no-shows and non-refundable fares, the Passenger Service Charge collected for
+                            a flight
+                            you didn't take remains claimable. Contact support with your ticket number to file the
+                            claim.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item reveal">
+                    <button class="faq-q">How long is my ticket valid? <i class="fa-solid fa-chevron-down"></i></button>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            Tickets are valid for <strong>1 year from the date of issue</strong> — use it to fly, or
+                            claim any
+                            eligible refund within that window. After one year, unclaimed tickets lapse.
+                        </div>
+                    </div>
+                </div>
+                <div class="faq-item reveal">
+                    <button class="faq-q">Are there extra charges on card refunds? <i
+                            class="fa-solid fa-chevron-down"></i></button>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            For card/online payments, the bank may levy a processing/service charge (typically ~3.5% of
+                            the ticket
+                            amount) alongside the fare-class cancellation fee. Wallet refunds via eSewa or Khalti carry
+                            no such charge.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section section-padding">
+        <div class="container reveal">
+            <h2>Plans Changed? We've Got You.</h2>
+            <p>Check your booking status or cancel in a few taps — the rules above, applied fairly, every time.</p>
+            <div class="cta-buttons">
+                <a href="./ticketStatus.html" class="btn btn-white">
+                    <i class="fa-solid fa-ticket"></i> Check Ticket Status
+                </a>
+                <a href="./contactUs.html" class="btn btn-outline-white">
+                    <i class="fa-solid fa-headset"></i> Contact Support
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER (same as homeLogged.html) -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <!-- Brand Column -->
+            <div class="footer-brand">
+                <div class="logo-text-wrapper">
+                    <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra logo white" class="logo" />
+                </div>
+                <p>Nepal's trusted digital gateway to the skies. Experience seamless booking, secure payments, and
+                    reliable service.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
+            </div>
+
+            <!-- Company Links -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="./aboutUs.html">About Us</a></li>
+                    <li><a href="./careers.html">Careers</a></li>
+                    <li><a href="./press.html">Press</a></li>
+                    <li><a href="./blog.html">Blog</a></li>
+                </ul>
+            </div>
+
+            <!-- Support Links -->
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="./my-bookings.html">My Bookings</a></li>
+                    <li><a href="./profile.html">My Profile</a></li>
+                    <li><a href="./ticketStatus.html">Ticket Status</a></li>
+                    <li><a href="./helpCenter.html">Help Center</a></li>
+                    <li><a href="./refundPolicy.html">Refund Policy</a></li>
+                    <li><a href="./contactUs.html">Contact Us</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-col contact-info-col">
+                <h4>Contact Us</h4>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div class="contact-text">
+                        <span>New Baneshwor, Kathmandu</span>
+                        <span>Nepal, 44600</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="contact-text">
+                        <span>+977 1 4XXXXXX</span>
+                        <span>+977 98XXXXXXXX</span>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div class="contact-text">
+                        <span>support@yatra2.0.com</span>
+                        <span>info@yatra2.0.com</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Partners Section -->
+        <div class="payment-partners-section">
+            <div class="container">
+                <p class="partners-title">Secure Payments Via</p>
+                <div class="partners-logos">
+                    <div class="partner-badge"><img src="assets/imgs/esewa.webp" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/khalti.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/connectisp.avif" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/nabil.jpg" alt="payment"></div>
+                    <div class="partner-badge"><img src="assets/imgs/visa.jpg" alt="payment"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2026 Yatra. All rights reserved. Academic Project by Dikshya Ghising.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Auth layer: the session the navbar chip + "Log Out" read (config → auth) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+
+    <!-- Shared JS (navbar scroll, mobile menu, reveal, counters) -->
+    <script src="assets/js/homeLogged.js"></script>
+    <!-- Page-specific JS (FAQ accordion + fee estimator) -->
+    <script src="assets/js/refundPolicy.js"></script>
+
+    <!-- Back to top (shared styles + JS) -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <i class="fa-solid fa-plane-up"></i>
+    </button>
+</body>
+
+</html>

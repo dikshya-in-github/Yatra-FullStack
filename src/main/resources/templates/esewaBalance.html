@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ePay — Payment | Yatra</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <!-- TEST REDESIGN — shared light-card styles -->
+    <link rel="stylesheet" href="assets/css/esewaV2.css">
+    <style>
+        /* Single centered card for this step (JS only drives the breakdown ids) */
+        .epay2-main.narrow {
+            width: min(560px, calc(100% - 2rem));
+        }
+    </style>
+</head>
+
+<body class="epay2-body">
+
+    <!-- Top nav -->
+    <header class="epay2-nav">
+        <div class="epay2-nav-brand">
+            <img src="assets/imgs/esewa.webp" alt="eSewa" class="epay2-logo">
+            <span class="epay2-chip">ePay</span>
+        </div>
+        <span class="epay2-secure"><i class="fa-solid fa-shield-halved"></i> <span>100% Secure
+                Payments</span></span>
+    </header>
+
+    <main class="epay2-main narrow">
+
+        <!-- Flow steps -->
+        <ol class="epay2-steps" aria-label="Payment steps">
+            <li class="is-done"><span class="step-dot"><i class="fa-solid fa-check"></i></span><span
+                    class="step-label">Login</span></li>
+            <li class="is-done"><span class="step-dot"><i class="fa-solid fa-check"></i></span><span
+                    class="step-label">Verify</span></li>
+            <li class="is-active"><span class="step-dot">3</span><span class="step-label">Pay</span></li>
+        </ol>
+
+        <!-- Payment card -->
+        <section class="epay2-card">
+
+            <!-- Merchant row -->
+            <div class="epay2-merchant">
+                <span class="epay2-merchant-logo">
+                    <img src="assets/imgs/Yatra-logo-black.png" alt="Yatra">
+                </span>
+                <div class="epay2-merchant-txt">
+                    <strong>Yatra</strong>
+                    <small>Flight Booking · Nepal</small>
+                </div>
+            </div>
+
+            <!-- Amount -->
+            <div class="epay2-amount">
+                <p class="epay2-amount-label">Total Amount</p>
+                <p class="epay2-amount-value"><span class="npr">NPR.</span> <span id="amountBig">8,299.99</span></p>
+            </div>
+
+            <!-- Breakdown -->
+            <div class="epay2-breakdown">
+                <div class="row"><span>Product Amount</span><b id="amountProduct">8,299.99</b></div>
+                <div class="row" id="promoRow" hidden><span>Promo Discount</span><b class="promo-val"
+                        id="promoVal"></b></div>
+                <div class="row row-payable" id="payableRow" hidden><span>Total Amount</span><b
+                        id="amountPayable">8,299.99</b></div>
+                <div class="row total" id="totalRow"><span>Total Amount</span><b id="amountTotal">8,299.99</b></div>
+            </div>
+
+            <p class="epay2-flight" id="flightRef">
+                <i class="fa-solid fa-plane"></i> Demo booking — no flight selected
+            </p>
+
+            <div class="epay2-divider"><span>Wallet &amp; details</span></div>
+
+            <!-- Balance card -->
+            <div class="balance-card">
+                <button class="bal-refresh" id="refreshBal" aria-label="Refresh balance">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+                <div>
+                    <p class="bal-label">MY BALANCE</p>
+                    <p class="bal-amount"><span class="npr">NPR.</span> <span id="balAmount">26.35</span></p>
+                </div>
+            </div>
+
+            <!-- User details -->
+            <div class="ud-card">
+                <h3>User Details</h3>
+                <p class="ud-phone" id="udPhone">9803660660</p>
+                <p class="ud-name" id="udName">Dikshya Ghising</p>
+                <p class="ud-line"><i class="fa-regular fa-envelope"></i> <span
+                        id="udEmail">ghisingleeku@gmail.com</span></p>
+                <p class="ud-line"><i class="fa-solid fa-phone"></i> <span id="udContact">9803660660</span></p>
+                <p class="ud-line"><i class="fa-solid fa-location-dot"></i> <span id="udAddress">Pariwartan,
+                        Suryabinayak Municipality-8, Bhaktapur, Bagmati Pradesh</span></p>
+                <span class="ud-edit" title="Edit details"><i class="fa-solid fa-pencil"></i></span>
+            </div>
+
+            <!-- Promo -->
+            <div class="promo-field">
+                <input type="text" id="promoInput" placeholder="Have a promo code? Try YATRA10" autocomplete="off">
+            </div>
+            <p class="field-err" id="promoErr"></p>
+            <p class="promo-ok" id="promoOk" hidden><i class="fa-solid fa-circle-check"></i> <span
+                    id="promoOkText"></span></p>
+
+            <button type="button" class="epay2-btn full" id="continueBtn" style="margin-top: 1.5rem;">CONTINUE
+                →</button>
+            <a class="cancel-pay" href="#" id="cancelPay" style="margin-top: 1.75rem;">Cancel payment</a>
+        </section>
+
+        <p class="epay2-note">Simulated payment gateway — Yatra academic project. No real transaction occurs.</p>
+    </main>
+
+    <!-- Footer -->
+    <footer class="epay2-foot">
+        <span>©eSewa Nepal, 2026. All Rights Reserved.</span>
+        <nav>
+            <a href="#">Terms &amp; Conditions</a>
+            <a href="#">Privacy Policies</a>
+        </nav>
+    </footer>
+
+    <script src="assets/js/esewaBalance.js"></script>
+</body>
+
+</html>

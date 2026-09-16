@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yatra Admin - Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <!-- Shared admin design system (admin pages do NOT load homeLogged.css) -->
+    <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+
+<body class="admin-body" data-admin-page="dashboard">
+
+    <div class="admin-shell">
+        <!-- ===== Sidebar (copy this block to every admin-*.html; shared JS sets the active item) ===== -->
+        <aside class="admin-sidebar">
+            <div class="admin-brand">
+                <img src="assets/imgs/Yatra-logo-all-white.png" alt="Yatra Admin" class="admin-brand-logo">
+                <span class="admin-brand-name">YATRA <em>ADMIN</em></span>
+            </div>
+
+            <nav class="admin-nav" aria-label="Admin navigation">
+                <a href="./admin-dashboard.html" class="admin-nav-item" data-page="dashboard"><i
+                        class="fa-solid fa-gauge-high"></i> Dashboard</a>
+
+                <span class="admin-nav-label">Manage</span>
+                <a href="./admin-flights.html" class="admin-nav-item" data-page="flights"><i
+                        class="fa-solid fa-plane"></i> Flights</a>
+                               <a href="./admin-airlines.html" class="admin-nav-item" data-page="airlines"><i
+                        class="fa-solid fa-building"></i> Airlines</a>
+                <a href="./admin-bookings.html" class="admin-nav-item" data-page="bookings"><i
+                        class="fa-solid fa-book"></i> Bookings</a>
+                <a href="./admin-users.html" class="admin-nav-item" data-page="users"><i class="fa-solid fa-users"></i> Users
+                </a>
+                <a href="./admin-destinations.html" class="admin-nav-item" data-page="destinations"><i
+                        class="fa-solid fa-location-dot"></i> Destinations</a>
+                <a href="./admin-payments.html" class="admin-nav-item" data-page="payments"><i
+                        class="fa-solid fa-credit-card"></i>
+                    Payments</a>
+                <a href="./admin-tickets.html" class="admin-nav-item" data-page="tickets"><i class="fa-solid fa-ticket"></i>
+                    Tickets</a>
+
+                <span class="admin-nav-label">Account</span>
+                <a href="./admin-profile.html" class="admin-nav-item" data-page="profile"><i class="fa-solid fa-user-gear"></i>
+                    Profile</a>
+                <button type="button" class="admin-nav-item admin-logout" id="adminLogout"><i
+                        class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <div class="admin-sidebar-user">
+                    <span class="admin-avatar admin-avatar-sm" id="sidebarAvatar">D</span>
+                    <span class="admin-sidebar-user-info">
+                        <strong id="sidebarName">Admin</strong>
+                        <small id="sidebarEmail">admin@yatra.com</small>
+                    </span>
+                </div>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+        <!-- ===== Main ===== -->
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
+                    aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
+                <span class="topbar-title" id="topbarTitle">Dashboard</span>
+                <div class="topbar-actions">
+                    <a href="./homeLogged.html" class="topbar-link"><i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>View site</span></a>
+                    <span class="admin-chip"><span class="admin-avatar admin-avatar-sm"
+                            id="adminAvatar">D</span><span id="adminName">Admin</span></span>
+                </div>
+            </header>
+
+            <main class="admin-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Dashboard</h1>
+                        <p class="page-sub">System overview — dummy numbers for now, wired to
+                            <code>GET /api/admin/dashboard</code> in the backend phase (Master Plan §2.5).</p>
+                    </div>
+                    <div class="page-actions">
+                        <button class="a-btn a-btn-outline" onclick="return false;"><i
+                                class="fa-solid fa-download"></i> Export</button>
+                        <button class="a-btn a-btn-primary" id="dashAddFlight"><i
+                                class="fa-solid fa-plus"></i> Add Flight</button>
+                    </div>
+                </div>                <!-- Stat cards (Master Plan §2.5) — values wired to the mock stores
+                     (yatra_admin_airlines / yatra_admin_flights / yatra_bookings) by
+                     admin-dashboard.js; dummy fallbacks only while a store is empty -->
+                <section class="stat-grid" aria-label="Key statistics">
+                    <div class="stat-card">
+                        <span class="stat-icon"><i class="fa-solid fa-users"></i></span>
+                        <span class="stat-info">
+                            <span class="stat-value" id="statUsers">1,248</span>
+                            <span class="stat-label">Total Users</span>
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon"><i class="fa-solid fa-plane"></i></span>
+                        <span class="stat-info">
+                            <span class="stat-value" id="statFlights">86</span>
+                            <span class="stat-label">Total Flights</span>
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon"><i class="fa-solid fa-building"></i></span>
+                        <span class="stat-info">
+                            <span class="stat-value" id="statAirlines">4</span>
+                            <span class="stat-label">Total Airlines</span>
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon"><i class="fa-solid fa-book"></i></span>
+                        <span class="stat-info">
+                            <span class="stat-value" id="statBookings">3,512</span>
+                            <span class="stat-label">Total Bookings</span>
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon"><i class="fa-solid fa-calendar-day"></i></span>
+                        <span class="stat-info">
+                            <span class="stat-value" id="statToday">27</span>
+                            <span class="stat-label">Today's Bookings</span>
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon"><i class="fa-solid fa-cash-register"></i></span>
+                        <span class="stat-info">
+                            <span class="stat-value" id="statRevenue">NPR 42.6L</span>
+                            <span class="stat-label">Revenue</span>
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></span>
+                        <span class="stat-info">
+                            <span class="stat-value" id="statPending">9</span>
+                            <span class="stat-label">Pending Payments</span>
+                        </span>
+                    </div>
+                </section>
+
+                <!-- Recent bookings: LIVE rows from the yatra_bookings store
+                     (rendered by admin-dashboard.js) — real PNRs, customers and
+                     status badges from completed eSewa checkouts -->
+                <section class="admin-card">
+                    <h2>Recent Bookings</h2>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>PNR</th>
+                                    <th>Customer</th>
+                                    <th>Flight</th>
+                                    <th>Route</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentBookingsBody">
+                                <!-- rows rendered by admin-dashboard.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="empty-state" id="recentEmpty" hidden>
+                        <i class="fa-solid fa-book"></i>
+                        <p>No bookings yet — complete a checkout on the storefront and it appears here.</p>
+                    </div>
+
+                    <div class="pagination">
+                        <span class="page-info" id="recentPageInfo">—</span>
+                        <div class="page-btns" id="recentPageBtns"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="assets/js/admin.js"></script>
+    <!-- Mock API layer (item 16): config → mock-data → api → page -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/admin-dashboard.js"></script>
+</body>
+
+</html>

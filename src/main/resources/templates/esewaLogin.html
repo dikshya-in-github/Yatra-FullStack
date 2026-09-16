@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ePay | Login — Yatra Payment</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <!-- TEST REDESIGN — swap this link back to esewaLogin.css to restore the old design -->
+    <link rel="stylesheet" href="assets/css/esewaLoginV2.css">
+</head>
+
+<body class="epay2-body">
+
+    <!-- Top nav -->
+    <header class="epay2-nav">
+        <div class="epay2-nav-brand">
+            <img src="assets/imgs/esewa.webp" alt="eSewa" class="epay2-logo">
+            <span class="epay2-chip">ePay</span>
+        </div>
+        <span class="epay2-secure"><i class="fa-solid fa-shield-halved"></i> <span>100% Secure
+                Payments</span></span>
+    </header>
+
+    <main class="epay2-main">
+
+        <!-- Flow steps -->
+        <ol class="epay2-steps" aria-label="Payment steps">
+            <li class="is-active"><span class="step-dot">1</span><span class="step-label">Login</span></li>
+            <li><span class="step-dot">2</span><span class="step-label">Verify</span></li>
+            <li><span class="step-dot">3</span><span class="step-label">Confirm</span></li>
+        </ol>
+
+        <!-- Payment card -->
+        <section class="epay2-card">
+
+            <!-- Merchant row -->
+            <div class="epay2-merchant">
+                <span class="epay2-merchant-logo">
+                    <img src="assets/imgs/Yatra-logo-black.png" alt="Yatra">
+                </span>
+                <div class="epay2-merchant-txt">
+                    <strong>Yatra</strong>
+                    <small>Flight Booking · Nepal</small>
+                </div>
+            </div>
+
+            <!-- Amount -->
+            <div class="epay2-amount">
+                <p class="epay2-amount-label">Total Amount</p>
+                <p class="epay2-amount-value"><span class="npr">NPR.</span> <span id="amountBig">8,299.99</span></p>
+            </div>
+
+            <!-- Breakdown -->
+            <div class="epay2-breakdown">
+                <div class="row"><span>Product Amount</span><b id="amountProduct">8,299.99</b></div>
+                <div class="row total"><span>Total Amount</span><b id="amountTotal">8,299.99</b></div>
+            </div>
+
+            <p class="epay2-flight" id="flightRef">
+                <i class="fa-solid fa-plane"></i> Demo booking — no flight selected
+            </p>
+
+            <div class="epay2-divider"><span>Sign in to complete payment</span></div>
+
+            <!-- Login form -->
+            <form id="loginForm" novalidate autocomplete="off">
+                <div class="epay2-field">
+                    <label for="esewaId">eSewa ID</label>
+                    <div class="input-wrap">
+                        <i class="fa-regular fa-user"></i>
+                        <input type="text" id="esewaId" placeholder="10-digit mobile or email" autocomplete="username">
+                    </div>
+                    <p class="field-err" id="idErr"></p>
+                </div>
+
+                <div class="epay2-field">
+                    <label for="esewaPin">Password / MPIN</label>
+                    <div class="input-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="esewaPin" placeholder="Enter your password"
+                            autocomplete="current-password">
+                        <button type="button" class="eye" id="eyeBtn" aria-label="Show password">
+                            <i class="fa-solid fa-eye-slash"></i>
+                        </button>
+                    </div>
+                    <p class="field-err" id="pinErr"></p>
+                </div>
+
+                <!-- Mock reCAPTCHA -->
+                <div class="captcha" id="captcha" role="checkbox" aria-checked="false" tabindex="0">
+                    <span class="cb" id="captchaBox"></span>
+                    <span class="cb-label">I'm not a robot</span>
+                    <span class="rc-brand">
+                        <i class="fa-solid fa-arrows-rotate rc-icon"></i>
+                        <small>reCAPTCHA<br>Privacy · Terms</small>
+                    </span>
+                </div>
+                <p class="field-err" id="capErr"></p>
+
+                <p class="form-err" id="formErr" role="alert"></p>
+                <button type="submit" class="epay2-btn" id="loginBtn">LOGIN &amp; CONTINUE</button>
+            </form>
+
+            <div class="epay2-links">
+                <a href="#" class="epay2-link green">Forgot Password?</a>
+                <a href="#" class="epay2-link">Create an account</a>
+            </div>
+
+            <a class="cancel-pay" href="./searchFlight.html">Cancel payment</a>
+        </section>
+
+        <p class="epay2-note">Simulated payment gateway — Yatra academic project. No real transaction occurs.</p>
+    </main>
+
+    <!-- Footer -->
+    <footer class="epay2-foot">
+        <span>©eSewa Nepal, 2026. All Rights Reserved.</span>
+        <nav>
+            <a href="#">Terms &amp; Conditions</a>
+            <a href="#">Privacy Policies</a>
+        </nav>
+    </footer>
+
+    <!-- Mock layer (item 17): the payable total comes from MockDB.payableTotal,
+         so the gateway charges the whole booking (fare × paying passengers). -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/esewaLogin.js"></script>
+</body>
+
+</html>
