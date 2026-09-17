@@ -140,7 +140,7 @@ class AdminRouteAuthorizationTest {
 
         assertThat(found)
                 .as("the sweep must find the real admin surface, not an empty set")
-                .hasSizeGreaterThanOrEqualTo(12)
+                .hasSizeGreaterThanOrEqualTo(20)
                 .contains(
                         // one from each admin controller, so a controller dropping out
                         // of discovery cannot hide behind the others
@@ -154,7 +154,30 @@ class AdminRouteAuthorizationTest {
                         "GET /api/admin/destinations",
                         // the multipart one: it carries a `consumes` condition, which is
                         // exactly the kind of mapping detail that can drop out of discovery
-                        "POST /api/admin/destinations/image");
+                        "POST /api/admin/destinations/image",
+                        // Phase 9 — the admin booking read, the detail read and the one
+                        // write. A new controller is exactly what a hand-written route
+                        // list would have missed.
+                        "GET /api/admin/bookings",
+                        "GET /api/admin/bookings/1",
+                        "PUT /api/admin/bookings/1/status",
+                        // Phase 10 — the payments ledger and its one write. The refund
+                        // route is the case this assertion is really for: a POST that
+                        // carries no body is exactly what a hand-written route list or a
+                        // `consumes`-based check would drop.
+                        "GET /api/admin/payments",
+                        "POST /api/admin/payments/1/refund",
+                        // Phase 11 — the user roster and its writes. The two path-variable
+                        // reads are the ones this assertion is for: `/1/bookings` is a
+                        // nested pattern and `/1/status` a single-segment write, and both
+                        // kinds are easy to miss when routes are listed by hand.
+                        "GET /api/admin/users",
+                        "POST /api/admin/users",
+                        "GET /api/admin/users/1",
+                        "PUT /api/admin/users/1",
+                        "DELETE /api/admin/users/1",
+                        "PUT /api/admin/users/1/status",
+                        "GET /api/admin/users/1/bookings");
     }
 
     /* ------------------------------------------------------------------ *

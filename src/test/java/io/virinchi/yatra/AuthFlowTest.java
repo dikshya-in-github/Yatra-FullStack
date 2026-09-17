@@ -42,8 +42,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * checkpoint: the HTTP shapes and error codes are proved without a database, and
  * the storage rules — a hashed password, case-insensitive email, one 10-digit
  * form per mobile number — are proved against the real schema.
+ *
+ * <p><b>Phase 11 addition: {@code yatra.mail.enabled=false} for this whole class.</b>
+ * Registration now sends a confirmation email, and {@code application.properties} points at
+ * Gmail with real credentials on this machine — so without this line every test in here would
+ * send real mail to a fake address, and each one would sit on an SMTP round trip before
+ * asserting anything. The switch is production code (see {@code Service/MailService}), not a
+ * test-only mock, so this class proves the thing that matters most about the mail step:
+ * <b>registration works exactly the same with mail off.</b> The message itself is asserted in
+ * {@code MailServiceTest}.
  */
-@SpringBootTest
+@SpringBootTest(properties = "yatra.mail.enabled=false")
 @AutoConfigureMockMvc
 @Transactional
 class AuthFlowTest {
@@ -157,6 +166,21 @@ class AuthFlowTest {
         assertThatThrownBy(() -> userService.register(
                 request("A", "B", uniqueEmail(), "12345", "secret123")))
                 .hasMessageContaining("10-digit");
+    }
+
+    /**
+     * The mail step is best effort, and this is the assertion that keeps it that way: with
+     * delivery switched off the account is still created, still usable, and no exception
+     * escapes. Phase 11.
+     */
+    @Test
+    void registerSucceedsWhenMailDeliveryIsDisabled() {
+        String email = uniqueEmail();
+
+        User user = userService.register(request("Dikshya", "Ghising", email, null, "secret123"));
+
+        assertThat(user.getPassword()).as("the credential is stored regardless of mail").isNotNull();
+        assertThat(userService.authenticate(email, "secret123").getId()).isEqualTo(user.getId());
     }
 
     @Test

@@ -18,5 +18,10 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
     Optional<Ticket> findByTicketNo(String ticketNo);
     boolean existsByPnr(String pnr);
 
+    //Ticket minting (Phase 10) checks both halves before it saves: both columns are
+    //UNIQUE, and the derivation is deterministic on the gateway's txn id, so two
+    //transactions 27.8 h apart can produce the same digits.
+    boolean existsByTicketNo(String ticketNo);
+
     List<Ticket> findByStatus(String status);
 }

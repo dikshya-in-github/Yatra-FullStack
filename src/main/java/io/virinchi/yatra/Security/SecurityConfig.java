@@ -78,6 +78,22 @@ public class SecurityConfig {
                         // rather than a prefix so no future /api/bookings/{id}
                         // read or admin write is opened by accident.
                         .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
+                        // The payment flow's two writes are public for the same
+                        // reason the booking write is: the wizard lets a signed-out
+                        // visitor complete a booking, and a booking that cannot be
+                        // paid for would be a dead end. Initiate opens a transaction
+                        // for a booking that already exists (and holds seats), and
+                        // verify answers the mock gateway — the structural refusal
+                        // that survives here is PAYMENT_NOT_INITIATED, so nothing
+                        // can be marked paid without that first step. Named as two
+                        // exact paths rather than /api/payments/** so no future
+                        // read or admin route under it is opened by accident.
+                        // What this does NOT have: any form of callback
+                        // authentication (a real eSewa integration signs its
+                        // webhook) and any rate limit. Recorded as a limitation in
+                        // Service/PaymentService and the standards doc, not hidden.
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/payments/initiate", "/api/payments/verify").permitAll()
                         // The airline READS are public because the storefront is:
                         // searchFlight.html shows an airline on every flight card,
                         // to signed-out visitors too. GET-only, so the admin
