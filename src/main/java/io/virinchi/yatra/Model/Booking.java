@@ -34,7 +34,7 @@ public class Booking {
     private String contactEmail;
     private String contactPhone;
 
-    //PENDING / CONFIRMED / CANCELLED — payment SUCCESS hunasath CONFIRMED (Phase 10).
+    //PENDING / CONFIRMED / CANCELLED — payment SUCCESS hunasath CONFIRMED.
     private String bookingStatus;
 
     //Pending / Paid / Refunded / Failed — Payment row ko status sanga match hunxa.
@@ -45,8 +45,8 @@ public class Booking {
     private boolean refundable;
 
     //totalAmount = fare × paying passengers — gateway le charge garne amount,
-    //ani yahi value MockDB.payableTotal() le pani dinxa (§34).
-    //BigDecimal (R5) — multiply garda fare.multiply(BigDecimal.valueOf(passengers)),
+    //ani yahi value MockDB.payableTotal() le pani dinxa.
+    //BigDecimal — multiply garda fare.multiply(BigDecimal.valueOf(passengers)),
     //ani scale 2 ma setScale(..., RoundingMode.HALF_UP) garera rakhne.
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -56,6 +56,15 @@ public class Booking {
     private BigDecimal productAmount;
 
     private LocalDateTime createdAt;
+
+    //Seed marker (Phase 7) — true only for the demo bookings the seeder created.
+    //This is what lets `POST /api/admin/reset` remove a *paid and ticketed* demo
+    //booking: R4's policy (a sale record is cancelled, never hard-deleted) still
+    //governs the admin APIs, and the reset is the one deliberately separate
+    //operation the standards' open question #6 asked for.
+    //(See Model/Airline for the full marker note.)
+    @Column(nullable = false)
+    private boolean seeded;
 
     //Booking 1:N Passenger — booking sangै passengers save hunxa.
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -71,7 +80,7 @@ public class Booking {
     @EqualsAndHashCode.Exclude
     private Payment payment;
 
-    //Booking 1:1 Ticket — PNR/ticket number yaha (Phase 12) hudaina, Ticket row ma hunxa.
+    //Booking 1:1 Ticket — PNR/ticket number yaha hudaina, Ticket row ma hunxa.
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     @JsonIgnore
     @ToString.Exclude

@@ -3,7 +3,7 @@ package io.virinchi.yatra.Exception;
 import org.springframework.http.HttpStatus;
 
 /**
- * Base of every error the API throws on purpose (Backend Roadmap Phase 1).
+ * Base of every error the API throws on purpose.
  *
  * Carries the two things {@link GlobalExceptionHandler} needs to build the JSON
  * body: the HTTP status and the stable machine code. Subclasses just fix those

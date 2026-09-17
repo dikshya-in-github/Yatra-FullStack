@@ -21,7 +21,7 @@ public class User {
 
     private String name;
 
-    //Unique pani ho — signup ma email duplicate vayo vane 409 EMAIL_EXISTS dinxa (§31.2).
+    //Unique pani ho — signup ma email duplicate vayo vane 409 EMAIL_EXISTS dinxa.
     @Column(unique = true)
     private String email;
 
@@ -29,18 +29,31 @@ public class User {
     @Column(unique = true)
     private String phone;
 
-    //BCrypt hash matra — plain password kahile pani save gardaina (Master Plan §3.4).
+    //BCrypt hash matra — plain password kahile pani save gardaina.
+    //@JsonIgnore: defence in depth. This entity must never be serialised to a
+    //response directly — @see io.virinchi.yatra.Dto.UserResponse is the public
+    //shape. If a future controller ever returns the entity by mistake, the hash
+    //still cannot leave the server.
+    @JsonIgnore
     private String password;
 
-    //ADMIN / USER — yasle @PreAuthorize("hasRole('ADMIN')") lai chalauxa (Phase 3).
+    //ADMIN / USER — yasle @PreAuthorize("hasRole('ADMIN')") lai chalauxa.
     private String role;
 
-    //Active / Inactive — admin le deactivate garna sakxa (Phase 11).
+    //Active / Inactive — admin le deactivate garna sakxa.
     private String status;
 
     private LocalDateTime registeredAt;
 
-    //User 1:N Booking (Roadmap Phase 2). FK booking table ma hunxa, so yo inverse side ho.
+    //Seed marker (Phase 7) — true only for the demo roster the seeder created.
+    //A seeded account carries a BCrypt hash of the demo password, so the panel can
+    //be signed into on a freshly seeded database; a reset removes these accounts
+    //unless one of them still owns a booking you made yourself.
+    //(See Model/Airline for the full marker note.)
+    @Column(nullable = false)
+    private boolean seeded;
+
+    //User 1:N Booking. FK booking table ma hunxa, so yo inverse side ho.
     //@JsonIgnore + @ToString/@EqualsAndHashCode.Exclude: bidirectional bhayeko le
     //toString/equals/JSON ma infinite recursion hunxa — tyo रोकna ko lagi.
     @OneToMany(mappedBy = "user")

@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Entity
 //(flight_id, seat_number) unique hunaiparxa — double-booking rokhne database-level
-//guarantee yahi ho. Phase 6 ma duita same seat ko request aayo vane yo constraint
+//guarantee yahi ho. Duita same seat ko request aayo vane yo constraint
 //le DataIntegrityViolationException throw garxa, ani 409 "Seat already booked" dinxa.
 @Table(uniqueConstraints = @UniqueConstraint(
         name = "uk_seat_flight_number",
@@ -26,6 +26,6 @@ public class Seat {
     @Column(name = "seat_number")
     private String seatNumber;
 
-    //AVAILABLE / BOOKED — booking confirm huda BOOKED hunxa (Phase 6).
+    //AVAILABLE / BOOKED — booking confirm huda BOOKED hunxa.
     private String status;
 }

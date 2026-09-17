@@ -20,9 +20,9 @@ import java.util.stream.Collectors;
 
 /**
  * Turns every exception thrown by a REST controller into the project's one
- * error body — `{ "error": "CODE", "message": "…" }` (Backend Roadmap Phase 1).
+ * error body — `{ "error": "CODE", "message": "…" }`.
  *
- * <p><b>Why built before any endpoint exists:</b> Phase 4 onward every module
+ * <p><b>Why built before any endpoint exists:</b> every module
  * throws {@link ApiException} subclasses. Doing this now means no controller
  * ever needs a try/catch, and no endpoint can ever answer Spring's default
  * error page. Retrofitting it later means revisiting every controller.
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  *
  * <p>One thing this advice deliberately does NOT handle:
  * {@code AccessDeniedException} thrown by the security <i>filter chain</i>
- * (unauthenticated requests) never reaches a controller, so Phase 3's
+ * (unauthenticated requests) never reaches a controller, so
  * {@code SecurityConfig} owns the 401 there via an {@code AuthenticationEntryPoint}.
  * The handler below only covers a 403 raised by {@code @PreAuthorize} <i>inside</i>
  * a controller method.
@@ -116,7 +116,7 @@ public class GlobalExceptionHandler {
 
     /* ---------- 3. Database constraints ---------- */
 
-    /* MySQL/TiDB driver error codes (measured, see the method docs — R11). */
+    /* MySQL/TiDB driver error codes (measured, see the method docs). */
     private static final int DUPLICATE_ENTRY = 1062;    // unique key violated
     private static final int ROW_IS_REFERENCED = 1451;  // ...and something still points at this row
     private static final int NO_REFERENCED_ROW = 1452;  // ...and the row it points at does not exist
@@ -124,10 +124,10 @@ public class GlobalExceptionHandler {
     /**
      * Safety net for a constraint no service pre-checked (the schema has several:
      * user email/phone, airline IATA, destination code, flight number, payment
-     * txn, ticket PNR, and the Phase 6 `(flight_id, seat_number)` seat constraint
+     * txn, ticket PNR, and the `(flight_id, seat_number)` seat constraint
      * the whole double-booking rule rests on).
      *
-     * <p><b>Why the classification below exists (R11).</b> This handler used to
+     * <p><b>Why the classification below exists.</b> This handler used to
      * call <i>every</i> integrity failure a duplicate and answer "That record
      * already exists — it breaks a unique constraint." Measured on this stack
      * (Hibernate 7 + Spring Data + TiDB Cloud), that was wrong for one of the
@@ -141,7 +141,7 @@ public class GlobalExceptionHandler {
      *
      * <p>So the discriminator is the vendor error code, with an honest generic
      * fallback for anything unrecognised. Those are MySQL/TiDB codes — the engine
-     * this project is pinned to (§2) — and on another engine the response would
+     * this project is pinned to — and on another engine the response would
      * fall through to {@code CONSTRAINT_VIOLATION} rather than lie.
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -173,7 +173,7 @@ public class GlobalExceptionHandler {
      *
      * <p>This is only the <i>method</i>-security path. An unauthenticated
      * request is rejected by the filter chain, long before a controller runs,
-     * so that 401/403 stays with {@code SecurityConfig} (Phase 3).
+     * so that 401/403 stays with {@code SecurityConfig}.
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {

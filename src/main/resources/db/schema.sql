@@ -2,7 +2,7 @@
 -- YATRA 2.0 — CANONICAL SCHEMA (source of truth for the `yatra` database)
 -- ============================================================================
 --
--- WHY THIS FILE EXISTS (risk R2):
+-- WHY THIS FILE EXISTS:
 --   `spring.jpa.hibernate.ddl-auto=update` used to let Hibernate diff and ALTER
 --   the live TiDB Cloud schema on every boot — including every `./mvnw test`.
 --   TiDB's ALTER TABLE support is narrower than MySQL's, so some Hibernate
@@ -36,7 +36,7 @@
 --
 -- KEY CONSTRAINTS (business rules depend on these — do not drop them):
 --   seat.uk_seat_flight_number (flight_id, seat_number)
---       → the database-level guarantee behind double-booking prevention (rule 2).
+--       → the database-level guarantee behind double-booking prevention.
 --   users.email, users.phone
 --       → the unique constraints SignupController/ProfileService map to
 --         409 EMAIL_EXISTS / PHONE_EXISTS.
@@ -45,8 +45,15 @@
 --   airline.logo is `mediumblob`
 --       → the assignment's mandatory "images in the database" requirement;
 --         the column holds Base64 text. Do not convert it to a path/varchar.
+--   airline.seeded, flight.seeded, users.seeded, booking.seeded
+--       → the demo seed marker (Phase 7), all `bit(1) NOT NULL DEFAULT b'0'`.
+--         `POST /api/admin/reset` deletes exactly the rows carrying it, so the
+--         demo can be re-run without manual DB cleanup and an admin's own
+--         records are never touched. Destination rows are deliberately NOT
+--         marked: airports are reference data the app needs, so a reset keeps
+--         them (see Service/SeedService).
 --   flight.fare, booking.total_amount, booking.product_amount, payment.amount
---       are all `decimal(10,2)`, never `double` (risk R5).
+--       are all `decimal(10,2)`, never `double`.
 --       → money must be exact: `double` cannot represent 8299.99, and the error
 --         propagates into the amount a customer is charged. Changing any of these
 --         back to `double` fails `ddl-auto=validate` at startup, and
@@ -61,6 +68,7 @@ CREATE TABLE IF NOT EXISTS `airline` (
   `logo` mediumblob DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `status` varchar(255) DEFAULT NULL,
+  `seeded` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,
   UNIQUE KEY `UKea5w9t4ji4nfbgu5w0jva9eoj` (`iata`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
@@ -87,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `registered_at` datetime(6) DEFAULT NULL,
   `role` varchar(255) DEFAULT NULL,
   `status` varchar(255) DEFAULT NULL,
+  `seeded` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,
   UNIQUE KEY `UK6dotkott2kjsp8vw4d0m25fb7` (`email`),
   UNIQUE KEY `UKdu5v5sr43g5bfnji4vb8hg5s3` (`phone`)
@@ -105,6 +114,7 @@ CREATE TABLE IF NOT EXISTS `flight` (
   `airline_id` int DEFAULT NULL,
   `destination_id` int DEFAULT NULL,
   `origin_id` int DEFAULT NULL,
+  `seeded` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,
   UNIQUE KEY `UKg9lyjbdea3jbrhy3t85n9bfq2` (`flight_no`),
   KEY `FK37wfh52g7g91rllg104gfq3yv` (`airline_id`),
@@ -129,6 +139,7 @@ CREATE TABLE IF NOT EXISTS `booking` (
   `total_amount` decimal(10,2) NOT NULL,
   `flight_id` int NOT NULL,
   `user_id` int DEFAULT NULL,
+  `seeded` bit(1) NOT NULL DEFAULT b'0',
   PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */,
   KEY `FK546eybei9q7dsna94vryofrbr` (`flight_id`),
   KEY `FK7udbel7q86k041591kj6lfmvw` (`user_id`),

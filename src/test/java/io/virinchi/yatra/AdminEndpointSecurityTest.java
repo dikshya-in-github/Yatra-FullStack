@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * End-to-end proof of the R3 fix, with a **real signed JWT** — the verification
+ * End-to-end proof of the role-prefix fix, with a **real signed JWT** — the verification
  * the author asked for: "a protected admin endpoint returns 200, not 403".
  *
  * <p>The protected endpoint lives in <b>test sources</b>, not production, so no
@@ -50,7 +50,7 @@ class AdminEndpointSecurityTest {
     @Autowired
     private JwtUtil jwtUtil;
 
-    /** The R3 proof: a real ADMIN token gets past hasRole('ADMIN'). */
+    /** The proof: a real ADMIN token gets past hasRole('ADMIN'). */
     @Test
     void adminTokenReachesTheProtectedEndpoint() throws Exception {
         String token = jwtUtil.generate(1, "Dikshya Ghising", "admin@yatra.com", "ADMIN");
@@ -85,17 +85,17 @@ class AdminEndpointSecurityTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    /** R10: static assets must be served, not 401'd. */
+    /** Static assets must be served, not 401'd. */
     @Test
     void staticAssetsAreNotBlocked() throws Exception {
         mockMvc.perform(get("/assets/js/config.js")).andExpect(status().isOk());
     }
 
     /**
-     * R10: page routes must not be 401'd. No page controller exists yet, so the
+     * Page routes must not be 401'd. No page controller exists yet, so the
      * expected status is 404 — the point is that it is NOT 401, i.e. security let
-     * the request through. This assertion tightens to 200 once Phase 3 adds the
-     * Thymeleaf page controllers.
+     * the request through. This assertion tightens to 200 once the Thymeleaf
+     * page controllers exist.
      */
     @Test
     void pageRoutesAreNotBlockedBySecurity() throws Exception {

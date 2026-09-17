@@ -7,7 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The regression guard for risk R3.
+ * The regression guard for the role-prefix bug.
  *
  * <p>The bug this prevents: {@code hasRole('ADMIN')} matches the authority
  * {@code ROLE_ADMIN}, but the database stores {@code "ADMIN"}. Grant the raw
@@ -42,7 +42,7 @@ class AuthoritiesTest {
 
     @Test
     void anAlreadyPrefixedRoleIsNotDoublePrefixed() {
-        // The other half of R3: "ROLE_ROLE_ADMIN" would be just as broken.
+        // The other half: "ROLE_ROLE_ADMIN" would be just as broken.
         assertThat(Authorities.of("ROLE_ADMIN"))
                 .extracting(GrantedAuthority::getAuthority)
                 .containsExactly("ROLE_ADMIN");

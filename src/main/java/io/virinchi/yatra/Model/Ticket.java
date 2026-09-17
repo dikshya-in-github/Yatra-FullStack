@@ -19,7 +19,7 @@ public class Ticket {
     private Booking booking;
 
     //PNR (Passenger Name Record) — "YTRA26" jastai. Admin panel le PNR/ticket number
-    //le search garxa (Phase 12), so both unique hunuparxa.
+    //le search garxa, so both unique hunuparxa.
     @Column(unique = true)
     private String pnr;
 

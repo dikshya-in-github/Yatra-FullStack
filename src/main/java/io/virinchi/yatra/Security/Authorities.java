@@ -9,7 +9,7 @@ import java.util.Locale;
 /**
  * **The one and only place a role string becomes a Spring Security authority.**
  *
- * <h2>Why this class exists (risk R3)</h2>
+ * <h2>Why this class exists</h2>
  * {@code User.role} stores plain {@code "ADMIN"} / {@code "USER"} — matching the
  * frontend roster in {@code mock-data.js}. But
  * {@code @PreAuthorize("hasRole('ADMIN')")} does <b>not</b> look for

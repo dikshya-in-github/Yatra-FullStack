@@ -28,14 +28,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Proves the Backend Roadmap Phase 1 checkpoint without a database: a REST
+ * Proves the error-contract checkpoint without a database: a REST
  * endpoint that throws {@link ResourceNotFoundException} answers the project's
  * JSON shape, not Spring's default error page.
  *
  * <p>MockMvc is built with {@code standaloneSetup} rather than
  * {@code @WebMvcTest} on purpose — standalone setup boots no application
  * context, so this test needs no MySQL, no Hibernate schema and no security
- * filter chain. The whole point of Phase 1 is verifying the error contract
+ * filter chain. The whole point is verifying the error contract
  * <i>before</i> any of that infrastructure exists, so the test must not depend
  * on it.
  *
@@ -96,7 +96,7 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/api/boom/integrity")
         void integrity() {
-            // The Phase 6 seat case, in the shape the driver really produces:
+            // The seat-constraint case, in the shape the driver really produces:
             // DataIntegrityViolationException -> hibernate ConstraintViolationException
             // -> SQLIntegrityConstraintViolationException with error code 1062.
             // (Measured — and deliberately NOT a DuplicateKeyException, which is what
@@ -108,7 +108,7 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/api/boom/in-use")
         void inUse() {
-            // R11: deleting a row other rows still point at — error 1451.
+            // Deleting a row other rows still point at — error 1451.
             throw new DataIntegrityViolationException("could not execute statement",
                     hibernateViolation(1451,
                             "Cannot delete or update a parent row: a foreign key constraint fails "
@@ -208,7 +208,7 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * R11 — the bug this replaced: a FK violation used to be answered with the
+     * The bug this replaced: a FK violation used to be answered with the
      * unique-constraint sentence, so "delete this airline" came back as "that
      * record already exists". Same status, honest text, and the constraint name
      * stays out of the body.

@@ -29,7 +29,7 @@ public class Flight {
     @JoinColumn(name = "airline_id")
     private Airline airline;
 
-    //Route ko dui tira pani Destination row ho (Roadmap Phase 2: "Destination
+    //Route ko dui tira pani Destination row ho ("Destination
     //referenced by Flight (origin/destination)").
     @ManyToOne
     @JoinColumn(name = "origin_id")
@@ -39,7 +39,7 @@ public class Flight {
     @JoinColumn(name = "destination_id")
     private Destination destination;
 
-    //Flight kkun din ko ho — search/filter date le hune bhayeko le (Phase 5).
+    //Flight kkun din ko ho — search/filter date le hune bhayeko le.
     private LocalDate flightDate;
 
     private LocalTime departTime;
@@ -47,7 +47,7 @@ public class Flight {
     private String aircraft;
 
     //Base economy fare — fare class ko delta yahi mathi thapinxa (E/C/D/B/A/Y).
-    //BigDecimal + DECIMAL(10,2) (R5): double le 8299.99 jastai value exactly hold
+    //BigDecimal + DECIMAL(10,2): double le 8299.99 jastai value exactly hold
     //garna sakdaina (0.1 + 0.2 = 0.30000000000000004), ani tyo error booking total
     //hudai gateway ko amount samma pugxa.
     //Money arithmetic: BigDecimal.valueOf(pax) / new BigDecimal("8299.99") —
@@ -57,14 +57,20 @@ public class Flight {
 
     //Admin le EKCHOTI matra seat capacity set garxa.
     //Available seats kahile pani store hudaina: available = seatCapacity − COUNT(BOOKED seats).
-    //Yo teacher le repeatedly flag gareko rule ho (Master Plan "Core Business Rule").
+    //Yo teacher le repeatedly flag gareko rule ho ("Core Business Rule").
     private int seatCapacity;
 
     //Active / Cancelled
     private String status;
 
+    //Seed marker (Phase 7) — true only for flights the demo seeder created, so a
+    //reset can remove them without touching a flight the admin made themselves.
+    //Mirrors the mock's `_seed: true` (see Model/Airline for the full note).
+    @Column(nullable = false)
+    private boolean seeded;
+
     //Flight 1:N Seat — flight banauda capacity jati Seat row auto-generate hunxa
-    //(Phase 5), so cascade + orphanRemoval rakhna parxa.
+    //So cascade + orphanRemoval rakhna parxa.
     @OneToMany(mappedBy = "flight", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @ToString.Exclude

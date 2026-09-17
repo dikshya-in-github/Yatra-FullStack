@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * R11 — the same parent-delete pattern R4 found on bookings, on the two other
+ * The same parent-delete pattern found on bookings, on the two other
  * parents the admin pages can delete: `Airline` (referenced by
  * `flight.airline_id`) and `Destination` (referenced by `flight.origin_id`
  * <i>and</i> `flight.destination_id`).

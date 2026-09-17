@@ -24,7 +24,7 @@ public class Destination {
     private String description;
 
     //Destination images Cloudinary ma — yaha URL string matra store hunxa,
-    //bytes hoina (Roadmap Phase 8).
+    //bytes hoina.
     private String imageUrl;
     private String imagePublicId; //Cloudinary delete() ko lagi chahinxa
 

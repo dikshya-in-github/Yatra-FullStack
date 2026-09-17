@@ -38,9 +38,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 /**
- * R4 — the booking-delete policy, run against the real TiDB schema.
+ * The booking-delete policy, run against the real TiDB schema.
  *
- * <p>R4 recorded an assumption ("{@code @OneToOne(mappedBy = …, cascade = ALL)}
+ * <p>The original assumption was ("{@code @OneToOne(mappedBy = …, cascade = ALL)}
  * probably carries the payment and ticket") and a preference (soft cancel over
  * hard delete). This test replaces the assumption with behaviour:
  *

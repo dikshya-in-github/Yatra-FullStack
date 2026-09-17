@@ -13,7 +13,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
     //Ek booking ko ek ticket (1:1 — booking_id unique).
     Optional<Ticket> findByBookingId(int bookingId);
 
-    //Admin ticket search: PNR wa ticket number le (Phase 12). Duitai unique hunuparxa.
+    //Admin ticket search: PNR wa ticket number le. Duitai unique hunuparxa.
     Optional<Ticket> findByPnr(String pnr);
     Optional<Ticket> findByTicketNo(String ticketNo);
     boolean existsByPnr(String pnr);

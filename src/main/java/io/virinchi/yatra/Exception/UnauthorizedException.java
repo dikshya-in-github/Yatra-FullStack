@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
  * {@link #notAuthenticated()} (`NOT_AUTHENTICATED`) mirrors the mock admin
  * gate: `admin-profile.js` checks `err.status === 401` to bounce back to the
  * admin sign-in page, and the mock `GET /api/admin/profile` already answers
- * exactly this code. Phase 3 replaces the mock gate with Spring Security, and
+ * exactly this code. Spring Security replaces the mock gate, and
  * the page keeps working because the status and code stay the same.
  */
 public class UnauthorizedException extends ApiException {

@@ -20,7 +20,7 @@ import java.io.IOException;
  * Reads {@code Authorization: Bearer <token>}, and — when the token verifies —
  * puts an authenticated principal into the security context.
  *
- * <p><b>This is where R3 is actually fixed.</b> The token's {@code role} claim
+ * <p><b>This is where the role prefix is actually fixed.</b> The token's {@code role} claim
  * holds the raw database value ({@code "ADMIN"}); passing that straight into a
  * {@code SimpleGrantedAuthority} would produce {@code "ADMIN"}, which
  * {@code hasRole('ADMIN')} never matches. {@link Authorities#of(String)} is the

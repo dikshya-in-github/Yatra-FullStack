@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * R4 (flight half) — the `admin-flights.html` Delete action.
+ * The flight half of the delete rule — the `admin-flights.html` Delete action.
  *
  * <p>The mock happily removes a flight locally because it has no concept of a
  * booking. The real API cannot: {@code booking.flight_id} is a real FK, and

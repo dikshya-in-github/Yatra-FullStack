@@ -15,9 +15,9 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * The Backend Roadmap Phase 2 checkpoint, automated.
+ * The schema checkpoint, automated.
  *
- * <p>The roadmap asks for this to be eyeballed in MySQL Workbench: "Hibernate
+ * <p>The original hand-check was to eyeball this in MySQL Workbench: "Hibernate
  * auto-creates all tables correctly on startup — all foreign keys look right".
  * Eyeballing cannot be re-run after a refactor and cannot fail a build, so the
  * same three questions are asked here instead, through JDBC metadata (portable
@@ -25,16 +25,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <ol>
  *   <li>does every entity have a table?</li>
- *   <li>do the foreign keys match the relationships the roadmap specifies?</li>
+ *   <li>do the foreign keys match the modelled relationships?</li>
  *   <li>is the {@code (flight_id, seat_number)} unique key really enforced?</li>
  *   <li>is this schema Yatra's alone, and not the {@code test} database it used
- *       to share with the teacher's demo project? (R1)</li>
- *   <li>is money stored as {@code decimal(10,2)} rather than {@code double}?
- *       (R5)</li>
+ *       to share with the teacher's demo project?</li>
+ *   <li>is money stored as {@code decimal(10,2)} rather than {@code double}?</li>
+ *   <li>are the demo seed markers real boolean columns?</li>
  * </ol>
  *
  * <p>Needs a live database, like {@link YatraApplicationTests} already does —
- * {@code ddl-auto=update} creates the schema on context startup.
+ * {@code ddl-auto=validate} checks the entities against the committed
+ * {@code db/schema.sql} on startup.
  */
 @SpringBootTest
 class EntitySchemaTest {
@@ -45,7 +46,7 @@ class EntitySchemaTest {
             "payment", "seat", "ticket", "users");
 
     /**
-     * Roadmap Phase 2's relationship list, written out as
+     * The relationship list, written out as
      * {@code "<child>.<fk column> -> <parent>"} so a failure names the exact
      * arrow that broke.
      */
@@ -61,7 +62,7 @@ class EntitySchemaTest {
             "ticket.booking_id -> booking");
 
     /**
-     * R5 guard: every column that holds money, written as
+     * Every column that holds money, written as
      * {@code "<table>.<column>"}.
      *
      * <p>`double` was the original choice (it matched the frontend's float
@@ -75,6 +76,21 @@ class EntitySchemaTest {
             "booking.total_amount",
             "booking.product_amount",
             "payment.amount");
+
+    /**
+     * The demo seed markers (Phase 7), written as {@code "<table>.<column>"}.
+     *
+     * <p>{@code POST /api/admin/reset} deletes exactly the rows carrying one of these, so
+     * the column has to be a real, non-nullable boolean: a nullable marker would make
+     * "is this row seed data?" a three-valued question and a reset could leave a demo
+     * booking behind (or take a real one). Destinations are deliberately absent — they
+     * are reference data a reset keeps.
+     */
+    private static final Set<String> EXPECTED_SEED_MARKERS = Set.of(
+            "airline.seeded",
+            "flight.seeded",
+            "users.seeded",
+            "booking.seeded");
 
     @Autowired
     private DataSource dataSource;
@@ -90,7 +106,7 @@ class EntitySchemaTest {
     }
 
     @Test
-    void foreignKeysMatchTheRoadmapRelationships() throws Exception {
+    void foreignKeysMatchTheRelationships() throws Exception {
         try (Connection conn = dataSource.getConnection()) {
             Set<String> foreignKeys = importedKeys(conn);
 
@@ -114,7 +130,7 @@ class EntitySchemaTest {
                 }
             }
 
-            // Phase 6's whole double-booking rule rests on this unique key: it is
+            // The whole double-booking rule rests on this unique key: it is
             // what makes the second request for the same seat fail in the DB
             // instead of depending on a Java check that can race.
             assertThat(columns)
@@ -124,7 +140,7 @@ class EntitySchemaTest {
     }
 
     /**
-     * R1 guard: this schema must hold Yatra's tables and nothing else.
+     * This schema must hold Yatra's tables and nothing else.
      *
      * <p>TiDB Cloud's default {@code test} database was originally shared with the
      * teacher's SpringWeb demo project, and **both apps run
@@ -153,7 +169,7 @@ class EntitySchemaTest {
     }
 
     /**
-     * R5 guard: money must be exact decimal, not binary floating point.
+     * Money must be exact decimal, not binary floating point.
      *
      * <p>Why this is a build check and not a code-review note: `ddl-auto=validate`
      * compares column <i>types</i>, not precision or scale, so a
@@ -182,6 +198,39 @@ class EntitySchemaTest {
                     assertThat(rs.getInt("DECIMAL_DIGITS")).as(money + " scale").isEqualTo(2);
                     assertThat(rs.getInt("NULLABLE"))
                             .as(money + " must not be nullable")
+                            .isEqualTo(DatabaseMetaData.columnNoNulls);
+                }
+            }
+        }
+    }
+
+    /**
+     * The seed marker must be a {@code bit(1) NOT NULL} column on all four tables.
+     *
+     * <p>Checked here rather than trusted because the marker is what makes the reset
+     * precise: see {@link #EXPECTED_SEED_MARKERS}. Hibernate itself only validates the
+     * type loosely, so a {@code varchar} holding "true"/"false" would satisfy
+     * {@code ddl-auto=validate} while quietly breaking the reset's {@code where
+     * s.seeded = true} semantics.
+     */
+    @Test
+    void theSeedMarkersAreRealBooleanColumns() throws Exception {
+        try (Connection conn = dataSource.getConnection()) {
+            DatabaseMetaData meta = conn.getMetaData();
+
+            for (String marker : EXPECTED_SEED_MARKERS) {
+                String table = marker.substring(0, marker.indexOf('.'));
+                String column = marker.substring(marker.indexOf('.') + 1);
+
+                try (ResultSet rs = meta.getColumns(conn.getCatalog(), null, table, column)) {
+                    assertThat(rs.next()).as(marker + " should exist").isTrue();
+
+                    assertThat(rs.getString("TYPE_NAME").toLowerCase(Locale.ROOT))
+                            .as(marker + " must be a boolean column")
+                            .isEqualTo("bit");
+                    assertThat(rs.getInt("COLUMN_SIZE")).as(marker + " width").isEqualTo(1);
+                    assertThat(rs.getInt("NULLABLE"))
+                            .as(marker + " must not be nullable — the reset depends on it")
                             .isEqualTo(DatabaseMetaData.columnNoNulls);
                 }
             }

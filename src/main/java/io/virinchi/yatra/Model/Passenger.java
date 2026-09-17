@@ -28,6 +28,6 @@ public class Passenger {
 
     private String nationality;
 
-    //Boarding pass ma assign hunxa (check-in, Phase 6 paxi).
+    //Boarding pass ma assign hunxa (check-in paxi).
     private String seatNumber;
 }

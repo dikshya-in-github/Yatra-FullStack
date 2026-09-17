@@ -16,7 +16,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     //Gateway reference unique — duplicate txn save hunna.
     Optional<Payment> findByTxnId(String txnId);
 
-    //Admin payments monitoring: GET /api/admin/payments (Phase 10).
+    //Admin payments monitoring: GET /api/admin/payments.
     List<Payment> findByStatus(String status);
     List<Payment> findByMethod(String method);
 }

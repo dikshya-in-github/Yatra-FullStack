@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * R5 — money is exact, and this is what "exact" is checked to mean.
+ * Money is exact, and this is what "exact" is checked to mean.
  *
  * <p>Three different claims, because "we changed the type" is not a proof:
  *
@@ -79,7 +79,7 @@ class MoneyPrecisionTest {
     }
 
     /**
-     * The bug R5 removed, written as arithmetic instead of prose.
+     * The bug this removed, written as arithmetic instead of prose.
      *
      * <p>The third assertion is deliberately about the <i>exact</i> value a double
      * holds: 3703.68 is not representable in binary, so no sum of doubles can ever

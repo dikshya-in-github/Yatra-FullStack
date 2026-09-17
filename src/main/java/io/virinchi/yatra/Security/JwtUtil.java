@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 /**
- * Signs and verifies the stateless JWT (Roadmap Phase 3).
+ * Signs and verifies the stateless JWT.
  *
  * <p><b>Claim set matches the frontend exactly.</b> {@code api.js}'s mock token
  * payload is {@code sub, name, email, role, iat, exp} — the claims the mock

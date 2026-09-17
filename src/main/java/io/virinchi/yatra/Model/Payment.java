@@ -27,7 +27,7 @@ public class Payment {
     @Column(unique = true)
     private String txnId;
 
-    //Gateway le charge gareko amount — BigDecimal (R5), DECIMAL(10,2).
+    //Gateway le charge gareko amount — BigDecimal, DECIMAL(10,2).
     //Yo value Booking.totalAmount sanga exactly match hunuparxa, tesaile duitai
     //eutai type ma hunu parxa; double ra BigDecimal ko mix le compare garna
     //galat (==) banaunxa.
@@ -35,7 +35,7 @@ public class Payment {
     private BigDecimal amount;
 
     //PENDING / SUCCESS / FAILED / REFUNDED — payment SUCCESS bhayepaxi
-    //booking CONFIRMED hunxa, ani ticket generate hunxa (Phase 10).
+    //booking CONFIRMED hunxa, ani ticket generate hunxa.
     private String status;
 
     private LocalDateTime paidAt;

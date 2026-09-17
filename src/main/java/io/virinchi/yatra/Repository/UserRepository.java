@@ -21,7 +21,10 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByEmailIgnoreCase(String email);
     Optional<User> findByPhone(String phone);
 
-    //Admin user management (Phase 11) — search + status filter.
+    //The demo seeder's own roster (Phase 7) — what `POST /api/admin/reset` removes.
+    List<User> findBySeededTrue();
+
+    //Admin user management — search + status filter.
     List<User> findByStatus(String status);
     List<User> findByNameContainingIgnoreCase(String name);
     Page<User> findByStatus(String status, Pageable pageable);

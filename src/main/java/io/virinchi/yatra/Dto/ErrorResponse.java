@@ -1,7 +1,7 @@
 package io.virinchi.yatra.Dto;
 
 /**
- * The ONE error body every REST failure returns (Backend Roadmap Phase 1):
+ * The ONE error body every REST failure returns:
  *
  * <pre>{ "error": "CODE", "message": "…" }</pre>
  *
