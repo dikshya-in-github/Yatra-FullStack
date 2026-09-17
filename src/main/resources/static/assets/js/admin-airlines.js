@@ -378,14 +378,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (deleteBtn) {
       const a = airlines.find((x) => String(x.id) === deleteBtn.dataset.delete);
-      if (a && confirm(`Delete "${a.name}"? This cannot be undone in the demo.`)) {
-        airlines = airlines.filter((x) => String(x.id) !== deleteBtn.dataset.delete);
+      if (a) deleteAirline(a);
+    }
+  });
+
+  /* Flights reference a carrier by id, so deleting an airline that still operates
+     flights would dangle those references. In real mode the API refuses it with 409
+     AIRLINE_HAS_FLIGHTS — the same guard `Service/AirlineService` applies — so without
+     this pre-check the admin would get an error toast for an action the page had
+     suggested was fine. This is the check admin-destinations.js already makes for
+     routes, worded the same way on purpose so both pages give one piece of advice:
+     disable it instead. (Reads through the API layer, item 16.) */
+  function flightsUsing(airlineId) {
+    return apiGet('/api/admin/flights')
+      .then((resp) => {
+        const flights = Array.isArray(resp.flights) ? resp.flights : [];
+        return flights.filter((f) => f && String(f.airlineId) === String(airlineId));
+      })
+      // Fail open, like the destinations page: if the flights read fails the delete
+      // proceeds and the real API's 409 still stops it — the cost is a less helpful
+      // message, not an orphaned flight.
+      .catch(() => []);
+  }
+
+  function deleteAirline(a) {
+    flightsUsing(a.id).then((inUse) => {
+      if (inUse.length) {
+        toast(
+          `${a.name} (${a.iata}) is used by ${inUse.length} flight${inUse.length === 1 ? '' : 's'} — disable it instead.`,
+          'error'
+        );
+        return;
+      }
+
+      if (confirm(`Delete "${a.name}"? This cannot be undone in the demo.`)) {
+        airlines = airlines.filter((x) => String(x.id) !== String(a.id));
         save();
         render();
         toast(`${a.name} deleted.`, 'success');
       }
-    }
-  });
+    });
+  }
 
   /* ---------- Utilities ---------- */
   function escapeHtml(str) {
