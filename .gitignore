@@ -7,6 +7,9 @@ application-local.properties
 
 ### Private planning docs — local only, never published ###
 *.md
+
+### macOS ###
+.DS_Store
 !**/src/main/**/target/
 !**/src/test/**/target/
 
