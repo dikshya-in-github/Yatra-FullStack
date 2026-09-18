@@ -63,17 +63,36 @@ var YATRA_CONFIG = {
        as `home.html`: PageController redirects it there, and a data source
        should not depend on winning that race. */
     REAL_API_PAGES: [
-        "login.html",        /* §4 — YatraAuth.login → POST /api/auth/login */
-        "signup.html",       /* §4 — YatraAuth.register → POST /api/auth/register */
-        "admin-login.html",  /* §4/§13 — the panel's sign-in + a real role check */
+        /* §1 — the real auth the plan asks for: POST /api/auth/login and
+           /api/auth/register, reached through YatraAuth (execution step 4). */
+        "login.html",
+        "signup.html",
+        "admin-login.html",  /* §1 + §13 — the panel's sign-in and its real role check */
 
-        /* §5 — the Flights module, the reference pattern for §12's five-step
-           workflow: GET /api/admin/flights + /api/airlines + /api/destinations
-           for reads, POST/PUT/DELETE /api/admin/flights for writes. It is named
-           here only because its WRITES moved with its reads; a page whose reads
-           are real but whose writes still land in localStorage must stay off
-           this list. */
-        "admin-flights.html"
+        /* §12 + §13 — the Flights module, the reference pattern for §12's five-step
+           workflow (execution step 5): GET /api/admin/flights + /api/airlines +
+           /api/destinations for reads, POST/PUT/DELETE /api/admin/flights for
+           writes. It is named here only because its WRITES moved with its reads; a
+           page whose reads are real but whose writes still land in localStorage
+           must stay off this list. */
+        "admin-flights.html",
+
+        /* §7 + §11 — the signed-in account. profile.html is §11's page; both pages
+           call ONLY GET/POST/PUT /api/users/me and GET /api/users/me/bookings, so
+           naming them here moves no unrelated call with them. They are named
+           together because profile.js's "Total bookings" and my-bookings.html's own
+           total read that one endpoint, and the pages' comments say the two counts
+           "can never disagree" — switching one without the other would make them.
+
+           booking.html is deliberately NOT named, even though §7 is about it. Its
+           pre-fill reaches GET /api/users/me through the same api.js call and gets
+           the real account either way — see booking.js §12. Naming it here would
+           also move POST /api/bookings to the real backend while payment.html is
+           still mock (§10), creating PENDING bookings holding real seats that
+           nothing sweeps (the hold sweep is off by default). It joins this list
+           with payment.html, in §10. */
+        "profile.html",
+        "my-bookings.html"
     ]
 };
 

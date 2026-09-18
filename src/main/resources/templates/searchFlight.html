@@ -78,9 +78,12 @@
                 <span class="dot"></span>
                 <span id="sumDate">Tue, 15 Sep</span>
             </div>
-            <a href="./homeLogged.html" class="btn btn-outline btn-modify">
+            <!-- fix-plan §4. This was <a href="./homeLogged.html"> with no JS handler
+                 anywhere — clicking it abandoned the search. It opens a popup that
+                 re-runs the search HERE instead. -->
+            <button type="button" class="btn btn-outline btn-modify" id="modifyBtn">
                 <i class="fa-solid fa-sliders"></i> Modify Flight
-            </a>
+            </button>
         </div>
 
         <h1 class="results-title reveal active" id="resultsTitle">
@@ -123,11 +126,127 @@
         </div>
     </div>
 
+    <!-- Confirm Flight (fix-plan §5) — the step between a flight card and
+         booking.html. Opened by the card's .btn-select button; the Confirm button
+         then makes §6's routing decision (signed in → booking.html, signed out →
+         login.html carrying the flight). Dismissed by the close icon, a click
+         outside, or Escape, returning to this page's state untouched. -->
+    <div class="modal-backdrop" id="confirmModal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+            <div class="modal-head">
+                <h3 id="confirmTitle">Confirm Flight</h3>
+                <button class="modal-close" id="confirmClose" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="cf-body" id="confirmBody">
+                <!-- Flight details + the price breakdown from fare.js (rows()), so
+                     this page shows the same numbers as the step it hands off to. -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirmProceed">
+                    <i class="fa-solid fa-circle-check"></i> Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modify Flight (fix-plan §4) — the search form as a popup over the results,
+         so changing the route re-runs the search on this page instead of sending the
+         user back to the home page.
+
+         It reuses the home form rather than imitating it: the markup uses that
+         form's own classes (.input-block / .input-wrapper / .swap-btn, all from
+         homeLogged.css, which this page already loads), the two city selects are
+         wired by cityPair.js — the same §3 rules — and the submit goes through
+         validation.js's validateSearchForm(), the validator homeLogged.html submits
+         through, pointed at this modal's ids. -->
+    <div class="modal-backdrop" id="modifyModal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modifyTitle">
+            <div class="modal-head">
+                <h3 id="modifyTitle">Modify Flight</h3>
+                <button class="modal-close" id="modifyClose" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="modifyForm">
+                <div class="mf-body">
+                    <div class="mf-route">
+                        <div class="input-block">
+                            <label for="mfOrigin">Departure City</label>
+                            <div class="input-wrapper">
+                                <select id="mfOrigin" required>
+                                    <option value="" disabled selected>Departure City</option>
+                                    <option value="KTM">Kathmandu (KTM)</option>
+                                    <option value="PKR">Pokhara (PKR)</option>
+                                    <option value="BWA">Bhairahawa (BWA)</option>
+                                    <option value="KEP">Nepalgunj (KEP)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="swap-container">
+                            <button type="button" class="swap-btn" id="mfSwap" aria-label="Swap cities">
+                                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                            </button>
+                        </div>
+                        <div class="input-block">
+                            <label for="mfDestination">Arrival City</label>
+                            <div class="input-wrapper">
+                                <select id="mfDestination" required>
+                                    <option value="" disabled selected>Arrival City</option>
+                                    <option value="PKR">Pokhara (PKR)</option>
+                                    <option value="KTM">Kathmandu (KTM)</option>
+                                    <option value="BWA">Bhairahawa (BWA)</option>
+                                    <option value="KEP">Nepalgunj (KEP)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mf-row">
+                        <div class="input-block">
+                            <label for="mfDepDate">Departure Date</label>
+                            <div class="input-wrapper">
+                                <input type="date" id="mfDepDate" required>
+                            </div>
+                        </div>
+                        <div class="input-block">
+                            <label for="mfPax">Passengers</label>
+                            <div class="input-wrapper">
+                                <select id="mfPax">
+                                    <option value="1">1 Adult</option>
+                                    <option value="2">2 Adults</option>
+                                    <option value="3">3 Adults</option>
+                                    <option value="4">4 Adults</option>
+                                    <option value="5">5 Adults</option>
+                                    <option value="6">6 Adults</option>
+                                    <option value="7">7 Adults</option>
+                                    <option value="8">8 Adults</option>
+                                    <option value="9">9 Adults</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="modifyCancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="modifyApply">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search Flights
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Mock API layer (item 16): config → mock-data → api → auth → page -->
     <script src="assets/js/config.js"></script>
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/auth.js"></script>
+    <!-- §4's popup reuses the home form's rules, so it needs both shared layers:
+         validation.js (validateSearchForm) and cityPair.js (§3's city rules). -->
+    <script src="assets/js/validation.js"></script>
+    <script src="assets/js/cityPair.js"></script>
+    <script src="assets/js/fare.js"></script>
     <script src="assets/js/searchFlight.js"></script>
 
     <!-- Navbar user chip + a "Log Out" that really clears the session.

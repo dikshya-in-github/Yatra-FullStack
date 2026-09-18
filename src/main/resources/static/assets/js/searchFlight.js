@@ -259,21 +259,11 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // 4) Select flight → step 2
+        // 4) Select flight → §5's Confirm Flight modal
+        //    This used to write the flight and jump straight to booking.html,
+        //    skipping both the confirm step (§5) and the login check (§6).
         if (e.target.closest(".btn-select")) {
-            var ci2 = +card.dataset.classIdx;
-            var idx2 = +card.dataset.idx;
-            var fl = currentFlights[idx2];
-            var cl = fl.fareOptions[ci2];
-            sessionStorage.setItem("yatra_selected_flight", JSON.stringify({
-                from: from, to: to, date: iso(selected),
-                flightNo: fl.flightNo, depart: fl.depart, arrive: fl.arrive,
-                airline: fl.airline,
-                flightClass: cl.label, refundable: cl.refundable,
-                price: cl.price,
-                passengers: pax
-            }));
-            location.href = "./booking.html"; // step 2 — Passenger Details
+            openConfirm(card);
         }
     });
 
@@ -298,6 +288,239 @@ document.addEventListener("DOMContentLoaded", function () {
     modal.addEventListener("click", function (e) { if (e.target === modal) closePolicy(); });
     document.addEventListener("keydown", function (e) {
         if (e.key === "Escape" && modal.classList.contains("show")) closePolicy();
+    });
+
+    /* ---------- Confirm Flight (fix-plan §5) + the routing behind it (§6) ----------
+       §5 asked for a step between the flight card and booking.html: a modal over the
+       current page showing the flight and its price breakdown, with the background
+       visible but not interactive or scrollable, dismissible back to the same search
+       state. §6 asked for the Confirm button's routing to depend on the real login
+       state (§1), carrying the selected flight through login so booking.html can
+       resume afterwards.
+
+       The breakdown comes from fare.js's rows() — the data form of the same module
+       booking.html and payment.html render — so this page shows the same numbers as
+       the step it hands off to, rather than a third copy of the split. */
+    var confirmModal = document.getElementById("confirmModal");
+    var confirmBody = document.getElementById("confirmBody");
+    var confirmClose = document.getElementById("confirmClose");
+    var confirmProceed = document.getElementById("confirmProceed");
+    var pending = null; // { flight, cls } chosen on the card
+
+    /** The real session auth.js owns — the mock no longer signs anyone in (§1). */
+    function isLoggedIn() {
+        return typeof YatraAuth !== "undefined"
+            && typeof YatraAuth.isLoggedIn === "function"
+            && YatraAuth.isLoggedIn();
+    }
+
+    function paxLabel() {
+        return pax + (pax > 1 ? " Adults" : " Adult");
+    }
+
+    function confirmMarkup(f, cls) {
+        var total = YatraFare.round2(cls.price * pax);
+        var rows = YatraFare.rows(total, { passengers: pax, unitPrice: cls.price });
+
+        function cell(label, value) {
+            return "<div><dt>" + label + "</dt><dd>" + value + "</dd></div>";
+        }
+
+        return '<div class="cf-route">' +
+                '<span class="cf-mark"><i class="fa-solid fa-plane"></i></span>' +
+                '<div><strong>' + fromCity + " (" + from + ") → " + toCity + " (" + to + ')</strong>' +
+                '<span>' + shortDate(selected) + " · " + paxLabel() + '</span></div>' +
+            '</div>' +
+            '<dl class="cf-grid">' +
+                cell("Flight", f.flightNo) +
+                cell("Airline", f.airline.name) +
+                cell("Departure", to12(f.depart)) +
+                cell("Arrival", to12(f.arrive)) +
+                cell("Duration", duration(f.depart, f.arrive)) +
+                cell("Ticket type", cls.label) +
+                cell("Refundable", cls.refundable ? "Yes" : "No") +
+            '</dl>' +
+            '<div class="cf-fare">' +
+                '<p class="cf-fare-title"><i class="fa-solid fa-receipt"></i> Price breakdown</p>' +
+                rows.map(function (r) {
+                    return '<div class="cf-fare-row' + (r.total ? " total" : "") + '">' +
+                        "<span>" + r.label + "</span><span>" + r.value + "</span></div>";
+                }).join("") +
+            '</div>';
+    }
+
+    function openConfirm(card) {
+        var f = currentFlights[+card.dataset.idx];
+        var cls = f && f.fareOptions[+card.dataset.classIdx];
+        if (!f || !cls) return;
+
+        pending = { flight: f, cls: cls };
+        confirmBody.innerHTML = confirmMarkup(f, cls);
+        confirmModal.classList.add("show");
+        confirmModal.setAttribute("aria-hidden", "false");
+        /* §5: "background visible but not interactive/scrollable while open". The
+           backdrop covers it; this stops the page behind from scrolling behind it. */
+        document.body.classList.add("modal-open");
+        confirmClose.focus();
+    }
+
+    function closeConfirm() {
+        confirmModal.classList.remove("show");
+        confirmModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
+        /* Nothing else is touched, which is what §5 asks for: "returns to the same
+           searchFlight.html state". The card stays open on the same ticket class, so
+           re-opening the modal is one click and no state has to be restored. */
+    }
+
+    confirmClose.addEventListener("click", closeConfirm);
+    confirmModal.addEventListener("click", function (e) {
+        if (e.target === confirmModal) closeConfirm();   // click outside dismisses
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && confirmModal.classList.contains("show")) closeConfirm();
+    });
+
+    confirmProceed.addEventListener("click", function () {
+        if (!pending) return;
+
+        /* The payload shape this page has always written — §6 changes WHEN it is
+           written, not what. booking.html reads exactly these keys. */
+        sessionStorage.setItem("yatra_selected_flight", JSON.stringify({
+            from: from, to: to, date: iso(selected),
+            flightNo: pending.flight.flightNo,
+            depart: pending.flight.depart,
+            arrive: pending.flight.arrive,
+            airline: pending.flight.airline,
+            flightClass: pending.cls.label, refundable: pending.cls.refundable,
+            price: pending.cls.price,
+            passengers: pax
+        }));
+
+        if (isLoggedIn()) {
+            location.href = "./booking.html"; // step 2 — Passenger Details
+        } else {
+            /* §6: not signed in → login.html, with the flight already in
+               sessionStorage so booking.html can resume. The marker is what makes
+               the resume possible at all: login.html's redirect was unconditional
+               (always ./homeLogged.html), so without it a user who signed in from
+               here would land on the home page and silently lose the booking. */
+            sessionStorage.setItem("yatra_resume_booking", "1");
+            location.href = "./login.html";
+        }
+    });
+
+    /* ---------- Modify Flight (fix-plan §4) ----------
+       §4 asks for the search form as a popup that re-runs the search in place, and
+       for it to reuse "the same search form + validation rules from §3". Both are
+       taken literally rather than reimplemented: the markup uses the home form's own
+       classes (.input-block / .input-wrapper / .swap-btn, from homeLogged.css, which
+       this page already loads), cityPair.js enforces §3's two city rules, and the
+       submit runs validateSearchForm() — the validator homeLogged.html submits
+       through — pointed at this modal's ids. Error painting is left at validation.js's
+       default "flash", which is what the home form uses too; this page deliberately
+       does not set errorStyle.
+
+       Re-running in place is the pattern the date strip already uses: update the
+       state, keep the URL honest, re-render the strip, re-query. The control this
+       replaces was an <a href="./homeLogged.html"> with no handler anywhere, so it
+       navigated home and abandoned the search. */
+    var modifyModal = document.getElementById("modifyModal");
+    var modifyBtn = document.getElementById("modifyBtn");
+    var modifyClose = document.getElementById("modifyClose");
+    var modifyCancel = document.getElementById("modifyCancel");
+    var modifyForm = document.getElementById("modifyForm");
+    var mfOrigin = document.getElementById("mfOrigin");
+    var mfDest = document.getElementById("mfDestination");
+    var mfDepDate = document.getElementById("mfDepDate");
+    var mfPax = document.getElementById("mfPax");
+
+    /* Wired ONCE, at load. cityPair.js snapshots the option list when it is set up and
+       rule 1 removes options from that list, so setting the pair up again on every
+       open would snapshot an already-filtered list and shrink the city list each time
+       — which is why the module now refuses a second setup for the same pair. */
+    YatraCityPair.setup("mfSwap", "mfOrigin", "mfDestination");
+
+    function setSelect(el, value) {
+        el.value = value;
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function openModify() {
+        /* Opened prefilled with the search on screen, so the modal shows what it is
+           modifying. The lists are restored first because a city it must show can be
+           missing from them: rule 1 removes the arrival's city from the departure's
+           list, and the route on screen may name a city the home form's four do not
+           cover at all (this page's own default route ends at BDP). A city that is
+           not in the list is left unassigned rather than forced — setting a <select>
+           to a value it does not offer silently yields ''. */
+        YatraCityPair.reset("mfOrigin");
+        setSelect(mfOrigin, from);
+        setSelect(mfDest, to);
+        mfDepDate.value = iso(selected);
+        mfDepDate.min = iso(new Date(new Date().setHours(0, 0, 0, 0)));
+        mfPax.value = String(Math.min(Math.max(pax, 1), 9));
+
+        modifyModal.classList.add("show");
+        modifyModal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("modal-open");
+        mfOrigin.focus();
+    }
+
+    function closeModify() {
+        modifyModal.classList.remove("show");
+        modifyModal.setAttribute("aria-hidden", "true");
+        /* Both modals share the body lock, so it is only released when neither is up. */
+        if (!confirmModal.classList.contains("show")) {
+            document.body.classList.remove("modal-open");
+        }
+        modifyBtn.focus();
+    }
+
+    modifyBtn.addEventListener("click", openModify);
+    modifyClose.addEventListener("click", closeModify);
+    modifyCancel.addEventListener("click", closeModify);
+    modifyModal.addEventListener("click", function (e) {
+        if (e.target === modifyModal) closeModify();   // click outside dismisses
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && modifyModal.classList.contains("show")) closeModify();
+    });
+
+    modifyForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        var check = validateSearchForm({
+            origin: "mfOrigin",
+            destination: "mfDestination",
+            depDate: "mfDepDate"
+        });
+        if (!check.valid) {
+            if (check.firstInvalid) check.firstInvalid.focus({ preventScroll: false });
+            return;
+        }
+
+        from = mfOrigin.value.toUpperCase();
+        to = mfDest.value.toUpperCase();
+        selected = new Date(mfDepDate.value + "T00:00:00");
+        pax = Math.min(Math.max(parseInt(mfPax.value, 10) || 1, 1), 9);
+
+        /* Keep the URL honest — the date strip does the same, and the page reads its
+           route from these params on load, so a refresh keeps the search. */
+        params.set("from", from);
+        params.set("to", to);
+        params.set("date", iso(selected));
+        params.set("pax", String(pax));
+        history.replaceState(null, "", location.pathname + "?" + params.toString());
+
+        document.getElementById("sumFrom").textContent = from;
+        document.getElementById("sumTo").textContent = to;
+        document.getElementById("sumPax").textContent = paxLabel();
+        document.title = from + " - " + to + " :: Flight search | Yatra";
+
+        closeModify();
+        renderStrip();   // re-draws the 7-day strip around the new date, and #sumDate
+        loadFlights();   // re-query in place — no navigation
     });
 
     /* ---------- Navbar + mobile menu (same as other pages) ---------- */

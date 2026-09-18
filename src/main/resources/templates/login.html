@@ -595,13 +595,12 @@
         </form>
     </main>
 
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
     <!-- Shared layer: config → mock data → API → validation (§35) → auth (§35) -->
     <script src="assets/js/config.js"></script>
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/validation.js"></script>
+    <script src="assets/js/toast.js"></script>
     <script src="assets/js/auth.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -646,7 +645,7 @@
 
                 const check = validateLoginForm({ form });
                 if (!check.valid) {
-                    toast('Please fix the highlighted fields.', 'error');
+                    showToast('Please fix the highlighted fields.', 'error');
                     return;
                 }
 
@@ -667,31 +666,34 @@
                 YatraAuth.login(loginId, password.value)
                     .then((user) => {
                         btn.innerHTML = '<i class="fa-solid fa-check"></i> Logged in';
-                        toast('Welcome back' + (user && user.name ? ', ' + user.name : '') + '!', 'success');
+                        showToast('Welcome back' + (user && user.name ? ', ' + user.name : '') + '!', 'success');
 
                         setTimeout(() => {
                             btn.disabled = false;
                             btn.innerHTML = originalHTML;
-                            window.location.href = './homeLogged.html';
+                            /* fix-plan §6 — resume the booking whose Confirm sent the
+                               user here. Without this the redirect is unconditional, and a
+                               signed-out user who picked a flight would land on the home
+                               page with the booking silently dropped. The flight itself is
+                               already in sessionStorage[yatra_selected_flight]; this key
+                               only says where to come back to, and is cleared as it is used. */
+                            if (sessionStorage.getItem('yatra_resume_booking')) {
+                                sessionStorage.removeItem('yatra_resume_booking');
+                                window.location.href = './booking.html';
+                            } else {
+                                window.location.href = './homeLogged.html';
+                            }
                         }, 1100);
                     })
                     .catch((err) => {
                         btn.disabled = false;
                         btn.innerHTML = originalHTML;
-                        toast((err && err.message) || 'Could not log you in. Please try again.', 'error');
+                        showToast((err && err.message) || 'Could not log you in. Please try again.', 'error');
                     });
             });
 
-            const toastEl = $('#toast');
-            let toastTimer;
-
-            function toast(message, type = 'success') {
-                toastEl.className = 'toast ' + type;
-                toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
-                requestAnimationFrame(() => toastEl.classList.add('show'));
-                clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4000);
-            }
+            /* showToast() lives in toast.js (§9) — one implementation shared
+               with every other page, which creates its own #toast element. */
         });
     </script>
 </body>

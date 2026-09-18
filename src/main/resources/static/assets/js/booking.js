@@ -45,8 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
         var p = hhmm.split(":"), h = +p[0];
         return ((h + 11) % 12 + 1) + ":" + p[1] + " " + (h >= 12 ? "PM" : "AM");
     }
+    /* One money format for the whole flow, now that fare.js owns it. Kept as a local
+       alias so the call sites below read as they always did. */
     function fmt(n) {
-        return "NPR " + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return YatraFare.format(n);
     }
 
     var totalPrice = Math.round(flight.price * paying * 100) / 100;
@@ -111,17 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sbPrice) sbPrice.textContent = fmt(totalPrice);
     if (sbTag) sbTag.textContent = flight.refundable ? "Refundable" : "Non Refundable";
 
-    /* Fare breakdown — deterministic split of the total (mock data) */
-    if (sbBreakdown) {
-        var base = Math.round(totalPrice * 0.88 * 100) / 100;
-        var tax = Math.round(totalPrice * 0.07 * 100) / 100;
-        var service = Math.round((totalPrice - base - tax) * 100) / 100;
-        sbBreakdown.innerHTML =
-            '<div class="breakdown-row"><span>Base Fare (' + paying + ' × ' + fmt(flight.price) + ')</span><span>' + fmt(totalPrice) + '</span></div>' +
-            '<div class="breakdown-row"><span>Airport Tax (est.)</span><span>' + fmt(tax) + '</span></div>' +
-            '<div class="breakdown-row"><span>Service Fee</span><span>' + fmt(service) + '</span></div>' +
-            '<div class="breakdown-row total"><span>Total</span><span>' + fmt(totalPrice) + '</span></div>';
-    }
+    /* Fare breakdown — from fare.js, the one place that splits a total. §5 asks the
+       "Confirm Flight" modal to reuse this same logic, which it could not while it
+       lived here; payment.js already carried the second copy.
+
+       The Base Fare row now reports `base`. It reported the TOTAL here, so on this
+       page alone the three rows summed to 8,299.99 + 581.00 + 415.00 against a stated
+       Total of 8,299.99 — the breakdown did not add up. payment.js printed `base`, so
+       the same booking showed two different breakdowns on its two steps. */
+    YatraFare.render(sbBreakdown, totalPrice, { passengers: paying, unitPrice: flight.price });
 
     /* ==========================================================
        4. N PASSENGER FORMS — rendered from the pax split
@@ -184,41 +184,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ==========================================================
-       5. COUNTDOWN TIMER (15 min — resumes from sessionStorage)
+       5. COUNTDOWN TIMER — the 15-minute hold, from an absolute
+          expiry (fix-plan §8a)
+
+          This was a decrementing counter (`timeLeft--` every second,
+          seeded from `bookingTimeLeft`). A background tab throttles
+          `setInterval`, so the countdown fell behind real time on
+          every tab switch and a back/forward navigation re-ran the
+          page against a stored value that meant something else — the
+          bug §8a reports. Remaining time is now always
+          `expiry - Date.now()`, which nothing can accumulate away.
+
+          The clock itself lives in hold.js: payment.html needs the
+          same one, and two copies of a countdown is how two pages
+          come to disagree about one hold.
        ========================================================== */
-    const TIMER_DURATION = 15 * 60;
-    let timeLeft = parseInt(sessionStorage.getItem('bookingTimeLeft')) || TIMER_DURATION;
     const timerDisplay = document.getElementById('timerDisplay');
     const timerBar = document.querySelector('.timer-bar');
 
-    function formatTime(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m} minute${m !== 1 ? 's' : ''} ${s} second${s !== 1 ? 's' : ''}`;
-    }
+    // Idempotent: starts a hold only if this session has none, so arriving here
+    // from a fresh search begins one and re-rendering does not restart it.
+    YatraHold.start();
 
-    function updateTimerDisplay() {
-        if (!timerDisplay || !timerBar) return;
-        timerDisplay.textContent = formatTime(timeLeft);
-        timerBar.classList.remove('warning', 'danger');
-        if (timeLeft <= 120) timerBar.classList.add('danger');
-        else if (timeLeft <= 300) timerBar.classList.add('warning');
-    }
-
-    updateTimerDisplay();
-
-    const timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerDisplay();
-        if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            if (timerDisplay) timerDisplay.textContent = '0 minutes 0 seconds';
-            alert('Your booking session has expired. Please start again.');
-            sessionStorage.removeItem('bookingTimeLeft');
-            sessionStorage.removeItem('bookingData');
-            window.location.href = './homeLogged.html';
-        }
-    }, 1000);
+    YatraHold.watch({
+        display: timerDisplay,
+        bar: timerBar,
+        /* §8b — the expiry screen and the key-clearing live in hold.js so that both
+           wizard pages show one screen with one copy and one key set. This used to be
+           an `alert()` written out in this file and again in payment.js, each clearing
+           a different subset of the abandoned attempt's keys. */
+        onExpire: YatraHold.expireScreen
+    });
 
     /* ==========================================================
        6. PHONE INPUT — clear button
@@ -333,8 +329,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 email: bookingData.contact.email,
             }));
 
-            /* Persist the remaining countdown so payment.html resumes it */
-            sessionStorage.setItem('bookingTimeLeft', String(timeLeft));
+            /* Nothing to persist for the countdown any more: the absolute
+               expiry is already in sessionStorage (§8a), so payment.html reads
+               the same instant instead of a duration this page had to hand on. */
 
             /* Loading state */
             continueBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
@@ -395,18 +392,77 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ==========================================================
-       12. AUTO-FILL passenger 1 from contact ("I'm a passenger")
+       12. PRE-FILL the contact block from the signed-in account
+           (fix-plan §7). GET /api/users/me is the same call
+           profile.html makes, and the answer is the real account in
+           BOTH modes: in mock mode api.js's mockSessionUser() reads
+           YATRA_CONFIG.AUTH_USER_KEY — the session the REAL login
+           wrote — so this is the signed-up name, email and mobile
+           rather than a placeholder.
+
+           Two rules, both deliberate:
+           - Anonymous visitors are left alone. With no session the
+             mock route synthesises a "Demo Traveller" record (its
+             never-dead-end rule), and writing that into a guest's
+             form is worse than leaving it blank.
+           - Only EMPTY fields are filled. A visitor who has already
+             typed must not have their typing replaced by a slower
+             response, and a returning back-button visit keeps what
+             they entered.
+       ========================================================== */
+    function setIfEmpty(field, value) {
+        if (field && !field.value.trim() && value) field.value = String(value).trim();
+    }
+
+    /* The account carries one `name`; the form has three boxes. First token,
+       last token, and whatever sits between them — the convention this
+       roster's own names use ("Sanjay Thapa Magar"). */
+    function splitName(name) {
+        var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return { first: '', middle: '', last: '' };
+        return {
+            first: parts[0],
+            middle: parts.slice(1, -1).join(' '),
+            last: parts.length > 1 ? parts[parts.length - 1] : ''
+        };
+    }
+
+    if (typeof YatraAuth !== 'undefined' && YatraAuth.isLoggedIn() && typeof apiGet === 'function') {
+        apiGet('/api/users/me').then(function (res) {
+            var user = (res && res.user) || null;
+            if (!user) return;
+
+            var name = splitName(user.name);
+            setIfEmpty(document.getElementById('contactFirstName'), name.first);
+            setIfEmpty(document.getElementById('contactMiddleName'), name.middle);
+            setIfEmpty(document.getElementById('contactLastName'), name.last);
+            setIfEmpty(document.getElementById('contactEmail'), user.email);
+            setIfEmpty(document.getElementById('contactPhone'), user.phone);
+
+            /* "I am a passenger" may already be ticked. Its own handler only
+               fires on `change`, and nothing changed here — so without this
+               the pre-filled contact would not reach the passenger block. */
+            mirrorContactToPassenger1();
+        }).catch(function () {
+            /* A stale token on a page guests may reach: leave the form as it is. */
+        });
+    }
+
+    /* ==========================================================
+       13. AUTO-FILL passenger 1 from contact ("I'm a passenger")
        ========================================================== */
     const imPassenger = document.getElementById('imPassenger');
+
+    function mirrorContactToPassenger1() {
+        if (!imPassenger || !imPassenger.checked) return;
+        document.getElementById('p1Title').value = document.getElementById('contactTitle').value;
+        document.getElementById('p1LastName').value = document.getElementById('contactLastName').value;
+        document.getElementById('p1FirstName').value = document.getElementById('contactFirstName').value;
+        document.getElementById('p1MiddleName').value = document.getElementById('contactMiddleName').value;
+    }
+
     if (imPassenger) {
-        imPassenger.addEventListener('change', () => {
-            if (imPassenger.checked) {
-                document.getElementById('p1Title').value = document.getElementById('contactTitle').value;
-                document.getElementById('p1LastName').value = document.getElementById('contactLastName').value;
-                document.getElementById('p1FirstName').value = document.getElementById('contactFirstName').value;
-                document.getElementById('p1MiddleName').value = document.getElementById('contactMiddleName').value;
-            }
-        });
+        imPassenger.addEventListener('change', mirrorContactToPassenger1);
     }
 });
 

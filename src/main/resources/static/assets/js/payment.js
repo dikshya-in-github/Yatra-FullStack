@@ -31,44 +31,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 3. COUNTDOWN TIMER (resume from sessionStorage)
+    // 3. COUNTDOWN TIMER — the same hold booking.html started
+    //    (fix-plan §8a)
+    //
+    //    This page used to persist its own decremented count back into
+    //    `bookingTimeLeft`, which is how the two pages drifted apart: each
+    //    wrote its own idea of what was left. There is now one instant, set
+    //    on booking.html, and this page only reads it.
+    //
+    //    `start()` is safe here: it resumes the existing hold and only begins
+    //    one if this session has none (payment.html opened directly), which is
+    //    what the old `|| TIMER_DURATION` fallback did.
     // ==========================================
-    const TIMER_DURATION = 15 * 60;
-    let timeLeft = parseInt(sessionStorage.getItem('bookingTimeLeft')) || TIMER_DURATION;
     const timerDisplay = document.getElementById('timerDisplay');
     const timerBar = document.querySelector('.timer-bar');
 
-    function formatTime(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m} minute${m !== 1 ? 's' : ''} ${s} second${s !== 1 ? 's' : ''}`;
-    }
+    YatraHold.start();
 
-    function updateTimerDisplay() {
-        timerDisplay.textContent = formatTime(timeLeft);
-        timerBar.classList.remove('warning', 'danger');
-        if (timeLeft <= 120) timerBar.classList.add('danger');
-        else if (timeLeft <= 300) timerBar.classList.add('warning');
-    }
-
-    updateTimerDisplay();
-
-    const timerInterval = setInterval(() => {
-        timeLeft--;
-        sessionStorage.setItem('bookingTimeLeft', timeLeft);
-
-        if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            timerDisplay.textContent = '0 minutes 0 seconds';
-            timerBar.classList.add('danger');
-            alert('Your booking session has expired. Please start again.');
-            sessionStorage.removeItem('bookingTimeLeft');
-            sessionStorage.removeItem('bookingData');
-            window.location.href = './homeLogged.html';
-            return;
-        }
-        updateTimerDisplay();
-    }, 1000);
+    YatraHold.watch({
+        display: timerDisplay,
+        bar: timerBar,
+        /* §8b — same screen as booking.html, from the same place: see the note there. */
+        onExpire: YatraHold.expireScreen
+    });
 
     // ==========================================
     // 3b. BOOKING DETAILS — rendered from bookingData (item 17)
@@ -89,7 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const paying = (typeof bf.passengerCount === 'number' && bf.passengerCount > 0)
             ? bf.passengerCount : (passengers.length || 1);
 
-        const money = (n) => 'NPR ' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        /* fare.js owns the money format now; the alias is kept for this page's call
+           sites. It used to be a third implementation of the same format. */
+        const money = (n) => YatraFare.format(n);
         const to12 = (hhmm) => {
             if (!hhmm) return '—';
             const parts = String(hhmm).split(':');
@@ -128,18 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
         setText('sbPrice', money(total));
         setText('sbTag', bf.refundable ? 'Refundable' : 'Non Refundable');
 
-        // Fare breakdown — the same deterministic split booking.js shows
-        const breakdown = document.getElementById('priceBreakdown');
-        if (breakdown) {
-            const base = Math.round(total * 0.88 * 100) / 100;
-            const tax = Math.round(total * 0.07 * 100) / 100;
-            const service = Math.round((total - base - tax) * 100) / 100;
-            breakdown.innerHTML =
-                '<div class="breakdown-row"><span>Base Fare (' + paying + ' × ' + money(bf.pricePerPassenger) + ')</span><span>' + money(base) + '</span></div>' +
-                '<div class="breakdown-row"><span>Airport Tax (est.)</span><span>' + money(tax) + '</span></div>' +
-                '<div class="breakdown-row"><span>Service Fee</span><span>' + money(service) + '</span></div>' +
-                '<div class="breakdown-row total"><span>Total</span><span>' + money(total) + '</span></div>';
-        }
+        /* Fare breakdown — fare.js's, so this page and booking.html cannot disagree
+           about the same booking again. This copy happened to print `base` correctly
+           and booking.html's did not; one implementation means the question stops
+           being asked per page. */
+        YatraFare.render(document.getElementById('priceBreakdown'), total, {
+            passengers: paying,
+            unitPrice: bf.pricePerPassenger
+        });
 
         // Booking card — the pending id POST /api/bookings minted (not a fake code)
         setText('bookingCode', booking.bookingId || 'Pending');

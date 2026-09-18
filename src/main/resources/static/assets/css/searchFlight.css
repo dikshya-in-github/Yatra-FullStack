@@ -525,6 +525,145 @@
   background: var(--primary);
 }
 
+/* ---------- Confirm Flight modal (fix-plan §5) ----------
+   The modal primitive above (.modal-backdrop / .modal-card / .modal-head /
+   .modal-close) is this page's own; these rules are the body it contains.
+   The fare rows are deliberately NOT .breakdown-row: that class is styled in
+   booking.css AND payment.css already (the same rules twice), and this modal is
+   a compact variant of the same numbers, built from fare.js's rows() data.
+   Adding a third copy of those rules here is the thing to avoid. */
+body.modal-open {
+  overflow: hidden; /* §5: the background must not be scrollable while open */
+}
+.cf-body {
+  padding: 1.4rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+.cf-route {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+.cf-mark {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cf-route strong {
+  display: block;
+  font-size: 0.98rem;
+  color: var(--dark);
+}
+.cf-route span {
+  font-size: 0.85rem;
+  color: var(--slate);
+}
+.cf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 1.25rem;
+  margin: 0;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.cf-grid div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.cf-grid dt {
+  font-size: 0.82rem;
+  color: var(--slate);
+}
+.cf-grid dd {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--dark);
+  text-align: right;
+}
+.cf-fare-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--slate);
+  margin-bottom: 0.65rem;
+}
+.cf-fare-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.32rem 0;
+  font-size: 0.9rem;
+  color: var(--slate);
+}
+.cf-fare-row.total {
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--border);
+  font-weight: 700;
+  color: var(--dark);
+}
+/* The footer both of this page's form modals use. homeLogged.css declares
+   .modal-footer with padding only; this refines it rather than inventing a second
+   name — two buttons sit here (Cancel + the action), so they need a flex row. */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0 1.6rem 1.5rem;
+}
+
+/* ---------- Modify Flight modal (fix-plan §4) ----------
+   The controls are the home page's own classes — .input-block, .input-wrapper and
+   .swap-btn all come from homeLogged.css, which this page already loads — so this
+   is only the modal's layout. */
+.mf-body {
+  padding: 1.4rem 1.6rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.mf-route {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.6rem;
+  align-items: end;
+}
+.mf-route .swap-container {
+  padding-bottom: 0.5rem;
+}
+.mf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+/* A little tighter than the home page's 52px — this sits inside a modal. */
+.mf-body .input-wrapper {
+  height: 48px;
+}
+@media (max-width: 560px) {
+  .cf-grid,
+  .mf-row,
+  .mf-route {
+    grid-template-columns: 1fr;
+  }
+  .mf-route .swap-container {
+    padding-bottom: 0;
+  }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
   .flight-row {

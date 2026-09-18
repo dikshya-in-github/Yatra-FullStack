@@ -89,26 +89,27 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTripToggle({ toggleId: 'groupRoundTripToggle', retBlockId: 'groupRetDateBlock', retInputId: 'groupRetDate', oneWayId: 'groupOneWayLabel', roundId: 'groupRoundTripLabel' });
 
     // ==========================================
-    // 5. SWAP ROUTE BUTTON (generalized for Book a Flight + Group Booking)
+    // 5. ROUTE DROPDOWNS — §3's two selection rules
     // ==========================================
-    function setupSwap(swapBtnId, originId, destId) {
-        const swapBtn = document.getElementById(swapBtnId);
-        const originSelect = document.getElementById(originId);
-        const destSelect = document.getElementById(destId);
-
-        if (swapBtn && originSelect && destSelect) {
-            swapBtn.addEventListener('click', () => {
-                const temp = originSelect.value;
-                originSelect.value = destSelect.value;
-                destSelect.value = temp;
-                swapBtn.style.transform = 'rotate(180deg)';
-                setTimeout(() => { swapBtn.style.transform = 'rotate(0deg)'; }, 300);
-            });
-        }
+    /* The rules themselves live in cityPair.js. They were moved, not copied,
+       because fix-plan §4's "Modify Flight" popup has to reuse them on
+       searchFlight.html — and that page deliberately does NOT load this file
+       (doing so would double-bind #mobileMenuBtn; see its own script block), so
+       there was no way to reach them from the page that now needs them. One
+       implementation, two callers. */
+    /* Only home.html and homeLogged.html carry these dropdowns, and only they
+       load cityPair.js. Every other page in the site loads THIS file for the
+       navbar alone, so an unconditional call threw here and killed the rest of
+       this handler (the passenger modal and scroll reveal below never ran).
+       The call is guarded on the markup rather than on the module: a page that
+       HAS the selects still requires cityPair.js and still fails loudly without it. */
+    const routePairs = [
+        ['swapRouteBtn', 'origin', 'destination'],
+        ['groupSwapRouteBtn', 'groupOrigin', 'groupDestination']
+    ];
+    if (routePairs.some(pair => document.getElementById(pair[1]) && document.getElementById(pair[2]))) {
+        YatraCityPair.setupAll(routePairs);
     }
-
-    setupSwap('swapRouteBtn', 'origin', 'destination');
-    setupSwap('groupSwapRouteBtn', 'groupOrigin', 'groupDestination');
 
     const originSelect = document.getElementById('origin');
     const destSelect = document.getElementById('destination');
@@ -250,6 +251,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             console.log('Search Data:', searchData);
             sessionStorage.setItem('flightSearchData', JSON.stringify(searchData));
+
+            /* A new search starts a new booking flow, so the previous flow's hold
+               goes with it. More necessary now than it was with a counter: the
+               storage holds an absolute instant, so a leftover one is inherited
+               by booking.html as an already-expired countdown rather than as a
+               number that merely looked stale. Guarded because home.html loads
+               this script without hold.js. */
+            if (typeof YatraHold !== 'undefined') YatraHold.clear();
 
             const searchBtn = flightForm.querySelector('.search-btn');
             if (searchBtn) {
