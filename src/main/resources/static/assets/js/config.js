@@ -3,7 +3,7 @@
    The single switch between the mock layer and the
    real Spring API (spec §2 / §41).
 
-   HOW THE SWITCH WORKS NOW (fix plan §4, 2026-09-18):
+   HOW THE SWITCH WORKS NOW (fix-plan §1 + §13; execution step 4, 2026-09-18):
      USE_MOCK_DATA is still the one switch, but it is evaluated
      PER PAGE against REAL_API_PAGES below. A page named there
      talks to the real Spring API; every page not named there
@@ -46,7 +46,7 @@ var YATRA_CONFIG = {
     ADMIN_SESSION_KEY: "yatra_admin_session",
 
     /* ---------------------------------------------------------------------
-       Fix plan §4 — the REAL-API ALLOW-LIST.
+       Fix-plan §1 + §13 (execution step 4) — the REAL-API ALLOW-LIST.
 
        `USE_MOCK_DATA` used to be one switch for every page at once, which is
        why integration never started: the moment it was flipped, EVERY page had

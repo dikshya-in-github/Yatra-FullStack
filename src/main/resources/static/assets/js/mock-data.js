@@ -57,7 +57,7 @@ var MockDB = (function () {
         airlines: "yatra_admin_airlines",
         destinations: "yatra_admin_destinations",
         bookings: "yatra_bookings",
-        flights: "yatra_admin_flights",             // owned HERE since fix-plan §5 (2026-09-18) — self-seeds and holds the CRUD helpers the admin page reaches through api.js
+        flights: "yatra_admin_flights",             // owned HERE since fix-plan §12 execution step 5 (2026-09-18) — self-seeds and holds the CRUD helpers the admin page reaches through api.js
         users: "yatra_admin_users",                 // shared roster (seeds here) — CRUD UI in admin-users.js
         bookingsSeedFlag: "yatra_bookings_seeded_v1" // owned by admin-bookings.js — read-only here
     };
@@ -367,7 +367,7 @@ var MockDB = (function () {
     }
 
     /* ---------- Flights (self-seeds on first read) ----------
-       Moved out of admin-flights.js in fix-plan §5 (2026-09-18). The page used to
+       Moved out of admin-flights.js in fix-plan §12 execution step 5 (2026-09-18). The page used to
        own this store outright — its own STORAGE_KEY (this same key), its own
        SEED_FLIGHTS, its own load()/save() — so a Save wrote to localStorage and
        the API was never called. Ownership sits here now, beside the other stores,
@@ -414,7 +414,7 @@ var MockDB = (function () {
         return SEED_FLIGHTS.slice();
     }
 
-    /* ---------- Flights, the write half (fix-plan §5) ----------
+    /* ---------- Flights, the write half (fix-plan §12 execution step 5) ----------
        The mutations the admin page now performs through api.js. The rules mirror
        FlightService because the mock is the API's specification:
          - the id is minted here — the page never sends one (it is the entity's

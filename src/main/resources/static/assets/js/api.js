@@ -367,7 +367,7 @@ var MOCK_GET_ROUTES = [
         return { bookings: MockDB.getBookings() }; // tickets derived per booking — same shape the page consumes
     } },
     /* The admin flight list, with the query parameters the real controller and
-       repository honour (fix plan §5). admin-flights.js sends
+       repository honour (fix plan §12; execution step 5). admin-flights.js sends
        search/airlineId/status/page/size and renders whatever comes back, so the
        mock has to filter and page HERE — handing back the whole store would make
        a migrated page render every row while its counts said "8", and the two
@@ -620,7 +620,7 @@ var MOCK_POST_ROUTES = [
         return { token: mockJwt(user), user: publicUser(user) };
     } },
 
-    /* POST /api/admin/flights — create (fix plan §5). Returns the bare flight
+    /* POST /api/admin/flights — create (fix plan §12; execution step 5). Returns the bare flight
        object, which is what FlightController.create returns. */
     { pattern: /^\/api\/admin\/flights$/, handle: function (match, params, body) {
         var record = mockFlightBody(body);
@@ -631,7 +631,7 @@ var MOCK_POST_ROUTES = [
 
 /* =====================================================
    PUT / DELETE — the write verbs the admin panel needs
-   (fix plan §3, added 2026-09-18)
+   (fix plan §12 steps 4–5 need these; execution step 3, added 2026-09-18)
 
    These tables exist BEFORE any page uses them. `api.js` exposed only
    apiGet/apiPost until now, which is why every admin module wrote straight
@@ -642,7 +642,7 @@ var MOCK_POST_ROUTES = [
 
    Each module's routes are added HERE as that module is migrated off its
    private store, so a handler always ships beside the page that calls it
-   (fix plan §5 does the Flights module that way). An unmapped route is not
+   (fix-plan §12 execution step 5 does the Flights module that way). An unmapped route is not
    silent: `mockRequest` below answers 404 NOT_IMPLEMENTED.
    ===================================================== */
 var MOCK_PUT_ROUTES = [

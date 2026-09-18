@@ -414,7 +414,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <!-- Fix plan §4: this page signs in against the REAL API now, so it loads the
+    <!-- Fix plan §13 (execution step 4): this page signs in against the REAL API now, so it loads the
          shared layer (config → api) instead of carrying its own mock session. -->
     <script src="assets/js/config.js"></script>
     <script src="assets/js/api.js"></script>
@@ -514,7 +514,7 @@
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying…';
 
-                /* REAL auth (fix plan §4, §13). Worth stating what this replaces: the
+                /* REAL auth (fix plan §13; execution step 4). Worth stating what this replaces: the
                    mock minted `role: 'ADMIN'` from whatever was typed, so every string
                    was a valid administrator and the panel's front door could not fail.
                    Credentials are now checked by the backend against a BCrypt hash, and

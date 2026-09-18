@@ -1,7 +1,7 @@
 /* =========================================
    YATRA ADMIN — FLIGHTS PAGE JS
    CRUD (Master Plan §2.1 #4). Full backend wiring as of the
-   fix-plan §5 pass (2026-09-18) — this page is the REFERENCE
+   fix-plan §12/§13 execution step 5 (2026-09-18) — this page is the REFERENCE
    PATTERN every other admin module is migrated to follow.
 
    Reads  : GET /api/admin/flights, and GET /api/airlines +
