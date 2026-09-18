@@ -3,21 +3,19 @@
    Fills the §2.5 stat cards + the recent-
    bookings table from the API layer
    (item 16 — GET /api/admin/dashboard):
-   - airlines (admin-airlines.js store)
-   - flights  (admin-flights.js store)
-   - bookings (esewaConfirm.js on PAY
-     success / admin-bookings.js seeds)
-   - users    (admin-users.js store)
+   - bookings (the recent-bookings table)
+   - stats    (the seven §2.5 cards)
 
-   Honest-numbers policy:
-   - Airlines/Flights/Users fall back to
-     their SEED sizes (4 / 6 / 10) only
-     while those stores are empty — the
-     owning pages self-seed on first open.
-   - Bookings-family cards are always real
-     (0 when nothing is booked yet).
-   Phase 13: these aggregates move into
-   GET /api/admin/dashboard server-side.
+   Phase 13 moved every aggregate into
+   GET /api/admin/dashboard: the endpoint
+   answers the booking rows and a `stats`
+   block that it computes with count/sum
+   queries, and the mock route in api.js
+   mirrors that shape (including the old
+   seed-size fallbacks, which live there
+   now). This file is a renderer only —
+   no page-side arithmetic is left, so a
+   card can never disagree with the API.
    ========================================= */
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (s, c = document) => c.querySelector(s);
@@ -28,10 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadDashboard() {
     const resp = await apiGet('/api/admin/dashboard');
     return {
-      airlines: Array.isArray(resp.airlines) ? resp.airlines : [],
-      flights: Array.isArray(resp.flights) ? resp.flights : [],
       bookings: Array.isArray(resp.bookings) ? resp.bookings : [],
-      users: Array.isArray(resp.users) ? resp.users : []
+      /* Phase 13 — the seven §2.5 numbers, computed by the endpoint (and by the
+         mock, which mirrors it). Both modes answer this key. */
+      stats: resp.stats || null
     };
   }
 
@@ -64,34 +62,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- Stat cards ---------- */
+  /* Phase 13 — renderer only. The endpoint computes the seven numbers (and the
+     mock mirrors it), so there is no page-side arithmetic left to disagree with
+     the API and no seed-size fallback to hide a real 0. */
   function renderStats(data) {
-    const { airlines, flights, bookings, users } = data;
+    const stats = data.stats || {};
 
-    const live = bookings.filter((b) => b.status !== 'Cancelled');
-    const revenue = live.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-    const todayIso = new Date().toISOString().slice(0, 10);
-    const todays = bookings.filter(
-      (b) => String(b.createdAt || '').slice(0, 10) === todayIso
-    ).length;
-    const pending = bookings.filter((b) => b.paymentStatus === 'Pending').length;
+    if (!data.stats) {
+      console.warn('Dashboard: the endpoint answered no `stats` block — showing zeros.');
+    }
 
-    const usersEl = $('#statUsers');
-    usersEl.textContent = users.length ? users.length : 10; // 10 = seed size
-    if (!users.length) usersEl.title = 'Seed count — open Users to load the store';
-
-    const flightsEl = $('#statFlights');
-    flightsEl.textContent = flights.length ? flights.length : 6; // 6 = seed size
-    if (!flights.length) flightsEl.title = 'Seed count — open Flights to load the store';
-
-    const airlinesEl = $('#statAirlines');
-    airlinesEl.textContent = airlines.length ? airlines.length : 4; // 4 = seed size
-    if (!airlines.length) airlinesEl.title = 'Seed count — open Airlines to load the store';
-
-    $('#statBookings').textContent = bookings.length;
-    $('#statToday').textContent = todays;
-    $('#statRevenue').textContent = fmtShortNPR(revenue);
+    $('#statUsers').textContent = stats.totalUsers || 0;
+    $('#statFlights').textContent = stats.totalFlights || 0;
+    $('#statAirlines').textContent = stats.totalAirlines || 0;
+    $('#statBookings').textContent = stats.totalBookings || 0;
+    $('#statToday').textContent = stats.todaysBookings || 0;
+    $('#statRevenue').textContent = fmtShortNPR(stats.revenue);
     $('#statRevenue').title = 'Sum of confirmed (non-cancelled) bookings';
-    $('#statPending').textContent = pending;
+    $('#statPending').textContent = stats.pendingPayments || 0;
   }
 
   /* ---------- Recent bookings (live rows) ---------- */

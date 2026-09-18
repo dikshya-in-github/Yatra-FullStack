@@ -15,6 +15,7 @@ import io.virinchi.yatra.Model.Ticket;
 import io.virinchi.yatra.Repository.BookingRepository;
 import io.virinchi.yatra.Repository.PassengerRepository;
 import io.virinchi.yatra.Repository.PaymentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -92,6 +93,7 @@ import java.util.stream.Collectors;
  * money" and "give up the trip" impossible to do independently.
  */
 @Service
+@Slf4j
 public class PaymentService {
 
     /** The gateway the project integrates; the page posts it lower-cased. */
@@ -211,6 +213,12 @@ public class PaymentService {
             payment.setStatus(PENDING);
             payment.setTxnId(null);
             payment.setPaidAt(null);
+
+            //The roadmap's "payments processed" event (Phase 14). A re-initiated
+            //abandoned attempt is worth a line of its own: it is the same row coming
+            //back around, not a second transaction.
+            log.info("Payment re-initiated: booking={} method={} amount={} (previous attempt replaced)",
+                    booking.getId(), method, payment.getAmount());
             return PaymentInitiateResponse.of(payments.save(payment));
         }
 
@@ -220,6 +228,9 @@ public class PaymentService {
         payment.setAmount(booking.getTotalAmount());
         payment.setStatus(PENDING);
         payment.setCreatedAt(LocalDateTime.now());
+
+        log.info("Payment initiated: booking={} method={} amount={}",
+                booking.getId(), method, payment.getAmount());
         return PaymentInitiateResponse.of(payments.save(payment));
     }
 
@@ -303,6 +314,12 @@ public class PaymentService {
             booking.setPaymentStatus(FAILED_DISPLAY);
             bookings.save(booking);
 
+            //A decline is a business event, not an error: the booking stays PENDING
+            //with its seats held, so this is WARN-level — visible without being read
+            //as a system fault.
+            log.warn("Payment declined at the gateway: booking={} txn={} method={} — booking left PENDING, seats still held",
+                    booking.getId(), txnId, method);
+
             return PaymentVerifyResponse.failure(payment, answeredAt);
         }
 
@@ -316,6 +333,13 @@ public class PaymentService {
         bookingService.updateStatus(booking.getId(), CONFIRMED);
 
         Ticket ticket = ticketService.issue(booking, txnId);
+
+        //Money moving is the single most auditable event in the system, and the txn id
+        //is the gateway's own reference — the one thing a reconciliation needs. No
+        //customer name: the booking id and the txn id are enough to find the rest.
+        log.info("Payment succeeded: booking={} txn={} method={} amount={} -> booking CONFIRMED, pnr={}",
+                booking.getId(), txnId, method, payment.getAmount(), ticket.getPnr());
+
         return PaymentVerifyResponse.success(payment, ticket, answeredAt);
     }
 
@@ -363,6 +387,9 @@ public class PaymentService {
         booking.setPaymentStatus(REFUNDED_DISPLAY);
         bookings.save(booking);
 
+        log.info("Payment refunded: booking={} txn={} amount={} — booking status and ticket untouched",
+                booking.getId(), payment.getTxnId(), payment.getAmount());
+
         return describe(booking);
     }
 
@@ -405,7 +432,7 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public Page<AdminBookingResponse> listPaymentPage(String search, String method, String status,
                                                       String sort, int page, int size) {
-        PageRequest request = PageRequest.of(Math.max(page, 0), Math.max(size, 1), sortFor(sort));
+        PageRequest request = Paging.request(page, size, sortFor(sort));
 
         Page<Payment> rows = payments.searchPage(
                 like(search), idTerm(search), storedMethod(method), storedStatus(status), request);

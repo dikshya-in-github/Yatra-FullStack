@@ -111,7 +111,7 @@ public class DestinationService {
     @Transactional(readOnly = true)
     public Page<Destination> listPage(String search, String status, String sort,
                                       int page, int size) {
-        PageRequest request = PageRequest.of(Math.max(page, 0), Math.max(size, 1), sortFor(sort));
+        PageRequest request = Paging.request(page, size, sortFor(sort));
 
         return destinations.searchPage(like(search), blankToNull(status), request);
     }

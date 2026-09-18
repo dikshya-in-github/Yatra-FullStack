@@ -27,6 +27,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -110,6 +112,14 @@ class SeedApiTest {
      */
     @Test
     void seedingCreatesTheDemoDatasetAndRefusesASecondRun() throws Exception {
+        // Start from a database that is not seeded, as the assertions below describe.
+        // A *seeded* one is the demo's normal resting state, and the walk in postman/
+        // leaves the rows it creates behind by design, so "a seed succeeds" is not a
+        // property of the environment — it is a property of this test's own start.
+        // The reset removes exactly the marked rows, and the test transaction rolls the
+        // whole scene back either way. (Reset-then-seed is the documented re-run path.)
+        mockMvc.perform(adminPost("/api/admin/reset")).andExpect(status().isOk());
+
         mockMvc.perform(seed())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.action").value("SEED"))
@@ -235,6 +245,9 @@ class SeedApiTest {
      */
     @Test
     void resetRemovesSeedDataAndKeepsWhatYouMadeYourself() throws Exception {
+        // Seeded wherever the database started: this test describes what a reset does to
+        // a seeded dataset, so it has to create that dataset rather than find it.
+        mockMvc.perform(adminPost("/api/admin/reset")).andExpect(status().isOk());
         mockMvc.perform(seed()).andExpect(status().isOk());
 
         Airline seeded = airlines.findByIata("ST").orElseThrow();
@@ -267,6 +280,20 @@ class SeedApiTest {
                                 .formatted(onSeedFlightNo, seeded.getId())))
                 .andExpect(status().isOk());
 
+        // The seeded bookings' payment and ticket ids, captured before the reset so the
+        // check afterwards can be about *those* rows. A live Postman walk creates paid,
+        // ticketed bookings of its own, and a reset must leave them alone — so
+        // "payments.count() is zero" was a statement about the whole table rather than
+        // about the demo dataset, and it only held while nobody had used the app.
+        List<Integer> seededPaymentIds = new ArrayList<>();
+        List<Integer> seededTicketIds = new ArrayList<>();
+        for (Booking booking : bookings.findBySeededTrue()) {
+            payments.findByBookingId(booking.getId()).ifPresent(payment -> seededPaymentIds.add(payment.getId()));
+            tickets.findByBookingId(booking.getId()).ifPresent(ticket -> seededTicketIds.add(ticket.getId()));
+        }
+        assertThat(seededPaymentIds).as("one seeded payment per seeded booking").hasSize(BOOKINGS);
+        assertThat(seededTicketIds).as("one seeded ticket per seeded booking").hasSize(BOOKINGS);
+
         mockMvc.perform(adminPost("/api/admin/reset"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.action").value("RESET"))
@@ -290,8 +317,8 @@ class SeedApiTest {
         assertThat(flights.findBySeededTrue()).as("seeded flights gone").isEmpty();
         assertThat(bookings.findBySeededTrue()).as("seeded bookings gone").isEmpty();
         assertThat(users.findBySeededTrue()).as("seeded roster gone").isEmpty();
-        assertThat(payments.count()).as("seeded payments gone").isZero();
-        assertThat(tickets.count()).as("seeded tickets gone").isZero();
+        assertThat(payments.findAllById(seededPaymentIds)).as("seeded payments gone").isEmpty();
+        assertThat(tickets.findAllById(seededTicketIds)).as("seeded tickets gone").isEmpty();
 
         assertThat(airlines.findByIata(myIata)).as("your airline survives").isPresent();
         assertThat(flights.findByFlightNo(myFlightNo)).as("your flight survives").isPresent();
@@ -329,6 +356,12 @@ class SeedApiTest {
      */
     @Test
     void resetThenSeedReproducesTheSameDataset() throws Exception {
+        // Two resets, because the first one has work to do and the second one is the
+        // assertion: a reset with nothing seeded removes nothing and keeps nothing, so
+        // the two-step is always a valid way to start from scratch. Asking the *first*
+        // reset to report zero only held while the database happened to be unseeded.
+        mockMvc.perform(adminPost("/api/admin/reset")).andExpect(status().isOk());
+
         mockMvc.perform(adminPost("/api/admin/reset"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.counts.bookings").value(0))
@@ -362,6 +395,8 @@ class SeedApiTest {
     /** A bulk write and a destructive reset are admin-only, like every other admin write. */
     @Test
     void seedAndResetRequireAnAdminToken() throws Exception {
+        int seededFlightsWhenTheTestStarted = flights.findBySeededTrue().size();
+
         mockMvc.perform(post("/api/admin/seed"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("NOT_AUTHENTICATED"));
@@ -376,7 +411,12 @@ class SeedApiTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + userToken))
                 .andExpect(status().isForbidden());
 
-        assertThat(flights.findBySeededTrue()).as("a refused call writes nothing").isEmpty();
+        // "Writes nothing" measured against what was there when the test started, not
+        // against an empty table: the demo seed fills it, and a live walk adds to it.
+        refresh();
+        assertThat(flights.findBySeededTrue())
+                .as("a refused call writes nothing")
+                .hasSize(seededFlightsWhenTheTestStarted);
     }
 
     /* ------------------------------------------------------------------ *

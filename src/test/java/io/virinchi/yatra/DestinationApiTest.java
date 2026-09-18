@@ -18,6 +18,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -206,21 +207,31 @@ class DestinationApiTest {
      * One search box over three columns — the same reach the page's own filter has
      * ("Search city, airport or code…"). The airport <i>name</i> is included
      * because a marker typing "Tribhuvan" would otherwise get nothing.
+     *
+     * <p><b>"Tribhuvan" is asserted as membership, not as a count, and it is the one
+     * term here that has to be.</b> The row is tagged, so the tag, the city and the code
+     * belong to it alone — but Phase 7 seeds a real "Tribhuvan International Airport",
+     * so that one term matches two rows the moment the demo dataset is loaded. Counting
+     * it would have been a statement about whether the database happens to be seeded
+     * rather than about whether the name column is searched; it passed only while the
+     * database was empty. The collection's tickets folder was fixed for exactly this in
+     * Session 45 — assert the run's own row is <i>among</i> the matches.
      */
     @Test
     void theSearchBoxMatchesCityAirportNameAndCode() throws Exception {
         String tag = tag();
-        // The airport name carries the tag too: Phase 7 seeds a real "Tribhuvan
-        // International Airport", so an untagged name would match two rows and the
-        // assertion would be measuring the seed data.
         Destination destination = destinations.save(
                 row(tag + " Searchable", tag + " Tribhuvan International Airport", null));
 
-        for (String term : new String[]{tag, "searchable", "tribhuvan", destination.getCode().toLowerCase()}) {
+        for (String term : new String[]{tag, "searchable", destination.getCode().toLowerCase()}) {
             mockMvc.perform(get("/api/destinations").param("search", term))
                     .andExpect(jsonPath("$.destinations.length()").value(1))
                     .andExpect(jsonPath("$.destinations[0].id").value(destination.getId()));
         }
+
+        mockMvc.perform(get("/api/destinations").param("search", "tribhuvan"))
+                .andExpect(jsonPath("$.destinations[?(@.id == " + destination.getId() + ")].code")
+                        .value(contains(destination.getCode())));
     }
 
     @Test

@@ -3,6 +3,7 @@ package io.virinchi.yatra;
 import io.virinchi.yatra.Model.Airline;
 import io.virinchi.yatra.Repository.AirlineRepository;
 import io.virinchi.yatra.Security.JwtUtil;
+import io.virinchi.yatra.Service.Paging;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -193,6 +195,34 @@ class AirlineApiTest {
 
         assertThat(idOf(second)).as("the second page holds the other row")
                 .isNotEqualTo(idOf(first));
+    }
+
+    /**
+     * {@code size} is bounded at both ends, and this is the public list.
+     *
+     * <p>Paging is the one part of a list endpoint that is fed straight by the caller,
+     * and until Phase 14 the only sanitising anywhere was {@code Math.max(size, 1)}: no
+     * upper end, so {@code ?size=1000000} asked the server to materialise the whole table
+     * into one page. On {@code GET /api/airlines} — public, because the storefront is —
+     * that request needs no token and no account. Both ends are asserted here because
+     * they are the same bug: an unvalidated number reaching {@code PageRequest}. See
+     * {@link Paging}.
+     */
+    @Test
+    void anOutOfRangePageSizeIsBoundedRatherThanServed() throws Exception {
+        // Absurdly large: served, but capped at the ceiling.
+        mockMvc.perform(get("/api/airlines").param("page", "0").param("size", "1000000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(Paging.MAX_SIZE))
+                .andExpect(jsonPath("$.airlines.length()").value(lessThanOrEqualTo(Paging.MAX_SIZE)));
+
+        // Zero and negative: one row on the first page. PageRequest.of refuses a size
+        // below 1 outright, so without the clamp this is a 500 rather than a page.
+        mockMvc.perform(get("/api/airlines").param("page", "-5").param("size", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.airlines.length()").value(lessThanOrEqualTo(1)));
     }
 
     @Test

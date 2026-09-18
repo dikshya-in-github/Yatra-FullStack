@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b7c3a1e2-4f5d-4a6b-9c8e-1d2f3a4b5c6d",
     "name": "Yatra 2.0 — API",
-    "description": "Yatra 2.0 — domestic flight booking platform for Nepal (CPJ119 Advanced Java).\n\n## What is in here\n\n| Folder | Contents |\n|---|---|\n| **00 · Setup** | Sign in (captures the Bearer token), sign in as a customer, and the demo `seed` / `reset` calls. Run these first — everything under `/api/admin/**` needs a token. |\n| **Admin · Airlines** | the airline CRUD, the logo bytes endpoint (`ETag` + a conditional `304`) and its failure cases. |\n| **Admin · Destinations** | the Cloudinary upload, the destination CRUD, and the two list paths (admin + public) that share one body. |\n| **Admin · Flights** | the flight CRUD, the seat map it generates (a public read), the filters, and the route/airline validation failures. |\n| **Public · Booking write (Phase 6)** | `POST /api/bookings` — the wizard's own write, and the seat hold it leaves behind. |\n| **Admin · Bookings (Phase 9)** | `GET /api/admin/bookings` (search, filters, paging), `GET /api/admin/bookings/{id}`, `PUT /api/admin/bookings/{id}/status` — success and failure cases. |\n| **Payments (Phase 10)** | the eSewa gateway walk (`initiate` → `verify`, success **and** declined), the admin payments ledger, its filters and paging, and the refund. |\n| **Admin · Users (Phase 11)** | the user roster (search, filters, paging), create, edit, activate/deactivate, delete — the `ADMIN_ACCOUNT_PROTECTED` and `USER_HAS_BOOKINGS` refusals, and the per-account booking read behind them. |\n| **99 · Delete guards** | why a flight, airline or destination that is in use refuses to be deleted — and the *disable it instead* path that does work. |\n\n**Run order matters, and the folders are arranged for it.** A collection run walks airlines → destinations → flights → booking write → Phase 9 → payments → Phase 11 → the delete guards, which is also the order the modules depend on each other. Each create captures the id the next folder needs (`{{airlineId}}` → `{{newCodeFrom}}`/`{{newCodeTo}}` → `{{flightId}}` → `{{pendingBookingId}}`), so nothing is pasted between tabs by hand.\n\n**Not in here yet:** the auth surface beyond the two sign-ins (register, refresh) and the **tickets** module — Roadmap Phase 12, then Phase 15, *build it as you go*. The registration confirmation email (Phase 11's other half) needs a real mailbox and is described in the Users folder.\n\n## How to use it\n\n1. Start the app (`./mvnw spring-boot:run` in IntelliJ or the terminal) and import **both** files from `postman/`.\n2. Select the **Yatra 2.0 — local** environment (top-right). `baseUrl` defaults to `http://localhost:8080`; the collection carries the same defaults, so it also works with no environment selected.\n\n> **Where each value lives, and why it matters.** The environment holds only what a human configures (`baseUrl`, the demo account). The transient values — `{{adminToken}}`, `{{userToken}}`, the ids every create captures (`{{airlineId}}`, `{{destIdFrom}}`, `{{flightId}}`, `{{bookingId}}`, `{{pendingBookingId}}`), the codes it generates (`{{newIata}}`, `{{newCodeFrom}}`, `{{newFlightNo}}`) and `{{today}}` — are **collection** variables on purpose: Postman resolves an environment variable *before* a collection variable, so an `adminToken` defined in the environment would shadow the one the sign-in request captures and every admin call would go out with an empty Bearer token.\n3. Run **00 · Setup**, in order: **Sign in (admin)** → **Seed the demo data** → **Sign in (customer)**. The sign-in requests store their tokens in `{{adminToken}}` / `{{userToken}}` automatically — every admin request sends the token as a Bearer header, and nothing else needs copying between tabs.\n\n## Booting from an empty database (the circle you will hit)\n\n`POST /api/admin/seed` is admin-only, and the `admin@yatra.com` account the sign-in uses is **created by that seed** — so on a database that has never been seeded there is no admin to authorise the first seed. Registering does not close the circle either: `POST /api/auth/register` creates a `USER`.\n\nOne manual step, once per database:\n\n1. `POST /api/auth/register` (that endpoint is public — from Signup, or by hand).\n2. `UPDATE users SET role = 'ADMIN' WHERE email = '<that account>';`\n3. **Sign in again.** The JWT is a snapshot of the role at sign-in time, so a token minted *before* the promotion still claims `USER` and every admin call answers **403**.\n4. Now `POST /api/admin/seed` works, and `admin@yatra.com` / `Yatra@123` exists afterwards for everyone else.\n\nVerified while writing this: against the current database, `POST /api/auth/login` as `admin@yatra.com` answers **401 `INVALID_CREDENTIALS`** — the live schema is not seeded right now, which is exactly this situation.\n\n## Running the whole collection\n\n**Work down the folders in order.** A request that needs an id reads it from a collection variable the previous folder's create filled in — the module folders are written as a single walk, not as twenty unrelated requests.\n\n**A re-run leaves its own rows behind — that is the design, not a leak.** The run creates a flight, a booking, two airports and an airline; the booking holds a seat, so the flight can no longer be deleted and neither can the airline or the airports its route uses. *99 · Delete guards* runs those deletes on purpose to show the refusal, and `POST /api/admin/reset` deliberately does **not** remove rows the seeder did not create.\n\n## Five things worth knowing before you judge a red test\n\n- **A booking's `status` is title case on purpose** (`Pending` / `Confirmed` / `Cancelled`), because `admin-bookings.js` compares those exact strings for its badge, its filter options and its cancel button — an uppercase body would silently colour every row red and hide the cancel action (risk R16 in the standards doc). Several tests here assert that vocabulary on purpose: if they fail, a page is about to break, not the test.\n- **The write requests really do change rows.** `Confirm` / `Cancel` are the admin actions; `POST /api/admin/reset` followed by `POST /api/admin/seed` puts the demo dataset back exactly as it was.\n- **The creates invent their own codes** (`{{newIata}}`, `{{newCodeFrom}}`, `{{newFlightNo}}`) from the clock, so a second run does not 409 on the row the first one made. If one ever does collide (`409 IATA_EXISTS` / `DESTINATION_CODE_EXISTS` / `FLIGHT_NO_EXISTS`), edit that variable on the collection's **Variables** tab and resend — the request says so in its own failure message.\n- **The payments folder answers with `bookings`, not `payments`.** `admin-payments.js` derives one transaction per *booking* and reads `resp.bookings`; a purpose-built payments array would leave that undefined and the page would quietly fall back to its localStorage demo seeds (risk R16). Relatedly, `outcome` in the verify body is a **mock-only** switch: a real gateway answers rather than being told.\n- **One request is disabled by default:** *Upload a destination image* needs a file from your machine, so choose one in its form-data row and enable it. Everything else runs as-is, and the destination creates work with no image at all (the empty string is a legitimate `imageUrl`).\n\nThe admin credentials below are the seeder's documented demo account (`SeedService.DEMO_PASSWORD`), not a secret — they exist so demo data nobody can sign into is not the demo data. See the standards doc, open question 8."
+    "description": "Yatra 2.0 — domestic flight booking platform for Nepal (CPJ119 Advanced Java).\n\n## What is in here\n\n| Folder | Contents |\n|---|---|\n| **00 · Setup** | Sign in (captures the Bearer token), the demo `reset` then `seed`, sign in again (the reset rebuilds the administrator, so its id is re-captured), then sign in as a customer. Run these first, in that order — everything under `/api/admin/**` needs a token. |\n| **Admin · Airlines** | the airline CRUD, the logo bytes endpoint (`ETag` + a conditional `304`) and its failure cases. |\n| **Admin · Destinations** | the Cloudinary upload, the destination CRUD, and the two list paths (admin + public) that share one body. |\n| **Admin · Flights** | the flight CRUD, the seat map it generates (a public read), the filters, and the route/airline validation failures. |\n| **Public · Booking write (Phase 6)** | `POST /api/bookings` — the wizard's own write, and the seat hold it leaves behind. |\n| **Admin · Bookings (Phase 9)** | `GET /api/admin/bookings` (search, filters, paging), `GET /api/admin/bookings/{id}`, `PUT /api/admin/bookings/{id}/status` — success and failure cases. |\n| **Payments (Phase 10)** | the eSewa gateway walk (`initiate` → `verify`, success **and** declined), the admin payments ledger, its filters and paging, and the refund. |\n| **Admin · Users (Phase 11)** | the user roster (search, filters, paging), create, edit, activate/deactivate, delete — the `ADMIN_ACCOUNT_PROTECTED` and `USER_HAS_BOOKINGS` refusals, and the per-account booking read behind them. |\n| **Admin · Tickets (Phase 12)** | the issued-ticket read: search by PNR / ticket number / customer / flight / booking id, the page's booking-status dropdown, the ticket's own `ISSUED` / `CANCELLED`, paging, the detail read and its 404, and both layers of the admin guard. |\n| **Admin · Dashboard (Phase 13)** | the dashboard read: the two keys the page renders (`bookings` + the seven §2.5 `stats` cards), and the four cross-checks that compare each card against the endpoint listing the same table — plus both layers of the admin guard. |\n| **99 · Delete guards** | why a flight, airline or destination that is in use refuses to be deleted — and the *disable it instead* path that does work. |\n\n**Run order matters, and the folders are arranged for it.** A collection run walks airlines → destinations → flights → booking write → Phase 9 → payments → Phase 11 → tickets (Phase 12) → the dashboard (Phase 13) → the delete guards, which is also the order the modules depend on each other. Each create captures the id the next folder needs (`{{airlineId}}` → `{{newCodeFrom}}`/`{{newCodeTo}}` → `{{flightId}}` → `{{pendingBookingId}}`), so nothing is pasted between tabs by hand.\n\n**The tickets module joined it at Phase 12, and the dashboard at Phase 13** — see those folders. Phase 13 is the one folder that asserts almost nothing about its own endpoint in isolation: it reads the four other lists and checks that the cards agree with them, because the roadmap's checkpoint for a dashboard is that its numbers match the database rather than that the body has the right keys. What is still not here is the auth surface beyond the two sign-ins (register, refresh). The registration confirmation email (Phase 11's other half) needs a real mailbox and is described in the Users folder.\n\n## How to use it\n\n1. Start the app (`./mvnw spring-boot:run` in IntelliJ or the terminal) and import **both** files from `postman/`.\n2. Select the **Yatra 2.0 — local** environment (top-right). `baseUrl` defaults to `http://localhost:8080`; the collection carries the same defaults, so it also works with no environment selected.\n\n> **Where each value lives, and why it matters.** The environment holds only what a human configures (`baseUrl`, the demo account). The transient values — `{{adminToken}}`, `{{userToken}}`, the ids every create captures (`{{airlineId}}`, `{{destIdFrom}}`, `{{flightId}}`, `{{bookingId}}`, `{{pendingBookingId}}`), the codes it generates (`{{newIata}}`, `{{newCodeFrom}}`, `{{newFlightNo}}`) and `{{today}}` — are **collection** variables on purpose: Postman resolves an environment variable *before* a collection variable, so an `adminToken` defined in the environment would shadow the one the sign-in request captures and every admin call would go out with an empty Bearer token.\n3. Run **00 · Setup**, in order: **Sign in (admin)** → **Reset the demo data** → **Seed the demo data** → **Sign in (admin) again** → **Sign in (customer)**. The sign-in requests store their tokens in `{{adminToken}}` / `{{userToken}}` automatically — every admin request sends the token as a Bearer header, and nothing else needs copying between tabs.\n\n## Booting from an empty database (the circle you will hit)\n\n`POST /api/admin/seed` is admin-only, and the `admin@yatra.com` account the sign-in uses is **created by that seed** — so on a database that has never been seeded there is no admin to authorise the first seed. Registering does not close the circle either: `POST /api/auth/register` creates a `USER`.\n\nOne manual step, once per database:\n\n1. `POST /api/auth/register` (that endpoint is public — from Signup, or by hand).\n2. `UPDATE users SET role = 'ADMIN' WHERE email = '<that account>';`\n3. **Sign in again.** The JWT is a snapshot of the role at sign-in time, so a token minted *before* the promotion still claims `USER` and every admin call answers **403**.\n4. Now `POST /api/admin/seed` works, and `admin@yatra.com` / `Yatra@123` exists afterwards for everyone else.\n\n**The cheaper way, if you have the signing key:** mint one admin JWT by hand and use it for that first seed. The token is an HS256 JWT signed with `yatra.jwt.secret` (the `local` profile reads it from `application-local.properties`) and the claims are the ones `JwtUtil` writes — `sub` (the numeric user id), `name`, `email`, `role: \"ADMIN\"`, `iat`, `exp`. Sign it, send it as `Authorization: Bearer …` to `POST /api/admin/seed`, and the seeded `admin@yatra.com` account exists from then on, so the sign-in request above works and nothing else needs hand-editing. That is how this collection's own live walk was bootstrapped.\n\nVerified while writing this: against the current database, `POST /api/auth/login` as `admin@yatra.com` answers **401 `INVALID_CREDENTIALS`** — the live schema is not seeded right now, which is exactly this situation.\n\n## Running the whole collection\n\n**Work down the folders in order.** A request that needs an id reads it from a collection variable the previous folder's create filled in — the module folders are written as a single walk, not as twenty unrelated requests.\n\n**A re-run leaves its own rows behind — that is the design, not a leak.** The run creates a flight, a booking, two airports and an airline; the booking holds a seat, so the flight can no longer be deleted and neither can the airline or the airports its route uses. *99 · Delete guards* runs those deletes on purpose to show the refusal, and `POST /api/admin/reset` deliberately does **not** remove rows the seeder did not create.\n\n## Eight things worth knowing before you judge a red test\n\n- **A booking's `status` is title case on purpose** (`Pending` / `Confirmed` / `Cancelled`), because `admin-bookings.js` compares those exact strings for its badge, its filter options and its cancel button — an uppercase body would silently colour every row red and hide the cancel action (risk R16 in the standards doc). Several tests here assert that vocabulary on purpose: if they fail, a page is about to break, not the test.\n- **The write requests really do change rows.** `Confirm` / `Cancel` are the admin actions; `POST /api/admin/reset` followed by `POST /api/admin/seed` puts the demo dataset back exactly as it was — **in that order**, because `reset` only deletes and `seed` is what recreates. Give the reset a few minutes: it deletes row by row and takes roughly 80 seconds against the hosted database.\n- **The creates invent their own codes** (`{{newIata}}`, `{{newCodeFrom}}`, `{{newFlightNo}}`) from the clock, so a second run does not 409 on the row the first one made. If one ever does collide (`409 IATA_EXISTS` / `DESTINATION_CODE_EXISTS` / `FLIGHT_NO_EXISTS`), edit that variable on the collection's **Variables** tab and resend — the request says so in its own failure message.\n- **The payments folder answers with `bookings`, not `payments`.** `admin-payments.js` derives one transaction per *booking* and reads `resp.bookings`; a purpose-built payments array would leave that undefined and the page would quietly fall back to its localStorage demo seeds (risk R16). Relatedly, `outcome` in the verify body is a **mock-only** switch: a real gateway answers rather than being told.\n- **One request is disabled by default:** *Upload a destination image* needs a file from your machine, so choose one in its form-data row and enable it. The Postman app honours that flag; a CLI runner (`newman`) does not, so its tests only register when a file is attached and a headless run reports it as skipped rather than red. Everything else runs as-is, and the destination creates work with no image at all (the empty string is a legitimate `imageUrl`).\n- **The tickets folder carries two status filters, and they are two different columns.** `status` is the *booking's* vocabulary (`Confirmed` / `Cancelled`) — the dropdown `admin-tickets.js` really sends, where \"Issued\" and \"Voided\" are only its labels — while `ticketStatus` is the document's own `ISSUED` / `CANCELLED`. The refund the payments folder runs after the ticket is minted moves the payment row and nothing else, so this walk leaves an `ISSUED` ticket under a `Refunded` payment: the folder asserts that rather than assuming it.\n\n- **The dashboard answers exactly two keys, and its cards are checked against other endpoints rather than against themselves.** `GET /api/admin/dashboard` is `{ bookings, stats }` — the recent-bookings rows and the seven §2.5 cards. When a dashboard test goes red, read the definition before the query: *Revenue* is the sum of `amount` over **non-cancelled** bookings (so a refunded booking still counts and a cancelled one does not), *Today's Bookings* counts bookings **created** today, and *Pending Payments* counts the booking's `paymentStatus` — not the payment row's `PENDING`. A money-first implementation is wrong here, not the test.\n\n- **A query string has to be in the URL's *parameters*, not only in its `raw` text.** Editing `raw` in the JSON file is enough for the Postman app, which re-parses it whenever the request opens — but a CLI runner (`newman`) resolves the structured parts and sends **no** parameters at all. That is how one ledger request fetched the whole table instead of one transaction while the request itself still looked right in the app. Edit a URL by hand, edit its `query` array too.\n\nThe admin credentials below are the seeder's documented demo account (`SeedService.DEMO_PASSWORD`), not a secret — they exist so demo data nobody can sign into is not the demo data. See the standards doc, open question 8."
   },
   "event": [
     {
@@ -231,12 +231,47 @@
       "key": "spareUserPhone",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "dashTotalBookings",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashTotalUsers",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashTotalFlights",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashTotalAirlines",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashRevenue",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashTodaysBookings",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashPendingPayments",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
     {
       "name": "00 · Setup",
-      "description": "Prerequisites. The seed needs a token, so sign in first — or run Seed once with the token you already have.",
+      "description": "Prerequisites, in the order they run: **sign in (admin)** → **reset** → **seed** → **sign in (admin) again** → **sign in (customer)**.\n\n*Reset* comes first because of what it does: it **only deletes** the rows the seeder created (`reset` does not put them back — `seed` does), so running it *after* the seed — or on its own — leaves every folder below with no demo data at all. Reset → seed is also the pair that makes a re-run repeatable, since the seeder refuses a second `seed` with **409 `ALREADY_SEEDED`** rather than doubling the dataset.",
       "item": [
         {
           "name": "Sign in (admin) — captures {{adminToken}}",
@@ -299,6 +334,52 @@
           }
         },
         {
+          "name": "Reset the demo data (keeps everything you made)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('what the reset deliberately kept is reported, not silent', () => {",
+                  "    pm.expect(body).to.have.property('counts');",
+                  "    pm.expect(body).to.have.property('kept');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "reset"
+              ]
+            },
+            "description": "Removes the rows the seeder created — and **only** those, decided by a `seeded` marker column, never by matching names or flight numbers (risk R14: a reset that deleted *everything whose flight number is U4 951* would take an admin's own flight with it).\n\nA seeded carrier or account that your own rows still reference is **kept** and named in `kept`, with its marker left on so a later reset finishes the job. Destinations are never touched — they are reference data the whole app needs.\n\n**It is the slowest request in this collection, and that is not a hang.** It deletes row by row — the demo set is 8 bookings, 12 flights (682 seat rows), 10 accounts and 4 airlines — which measured about **80 seconds** against the hosted database. A client-side request timeout shorter than that will abort the *wait* while the server keeps working, and the next request then races a delete that is still in flight (live, that surfaced as `500` from a stale row on `PUT /api/admin/bookings/{id}/status`). Give it a few minutes."
+          }
+        },
+        {
           "name": "Seed the demo data",
           "event": [
             {
@@ -350,7 +431,7 @@
           }
         },
         {
-          "name": "Reset the demo data (keeps everything you made)",
+          "name": "Sign in (admin) again — re-captures {{adminUserId}} the reset invalidated",
           "event": [
             {
               "listen": "test",
@@ -360,39 +441,53 @@
                   "pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "",
                   "const body = pm.response.json();",
-                  "pm.test('what the reset deliberately kept is reported, not silent', () => {",
-                  "    pm.expect(body).to.have.property('counts');",
-                  "    pm.expect(body).to.have.property('kept');",
-                  "});"
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.collectionVariables.set('adminToken', body.token);",
+                  "    // The seeded administrator's own id — the Phase 11 folder uses it to",
+                  "    // show that an ADMIN account refuses demotion, deactivation and deletion.",
+                  "    pm.collectionVariables.set('adminUserId', String(body.user.userId));",
+                  "    pm.test('an ADMIN token was returned', () => {",
+                  "        pm.expect(body.token).to.be.a('string').and.not.empty;",
+                  "        pm.expect(body.user.role).to.eql('ADMIN');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('sign-in failed — is the demo data seeded?', () => {",
+                  "        pm.expect.fail('Run 00 · Setup → Seed the demo data first, then retry. '",
+                  "            + 'Response: ' + (body.message || pm.response.text()));",
+                  "    });",
+                  "}"
                 ]
               }
             }
           ],
           "request": {
             "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
+              "type": "noauth"
             },
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"loginId\": \"{{adminEmail}}\",\n    \"password\": \"{{adminPassword}}\"\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/reset",
+              "raw": "{{baseUrl}}/api/auth/login",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "admin",
-                "reset"
+                "auth",
+                "login"
               ]
             },
-            "description": "Removes the rows the seeder created — and **only** those, decided by a `seeded` marker column, never by matching names or flight numbers (risk R14: a reset that deleted *everything whose flight number is U4 951* would take an admin's own flight with it).\n\nA seeded carrier or account that your own rows still reference is **kept** and named in `kept`, with its marker left on so a later reset finishes the job. Destinations are never touched — they are reference data the whole app needs."
+            "description": "The same call as the first sign-in, and it exists because of what the two requests above it do. `reset` **deletes** the seeded accounts and `seed` recreates them, so `admin@yatra.com` comes back with a **new id** — the `{{adminUserId}}` the first sign-in captured now names a row that does not exist, and the Phase 11 folder addresses the *current* administrator by id. Re-running the sign-in after the seed is how the walk keeps that id true."
           }
         },
         {
@@ -1199,16 +1294,32 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "// This request ships disabled: the file has to come from the machine running the",
+                  "// collection. The Postman app honours that flag and skips it; `newman` and the other",
+                  "// CLI runners do not, so the assertions below only register when a file is actually",
+                  "// attached. A run with none reports this step as skipped, not as a failure.",
+                  "const form = pm.request && pm.request.body ? pm.request.body.formdata : null;",
+                  "let rows = [];",
+                  "if (form) {",
+                  "    rows = typeof form.toJSON === 'function' ? form.toJSON() : (Array.isArray(form) ? form : []);",
+                  "}",
+                  "const attached = rows.some(row => row && row.key === 'file' && (row.src || row.value));",
                   "",
-                  "const body = pm.response.json();",
-                  "pm.test('the upload answers the pair the row will store', () => {",
-                  "    pm.expect(body.imageUrl).to.be.a('string').and.match(/^https?:/);",
-                  "    pm.expect(body.publicId).to.be.a('string').and.not.empty;",
-                  "});",
+                  "if (!attached) {",
+                  "    console.log('SKIPPED — no file in this request\\'s form-data row. Pick one and enable the request to exercise the upload.');",
+                  "} else {",
+                  "    pm.test('200 OK', () => pm.response.to.have.status(200));",
                   "",
-                  "pm.collectionVariables.set('newImageUrl', body.imageUrl);",
-                  "pm.collectionVariables.set('newImagePublicId', body.publicId);"
+                  "    const body = pm.response.json();",
+                  "",
+                  "    pm.test('the upload answers the pair the row will store', () => {",
+                  "        pm.expect(body.imageUrl).to.be.a('string').and.match(/^https?:/);",
+                  "        pm.expect(body.publicId).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "",
+                  "    pm.collectionVariables.set('newImageUrl', body.imageUrl);",
+                  "    pm.collectionVariables.set('newImagePublicId', body.publicId);",
+                  "}"
                 ]
               }
             }
@@ -2510,6 +2621,61 @@
             },
             "description": "The same public seat map as before, read again after the booking — the cheapest honest proof that the write above really held a seat rather than only promising one.\n\n**How a seat is claimed.** Not by an insert: the service runs `UPDATE seat SET status = 'BOOKED' WHERE id = ? AND status = 'AVAILABLE'` and reads the **row count**. Measured on this stack, the seat's `(flight_id, seat_number)` unique key cannot catch a second booking of an already-generated row, so the database arbitrates through that conditional update — which is why a double book is impossible even when two requests arrive together. Half the map is verified here because the `201`-style confirmation lives in Phase 9's `Confirm` request, which refuses until a payment exists."
           }
+        },
+        {
+          "name": "Double book the same seat — 409 SEAT_ALREADY_BOOKED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict to a second booking of a held seat', () => pm.response.to.have.status(409));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('the refusal is the project error shape, not an HTML 409', () => {",
+                  "    pm.expect(body).to.have.property('error');",
+                  "    pm.expect(body).to.have.property('message');",
+                  "});",
+                  "pm.test('the guard names the seat, so a caller can pick another', () => {",
+                  "    pm.expect(body.error, 'the atomic UPDATE\\'s row count decided; this is the loser').to.eql('SEAT_ALREADY_BOOKED');",
+                  "    pm.expect(body.message).to.include('1A');",
+                  "});",
+                  "pm.test('the refusal created nothing — the pending booking id is still the first one', () => {",
+                  "    pm.expect(pm.collectionVariables.get('pendingBookingId'),",
+                  "        'nothing was captured or overwritten by the refused write').to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"contact\": {\n        \"title\": \"Mr\",\n        \"firstName\": \"Postman\",\n        \"middleName\": \"\",\n        \"lastName\": \"Runner\",\n        \"email\": \"postman.runner@example.com\",\n        \"phone\": \"+977 9800000000\",\n        \"invoiceParty\": \"\",\n        \"panNo\": \"\",\n        \"isPassenger\": true\n    },\n    \"passengers\": [\n        {\n            \"title\": \"Mr\",\n            \"firstName\": \"Postman\",\n            \"lastName\": \"Runner\",\n            \"nationality\": \"Nepali\",\n            \"type\": \"ADT\",\n            \"seatNumber\": \"1A\"\n        }\n    ],\n    \"flight\": {\n        \"flightNo\": \"{{newFlightNo}}\",\n        \"from\": \"{{destCodeFrom}}\",\n        \"to\": \"{{destCodeTo}}\",\n        \"date\": \"{{today}}\",\n        \"depart\": \"06:15\",\n        \"arrive\": \"07:30\",\n        \"airline\": \"Yatra Test Air {{newIata}}\",\n        \"flightClass\": \"Economy\",\n        \"refundable\": true,\n        \"pricePerPassenger\": 9999,\n        \"passengerCount\": 1,\n        \"totalPrice\": 9999\n    },\n    \"amount\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "description": "Roadmap Phase 6's headline guard, fired explicitly — the second booking of a seat the first booking already holds, and the **409 `SEAT_ALREADY_BOOKED`** that answers it.\n\n**Why it is a request and not just a unit test.** `BookingApiTest` covers the same path, but the brief names the double-booking 409 as the failure case this collection must include, and a checkpoint a marker can watch fail is worth more than one they have to read. The request is deliberately the *same body as the create above* with **one** edit: `seatNumber: \"1A\"` on the passenger. That seat is the one the unpaged wizard payload just claimed (the earlier seat-map request asserts it is the only `BOOKED` seat), so the service's conditional `UPDATE seat SET status = 'BOOKED' WHERE id = ? AND status = 'AVAILABLE'` touches **zero rows** and the loser gets the refusal instead of a silent seat swap.\n\n**It creates nothing**, which is why it can sit here without disturbing the walk: the 409 leaves `{{pendingBookingId}}` pointing at the first (payable) booking that Phase 9 and the payments folder both depend on."
+          }
         }
       ]
     },
@@ -2539,10 +2705,17 @@
                   "});",
                   "",
                   "if (body.bookings.length > 0) {",
-                  "    // A row the status-change requests below can actually move. A PENDING one would make",
-                  "    // *revert to PENDING* a 200 no-op instead of the 409 it is there to show, and the",
-                  "    // booking write in the previous folder creates exactly such a PENDING row.",
-                  "    const row = body.bookings.find((booking) => booking.status !== 'Pending')",
+                  "    // A row the status-change requests below can actually move — and one they can move",
+                  "    // *honestly*. Confirmed **and** Paid is the pair those two requests assume:",
+                  "    //   - a PENDING row would make *revert to PENDING* a 200 no-op instead of the 409 it",
+                  "    //     is there to show, and the booking write in the previous folder creates one;",
+                  "    //   - a row whose payment is already 'Refunded' — this walk's own leftovers from an",
+                  "    //     earlier run, which the payments folder refunds — fails 'the payment row is",
+                  "    //     reflected as Paid' and makes 'nothing else moved' compare Refunded with itself.",
+                  "    // Setup's reset + seed puts a fresh set of Confirmed/Paid demo bookings back every",
+                  "    // run; the fallbacks keep this working on a database somebody has clicked through by hand.",
+                  "    const row = body.bookings.find((booking) => booking.status === 'Confirmed' && booking.paymentStatus === 'Paid')",
+                  "        || body.bookings.find((booking) => booking.status !== 'Pending')",
                   "        || body.bookings[0];",
                   "    pm.collectionVariables.set('bookingId', row.id);",
                   "}",
@@ -3541,7 +3714,16 @@
                 "initiate"
               ]
             },
-            "description": "Opens a transaction for the pending booking the wizard created, and answers the redirect `payment.js` follows. **No token is sent** — the storefront books for signed-out visitors, so the payment writes are public in exactly the same way (and with the same cost: no rate limit, and `verify` is a gateway callback with no callback signature — see the standards doc).\n\nTwo keys in this body are **accepted and ignored**: `amount` (the request claims 1.00 and the recorded figure is the booking's own total — a number that arrives in a JSON body is a number a browser can edit) and `promoCode` (the mock's promo discount happens inside the gateway pages, and the row records what the booking says is owed).\n\n`method: \"esewa\"` is what the page posts; the response reports the stored spelling `eSewa`, because that is what `admin-payments.html`'s filter dropdown compares against."
+            "description": "Opens a transaction for the pending booking the wizard created, and answers the redirect `payment.js` follows. **No token is sent** — the storefront books for signed-out visitors, so the payment writes are public in exactly the same way (and with the same cost: no rate limit, and `verify` is a gateway callback with no callback signature — see the standards doc).\n\nTwo keys in this body are **accepted and ignored**: `amount` (the request claims 1.00 and the recorded figure is the booking's own total — a number that arrives in a JSON body is a number a browser can edit) and `promoCode` (the mock's promo discount happens inside the gateway pages, and the row records what the booking says is owed).\n\n`method: \"esewa\"` is what the page posts; the response reports the stored spelling `eSewa`, because that is what `admin-payments.html`'s filter dropdown compares against.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"bookingId\": {{pendingBookingId}},\n    \"method\": \"esewa\",\n    \"amount\": 1,\n    \"promoCode\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           }
         },
         {
@@ -3733,6 +3915,13 @@
                 "api",
                 "admin",
                 "payments"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{txnId}}",
+                  "description": "This run's own gateway reference. The search spans the txn id, booking id, contact block, flight number, PNR and ticket number, so this one term picks out exactly this transaction — which is why the whole table coming back is the failure it looks like."
+                }
               ]
             },
             "description": "The monitoring half. **The wrapper key is `bookings`, not `payments`, and that is deliberate**: `admin-payments.js` has no payments store — it derives one transaction per booking from `resp.bookings`, so a purpose-built payments array would leave that undefined and the page would quietly render its localStorage demo seeds (risk R16).\n\nOnly bookings that reached the gateway are here, which is what makes the page's *Transactions* tile count transactions.",
@@ -4127,7 +4316,17 @@
                 "refund"
               ]
             },
-            "description": "A refund gives money back, and a declined attempt never took any. The endpoint refuses a transaction that is `PENDING` or `FAILED` for the same reason it refuses one that does not exist — there is nothing to return. Only a `SUCCESS` payment can be refunded."
+            "description": "A refund gives money back, and a declined attempt never took any. The endpoint refuses a transaction that is `PENDING` or `FAILED` for the same reason it refuses one that does not exist — there is nothing to return. Only a `SUCCESS` payment can be refunded.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         },
         {
@@ -4244,7 +4443,17 @@
                 "refund"
               ]
             },
-            "description": "The payments page's only write. It changes **two rows in step** — the payment row becomes `REFUNDED` (what the gateway did) and the booking's `paymentStatus` becomes `Refunded` (what every page displays) — and **nothing else**: the booking stays `Confirmed`, its seats stay counted and its ticket stays issued, because *refund the money* and *give up the trip* are two separate admin decisions (R4's cancel policy owns the second).\n\nAddressed by **booking id**, the key the page holds: a payment is 1:1 with its booking, so naming either one names the same transaction, and it is the id every other admin page speaks."
+            "description": "The payments page's only write. It changes **two rows in step** — the payment row becomes `REFUNDED` (what the gateway did) and the booking's `paymentStatus` becomes `Refunded` (what every page displays) — and **nothing else**: the booking stays `Confirmed`, its seats stay counted and its ticket stays issued, because *refund the money* and *give up the trip* are two separate admin decisions (R4's cancel policy owns the second).\n\nAddressed by **booking id**, the key the page holds: a payment is 1:1 with its booking, so naming either one names the same transaction, and it is the id every other admin page speaks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
           }
         },
         {
@@ -5573,6 +5782,1199 @@
               ]
             },
             "description": "The delete really happened, and an unknown id answers the project's one error shape — the same `{ error, message }` body `api.js` parses in mock mode."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin · Tickets (Phase 12)",
+      "description": "The issued-ticket read: `GET /api/admin/tickets` (search, the page's status dropdown, the ticket's own `ISSUED`/`CANCELLED`, paging) and `GET /api/admin/tickets/{bookingId}`.\n\n**These rows are documents, so this is the only folder where a ticket can be seen.** `POST /api/payments/verify` in the previous folder is what mints them, and this endpoint is the read surface Roadmap Phase 12 adds. The query is written from `ticket` with an inner join on the booking, so a draft abandoned at the gateway never appears: a booking with no document is simply not a ticket.\n\n**Two status filters, and they are not the same column.** `status` is the *booking's* vocabulary (`Confirmed` / `Cancelled`) — the dropdown `admin-tickets.js` actually sends, where \"Issued\" and \"Voided\" are only its labels — while `ticketStatus` is the document's own `ISSUED` / `CANCELLED`. The refund the payments folder already ran moved the payment row and the booking's payment status and touched nothing else, so the ticket this walk produces is still **`ISSUED`** under a **`Refunded`** payment. That is exactly why both filters exist rather than one, and it is asserted below rather than assumed.\n\n**The response is `{ bookings: [...] }` with the booking record as its row.** Not a slip: `admin-tickets.js` derives a document per booking and reads `resp.bookings`, so a purpose-built ticket row or a `tickets` array would leave the page rendering its localStorage demo seeds while looking correct (risk R16, on a fourth surface). The id must also stay a **string**, because the page calls `b.id.toLowerCase()` on it.\n\n**Nothing here writes.** Issuing, reissuing and voiding belong to `TicketService`; an admin cancels the *booking* (`PUT /api/admin/bookings/{id}/status`) and a refund moves money, and neither rewrites a ticket row — which is why the whole folder is `GET`.",
+      "item": [
+        {
+          "name": "List tickets — search by the PNR the payment minted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the wrapper is { bookings: [...] }, not a bare array or a tickets key', () => {",
+                  "    pm.expect(body.bookings, 'admin-tickets.js reads resp.bookings and falls back to its localStorage seeds')",
+                  "        .to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(body).to.not.have.property('tickets');",
+                  "});",
+                  "",
+                  "pm.test('unpaged responses carry no paging keys at all', () => {",
+                  "    pm.expect(body).to.not.have.property('page');",
+                  "    pm.expect(body).to.not.have.property('totalElements');",
+                  "});",
+                  "",
+                  "pm.test('the row is the document the payment minted', () => {",
+                  "    const row = body.bookings[0];",
+                  "    pm.expect(row.pnr).to.eql(pm.collectionVariables.get('pnr'));",
+                  "    pm.expect(row.ticketNo).to.eql(pm.collectionVariables.get('ticketNo'));",
+                  "    pm.expect(String(row.id)).to.eql(pm.collectionVariables.get('pendingBookingId'));",
+                  "});",
+                  "",
+                  "pm.test('the id is a STRING — admin-tickets.js calls .toLowerCase() on it', () => {",
+                  "    pm.expect(body.bookings[0].id).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.test('the status is the page vocabulary, not the stored column value', () => {",
+                  "    pm.expect(body.bookings[0].status, 'CONFIRMED would redden every row silently (R16)')",
+                  "        .to.eql('Confirmed');",
+                  "});",
+                  "",
+                  "pm.test('the customer fields are strings, never null (the page escapes them raw)', () => {",
+                  "    const row = body.bookings[0];",
+                  "    pm.expect(row.customer).to.be.a('string').and.to.contain('Postman');",
+                  "    pm.expect(row.email).to.be.a('string').and.to.contain('postman.runner@example.com');",
+                  "    pm.expect(row.phone).to.be.a('string').and.to.not.be.empty;",
+                  "    pm.expect(row.pnr).to.be.a('string');",
+                  "    pm.expect(row.ticketNo).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.test('the detail modal has a passenger list, a flight block and a payment block', () => {",
+                  "    const row = body.bookings[0];",
+                  "    pm.expect(row.passengers).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(row.flight.flightNo).to.eql(pm.collectionVariables.get('newFlightNo'));",
+                  "    pm.expect(row.flight.passengerCount).to.eql(1);",
+                  "    pm.expect(row.payment.txnId).to.eql(pm.collectionVariables.get('txnId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search={{pnr}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{pnr}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The folder's anchor: the PNR the gateway answer captured finds exactly the document the gateway answer minted.\n\nThe PNR is UNIQUE in the schema, so `search={{pnr}}` cannot return a second row — even across repeated runs, because every run leaves its own flight and booking behind and each mints its own identifiers.\n\nThe assertions are the page contract, not the data: `{ bookings: [...] }`, a **textual** id, title-case `status`, and customer fields that are strings rather than null (`admin-tickets.js` passes the name, phone and email straight into `escapeHtml`, and `String(null)` prints the word \"null\" in the table)."
+          }
+        },
+        {
+          "name": "List tickets — search by the ticket number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the ticket number finds the same single document', () => {",
+                  "    pm.expect(body.bookings).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(body.bookings[0].ticketNo).to.eql(pm.collectionVariables.get('ticketNo'));",
+                  "    pm.expect(String(body.bookings[0].id)).to.eql(pm.collectionVariables.get('pendingBookingId'));",
+                  "});",
+                  "",
+                  "pm.test('both identifiers travel on one row, as the e-ticket prints them', () => {",
+                  "    pm.expect(body.bookings[0].pnr).to.eql(pm.collectionVariables.get('pnr'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search={{ticketNo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{ticketNo}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The second half of the search box's promise — `admin-tickets.js` advertises \"PNR, ticket no, passenger, flight no or booking ID\", and both identifiers live on the `ticket` row itself, so this needs no join.\n\nNote the **one** term this API deliberately does not search: passenger names. Joining the `passengers` collection inside a paged query makes Hibernate paginate in memory (load every matching row to return one page) — the trap Phase 9 documented. The page still searches them client-side while the list is unpaged, which is how it reads today."
+          }
+        },
+        {
+          "name": "List tickets — search by the booking id (the numeric clause is OR'd, not AND'd)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('searching the id the list just handed back finds the row', () => {",
+                  "    pm.expect(body.bookings, 'an AND between the text LIKEs and the id clause answers zero rows here')",
+                  "        .to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(String(body.bookings[0].id)).to.eql(pm.collectionVariables.get('pendingBookingId'));",
+                  "});",
+                  "",
+                  "pm.test('the row still speaks the page vocabulary', () => {",
+                  "    pm.expect(body.bookings[0].status).to.eql('Confirmed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search={{pendingBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{pendingBookingId}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "A numeric search also matches the **booking id**, and this request exists because that clause has a history.\n\nThe Phase 9 query first wrote the id match with an `AND` beside the text `LIKE`s. The service sets *both* parameters for a numeric term, so the row had to match a name **and** an id, and searching for the id the list had just returned gave zero rows — a bug a test caught, not a review. Here the id match is **OR'd** with the text matches, so pasting back an id works, which is the whole reason the service converts a numeric term to an integer instead of casting the id to a string inside the `LIKE` (a dialect-dependent expression that would also try to match an id against a name)."
+          }
+        },
+        {
+          "name": "List tickets — search by the customer's email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "// The contact email is fixed, so a repeat run matches its own earlier bookings too —",
+                  "// the assertion is therefore 'this run's ticket is in the result', not 'only one row'.",
+                  "// (The PNR, ticket number and flight number searches stay exact: each run invents those.)",
+                  "const mine = body.bookings.find((row) => String(row.id) === pm.collectionVariables.get('pendingBookingId'));",
+                  "",
+                  "pm.test('the contact block is searchable — it is the only customer this booking has', () => {",
+                  "    pm.expect(body.bookings, 'the guest contact email matched nothing').to.be.an('array').and.not.be.empty;",
+                  "    pm.expect(mine, 'the ticket this run minted is among the matches').to.be.an('object');",
+                  "    pm.expect(mine.email).to.eql('postman.runner@example.com');",
+                  "    pm.expect(mine.customer).to.contain('Postman');",
+                  "});",
+                  "",
+                  "pm.test('a guest booking is still a ticket — the wizard is public, so user_id is null', () => {",
+                  "    pm.expect(mine, 'the row has to exist before its shape can be checked').to.be.an('object');",
+                  "    pm.expect(String(mine.id)).to.eql(pm.collectionVariables.get('pendingBookingId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search=postman.runner@example.com",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "postman.runner@example.com"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "\"Search by customer\" means the booking's **contact block** — name, email and phone — because that is what the admin table shows and the only customer record a guest booking has. `POST /api/bookings` is public, so `booking.user_id` is nullable and a walk that never signed in still produces a ticket.\n\nThe email is a literal here rather than a collection variable: the Phase 6 booking write sends `postman.runner@example.com`, and the search is case-insensitive (`lower(...) like`), so the stored value matches whatever case the form used."
+          }
+        },
+        {
+          "name": "List tickets — search by the flight number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the flight number reaches the flight table and finds this run', () => {",
+                  "    pm.expect(body.bookings).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(body.bookings[0].flight.flightNo).to.eql(pm.collectionVariables.get('newFlightNo'));",
+                  "});",
+                  "",
+                  "pm.test('the wrapper is still { bookings: [...] } on a searched list', () => {",
+                  "    pm.expect(body).to.not.have.property('tickets');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search={{newFlightNo}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{newFlightNo}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The third entity the search spans, and the one that makes it a query rather than a derived method: the flight number lives on `flight`, two joins from `ticket`.\n\nThis flight number is generated per run (`{{newFlightNo}}`), so exactly one ticket answers it — this run's. The same term is reused by the two filter requests and the paging request below, which is why those need no separate fixture."
+          }
+        },
+        {
+          "name": "List tickets — filter by booking status (the page's dropdown)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the page vocabulary finds the ticket', () => {",
+                  "    pm.expect(body.bookings).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(body.bookings[0].status).to.eql('Confirmed');",
+                  "});",
+                  "",
+                  "pm.test('the filter is the booking column, not the document status', () => {",
+                  "    pm.expect(body.bookings[0].status, 'the dropdown the page sends is title-case booking state')",
+                  "        .to.be.oneOf(['Pending', 'Confirmed', 'Cancelled']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search={{newFlightNo}}&status=Confirmed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{newFlightNo}}"
+                },
+                {
+                  "key": "status",
+                  "value": "Confirmed"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "`admin-tickets.html` has exactly one dropdown, with the options **All tickets**, **Issued (Confirmed)** and **Voided (Cancelled)** — and `admin-tickets.js` compares the sent value against the row's `status`. So `status` here means the **booking's** state, in the page's title-case vocabulary; it is the R16 rule applied to a filter rather than to a body.\n\nFiltering the *ticket's* own `ISSUED`/`CANCELLED` column here would answer zero rows for the page with no error anywhere — the page would look empty and correct. That is why the document filter is a **separate** parameter (see the next two requests) instead of an overload of this one.\n\n`ALL` and a blank value are both folded to \"no filter\" before the query runs, so the dropdown's default never returns an empty list by accident."
+          }
+        },
+        {
+          "name": "List tickets — filter by the ticket's own status (ISSUED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the issued document is found by the ticket column', () => {",
+                  "    pm.expect(body.bookings).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(body.bookings[0].ticketNo).to.eql(pm.collectionVariables.get('ticketNo'));",
+                  "});",
+                  "",
+                  "pm.test('a refunded payment does not void the ticket — the two columns are independent', () => {",
+                  "    const row = body.bookings[0];",
+                  "    pm.expect(row.paymentStatus, 'the payments folder refunded this transaction').to.eql('Refunded');",
+                  "    pm.expect(row.status, 'and the booking is still confirmed').to.eql('Confirmed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search={{newFlightNo}}&ticketStatus=ISSUED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{newFlightNo}}"
+                },
+                {
+                  "key": "ticketStatus",
+                  "value": "ISSUED"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The filter that makes this endpoint a *ticket* read rather than a second bookings list: `ticketStatus` matches the row's own `ISSUED` / `CANCELLED` column, in any case.\n\nIt is also where the phase's one scope boundary is visible. **A refund does not void the ticket.** The payments folder has already refunded this walk's transaction, and what moved was the payment row and the booking's `paymentStatus` (`Refunded`) — the document is untouched, so it is still `ISSUED` under a refunded payment and the booking is still `Confirmed`. R4's cancel policy owns money and seats; voiding an issued document is a write this phase does not perform. The state is producible all the same — `SeedService` writes `CANCELLED` for a refunded booking's seeded ticket — which is why the filter exists."
+          }
+        },
+        {
+          "name": "List tickets — the document filter: nothing in this walk is voided",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK — a filter that matches nothing is an empty list, not an error', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('no admin action voids a ticket, so asking for CANCELLED answers nothing', () => {",
+                  "    pm.expect(body.bookings).to.be.an('array').that.is.empty;",
+                  "});",
+                  "",
+                  "pm.test('the two status filters really are two columns', () => {",
+                  "    pm.expect(body.bookings.length, 'the ticket is ISSUED while the booking is Confirmed').to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search={{newFlightNo}}&ticketStatus=CANCELLED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{newFlightNo}}"
+                },
+                {
+                  "key": "ticketStatus",
+                  "value": "CANCELLED"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The negative half of the previous request, and the assertion that keeps the two filters honest: this walk cancelled nothing and refunded without voiding, so no ticket on this flight is `CANCELLED`.\n\nIt is deliberately **not** filed under a `FAIL —` name. A filter that matches nothing is a correct 200 with an empty list, not a refusal — the `FAIL —` prefix in this collection marks the requests that assert a refusal (401 / 403 / 404 / 409).\n\nWhat would make it non-empty is a database where `SeedService` has run: the seeder writes a `CANCELLED` ticket for its refunded booking, which is the state the filter was built to find."
+          }
+        },
+        {
+          "name": "List tickets — one page (size + page + sort)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('a paged response adds the keys a client needs to walk the rest', () => {",
+                  "    pm.expect(body.bookings).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(body.page).to.eql(0);",
+                  "    pm.expect(body.size).to.eql(1);",
+                  "    pm.expect(body.totalElements).to.eql(1);",
+                  "    pm.expect(body.totalPages).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test('sort=issued is whitelisted and the row is the right one', () => {",
+                  "    pm.expect(body.bookings[0].ticketNo).to.eql(pm.collectionVariables.get('ticketNo'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets?search={{newFlightNo}}&size=1&page=0&sort=issued",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "{{newFlightNo}}"
+                },
+                {
+                  "key": "size",
+                  "value": "1"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "sort",
+                  "value": "issued"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Paging is **opt-in**, like every other admin list in this project: with no `size` the endpoint answers the whole list — the shape `admin-tickets.js` consumes today, filtering and paging client-side — and passing `size` switches to a real database page and adds `page` / `size` / `totalElements` / `totalPages`. The first request in this folder asserts those keys are **absent** when they were not asked for; this one asserts they appear when they were.\n\n`sort=issued` is one of the five whitelisted keys (`id`, `pnr`, `ticket`, `issued`, `status`). Anything unrecognised falls back to `id` rather than reaching the database as a column name — R6's lesson, and the reason the whitelist exists at all.\n\nOne page of one row is deliberate: the point is the metadata, not the splitting. The list path also has its own ordered query rather than `Pageable.unpaged()`, which would silently discard the sort."
+          }
+        },
+        {
+          "name": "Ticket detail ({{pendingBookingId}}) — the same record the row holds",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the detail read is addressed by the booking id the page rows carry', () => {",
+                  "    pm.expect(String(body.id)).to.eql(pm.collectionVariables.get('pendingBookingId'));",
+                  "});",
+                  "",
+                  "pm.test('it carries the whole document — PNR, ticket number, passengers, flight, payment', () => {",
+                  "    pm.expect(body.pnr).to.eql(pm.collectionVariables.get('pnr'));",
+                  "    pm.expect(body.ticketNo).to.eql(pm.collectionVariables.get('ticketNo'));",
+                  "    pm.expect(body.passengers).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(body.flight.flightNo).to.eql(pm.collectionVariables.get('newFlightNo'));",
+                  "    pm.expect(body.payment.txnId).to.eql(pm.collectionVariables.get('txnId'));",
+                  "});",
+                  "",
+                  "pm.test('a detail read is the same record, not a narrower second shape', () => {",
+                  "    pm.expect(body.customer).to.be.a('string').and.to.contain('Postman');",
+                  "    pm.expect(body.passengers[0].firstName).to.be.a('string');",
+                  "    pm.expect(body.flight.flightFrom === undefined, 'the flight block uses the pages own keys')",
+                  "        .to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets/{{pendingBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "{{pendingBookingId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The roadmap asks for \"view full ticket detail\", and this is it.\n\n**Keyed by booking id, not ticket id.** A ticket is 1:1 with its booking, so naming either one names the same document — and the booking id is the key the page already holds: `admin-tickets.js` builds each row action from `b.id`, which the shared row mapper renders from the booking's primary key. It is the same choice `POST /api/admin/payments/{bookingId}/refund` makes, for the same reason.\n\n**The same record the list returns**, not a narrower \"summary vs detail\" pair — exactly as `GET /api/admin/bookings/{id}` does it. `admin-tickets.js` opens its modal from the row it already holds, so a second shape would be two things to keep in step for no gain."
+          }
+        },
+        {
+          "name": "FAIL — a booking with no ticket has no ticket read (404 TICKET_NOT_FOUND)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 — the booking is real, the document is not', () => {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the code is derived from the resource name', () => {",
+                  "    pm.expect(body.error).to.eql('TICKET_NOT_FOUND');",
+                  "});",
+                  "",
+                  "pm.test('and the body is the one error shape the whole API answers', () => {",
+                  "    pm.expect(body).to.have.all.keys('error', 'message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets/{{spareBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets",
+                "{{spareBookingId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "`{{spareBookingId}}` is the booking the payments folder created for its failure cases — it was initiated against and then declined, so it exists, it has a payment row, and it has **no ticket**. That is exactly the state the list excludes (the query inner-joins the document) and this read reports as `404`.\n\nThe distinction worth seeing is 404-versus-empty-list: the list would answer `{\"bookings\": []}` for this booking, which is correct but says nothing about whether the booking exists. The detail read is addressed at one resource, so a missing document is a missing resource. The code comes from `ResourceNotFoundException.of(\"Ticket\", id)`, which derives it from the resource name, so it is `TICKET_NOT_FOUND` rather than a generic `NOT_FOUND`."
+          }
+        },
+        {
+          "name": "FAIL — no token (401 NOT_AUTHENTICATED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('the body is the same shape a controller error would give', () => {",
+                  "    pm.expect(body.error).to.eql('NOT_AUTHENTICATED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "The route rule in `SecurityConfig` refuses `/api/admin/**` before a controller is reached, so this is answered by the filter chain rather than by `@PreAuthorize` — and the error body is still the project's own `{ \"error\", \"message\" }`, not Spring's HTML page, because `api.js` parses every failure with one shape.\n\nThe guard is deliberately **two layers**: this route rule, and `@PreAuthorize(\"hasRole('ADMIN')\")` inside the method. That annotation layer is asserted statically rather than here, because the route rule would mask a missing one at runtime — `AdminRouteAuthorizationTest` sweeps every discovered admin route for both, including the two this folder adds."
+          }
+        },
+        {
+          "name": "FAIL — signed-in customer (403 FORBIDDEN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const token = pm.collectionVariables.get('userToken');",
+                  "",
+                  "pm.test('a USER token is set (run 00 · Setup → Sign in (customer))', () => {",
+                  "    pm.expect(token, 'set {{userToken}} first').to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "if (!token) { return; }",
+                  "",
+                  "pm.test('403 Forbidden — authenticated, but not an admin', () => {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('and the answer is FORBIDDEN, not NOT_AUTHENTICATED', () => {",
+                  "    pm.expect(pm.response.json().error).to.eql('FORBIDDEN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tickets"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The case that catches the role check being loosened to `authenticated()`: the caller is fully signed in, so only `hasRole('ADMIN')` stands between them and every ticket on the platform. **403, not 401** — the token is valid, the role is not.\n\nTickets carry passenger names, nationalities and seat numbers, so this is not a cosmetic restriction."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin · Dashboard (Phase 13)",
+      "description": "**The dashboard read** — `GET /api/admin/dashboard`: the recent-bookings rows the table renders plus the seven Master Plan §2.5 cards (`totalUsers`, `totalFlights`, `totalAirlines`, `totalBookings`, `todaysBookings`, `revenue`, `pendingPayments`). One parameterless `GET`, admin-only, Roadmap Phase 13.\n\n**This folder is the phase's checkpoint, and it is written so that a re-run cannot make it stale.** The roadmap's checkpoint is *the dashboard numbers match what is actually in the database after your seeded + test data*, so every card is compared against **the endpoint that lists the same table, in the same run**: the bookings list carries four of them — its rows are where revenue, today and pending are re-derived — and the user, flight and airline lists carry the three totals. No assertion here names an absolute number, so a second run over a database the first one already wrote to still passes. That is the same run-scoping Session 45 had to retrofit onto the tickets folder, done up front this time.\n\n**The body is `{ bookings, stats }` — two keys, and the first request asserts there are exactly two.** Until Phase 13 the endpoint answered `airlines`/`flights`/`bookings`/`users` and the page did the arithmetic itself. The aggregates moved into SQL (`count`/`sum`) and the body was trimmed to what the page renders: the first key is the table's rows, the second the cards' numbers. A key quietly coming back is dead payload; a missing one would blank a card or the recent-bookings table **with no error anywhere** (risk R16).\n\n**Three of the seven are a definition rather than a detail, and this folder checks the definition rather than the number.** *Revenue* is the sum of `amount` over the **non-cancelled** bookings — so a refunded booking still counts and a cancelled one still does not — and the folder re-derives it the same way from the bookings list, then proves the filter is doing something by showing the all-rows sum is strictly larger while a cancelled booking exists. *Today's Bookings* counts bookings **created** today and is compared against `{{today}}`, the same client-local calendar date the bookings folder already trusts for `?created={{today}}` (client and server share the clock). *Pending Payments* counts the **booking's** `paymentStatus` — the vocabulary the table's badges render — not the payment row's own `PENDING`.\n\n**Nothing here writes.** The whole folder is `GET`, so it is safe to re-run on its own at any point after *00 · Setup*, and it can never be the reason a later delete guard changes its answer.",
+      "item": [
+        {
+          "name": "Get the dashboard — the two keys, and the seven cards (captures {{dashTotalBookings}} …)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the body is EXACTLY { bookings, stats } — two keys, not four', () => {",
+                  "    pm.expect(Object.keys(body).sort(), 'a trimmed key coming back would be dead payload; a missing one would blank a card or the table (R16)')",
+                  "        .to.eql(['bookings', 'stats']);",
+                  "});",
+                  "",
+                  "pm.test('the recent-bookings table gets an array of the admin booking rows', () => {",
+                  "    pm.expect(body.bookings).to.be.an('array');",
+                  "    if (body.bookings.length) {",
+                  "        pm.expect(body.bookings[0].id, 'admin-bookings.js runs b.id.toLowerCase() on this row').to.be.a('string');",
+                  "        pm.expect(body.bookings[0].status, 'title case is the page vocabulary, not CONFIRMED (R16)')",
+                  "            .to.be.oneOf(['Pending', 'Confirmed', 'Cancelled']);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('stats carries exactly the seven Master Plan §2.5 cards', () => {",
+                  "    pm.expect(Object.keys(body.stats).sort()).to.eql([",
+                  "        'pendingPayments', 'revenue', 'todaysBookings',",
+                  "        'totalAirlines', 'totalBookings', 'totalFlights', 'totalUsers'",
+                  "    ]);",
+                  "});",
+                  "",
+                  "pm.test('every card is a non-negative number, and a part never exceeds its total', () => {",
+                  "    const s = body.stats;",
+                  "    ['totalUsers', 'totalFlights', 'totalAirlines', 'totalBookings', 'todaysBookings', 'pendingPayments']",
+                  "        .forEach((key) => pm.expect(Number(s[key]), key).to.be.at.least(0));",
+                  "    pm.expect(Number(s.revenue)).to.be.at.least(0);",
+                  "    pm.expect(Number(s.todaysBookings)).to.be.at.most(Number(s.totalBookings));",
+                  "    pm.expect(Number(s.pendingPayments)).to.be.at.most(Number(s.totalBookings));",
+                  "});",
+                  "",
+                  "pm.test('this run has produced data for the cards to describe', () => {",
+                  "    const s = body.stats;",
+                  "    pm.expect(Number(s.totalBookings), 'the booking write created one earlier in this run').to.be.at.least(1);",
+                  "    pm.expect(Number(s.revenue), 'a confirmed and paid booking is in this run').to.be.above(0);",
+                  "    pm.expect(Number(s.todaysBookings), 'this run booked today').to.be.at.least(1);",
+                  "});",
+                  "",
+                  "// Captured for the four cross-checks below — each compares one card against the",
+                  "// endpoint that lists the same table, so none of them needs a hard-coded number.",
+                  "const s = body.stats;",
+                  "pm.collectionVariables.set('dashTotalBookings', String(s.totalBookings));",
+                  "pm.collectionVariables.set('dashTotalUsers', String(s.totalUsers));",
+                  "pm.collectionVariables.set('dashTotalFlights', String(s.totalFlights));",
+                  "pm.collectionVariables.set('dashTotalAirlines', String(s.totalAirlines));",
+                  "pm.collectionVariables.set('dashRevenue', String(s.revenue));",
+                  "pm.collectionVariables.set('dashTodaysBookings', String(s.todaysBookings));",
+                  "pm.collectionVariables.set('dashPendingPayments', String(s.pendingPayments));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The phase's own endpoint: the recent-bookings rows and the seven §2.5 cards in one body.\n\n**The two keys are the whole contract, so they are asserted as exactly two.** The page's first render is `apiGet('/api/admin/dashboard')` and then `resp.bookings` / `resp.stats` — nothing else — and the mock route in `api.js` answers the same pair. That is risk R16 stated positively: the shape carries what the page renders, and a collection key quietly reappearing (the pre-Phase-13 `airlines`/`flights`/`users` arrays) is a failure rather than a spare part.\n\n**The cards are checked for shape here and for value below.** This request is the only one that reads `stats` directly; the four after it re-derive the same numbers from the endpoints that list those tables, which is what makes this a checkpoint instead of a schema test.\n\n**Captures** `{{dashTotalBookings}}`, `{{dashTotalUsers}}`, `{{dashTotalFlights}}`, `{{dashTotalAirlines}}`, `{{dashRevenue}}`, `{{dashTodaysBookings}}` and `{{dashPendingPayments}}` for those four cross-checks."
+          }
+        },
+        {
+          "name": "The bookings list — four of the seven cards, re-derived from the rows",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "const rows = body.bookings || [];",
+                  "const v = (key) => Number(pm.collectionVariables.get(key));",
+                  "",
+                  "pm.test('Total Bookings equals the length of the bookings list', () => {",
+                  "    pm.expect(rows.length).to.eql(v('dashTotalBookings'));",
+                  "});",
+                  "",
+                  "pm.test('Revenue equals the NON-CANCELLED sum of the same rows — the page definition', () => {",
+                  "    const nonCancelled = rows.filter((b) => b.status !== 'Cancelled')",
+                  "        .reduce((sum, b) => sum + (Number(b.amount) || 0), 0);",
+                  "    pm.expect(Math.abs(nonCancelled - v('dashRevenue')), 'the card and the rows must agree to the cent')",
+                  "        .to.be.below(0.01);",
+                  "});",
+                  "",
+                  "pm.test('the filter is doing something: a cancelled booking carrying money is excluded', () => {",
+                  "    const sumOf = (list) => list.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);",
+                  "    const cancelledSum = sumOf(rows.filter((b) => b.status === 'Cancelled'));",
+                  "    if (cancelledSum > 0) {",
+                  "        pm.expect(sumOf(rows), 'counting a cancelled booking would silently overstate the card')",
+                  "            .to.be.above(v('dashRevenue'));",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Pending Payments equals the rows whose paymentStatus is Pending', () => {",
+                  "    const pending = rows.filter((b) => String(b.paymentStatus).toLowerCase() === 'pending').length;",
+                  "    pm.expect(pending).to.eql(v('dashPendingPayments'));",
+                  "});",
+                  "",
+                  "pm.test('Todays Bookings equals the rows created on {{today}}', () => {",
+                  "    const createdToday = rows.filter((b) => String(b.createdAt || '').slice(0, 10) === pm.collectionVariables.get('today')).length;",
+                  "    pm.expect(createdToday, 'client and server share the clock — the bookings folder already trusts {{today}} for ?created=')",
+                  "        .to.eql(v('dashTodaysBookings'));",
+                  "});",
+                  "",
+                  "pm.test('this run own booking is one of the rows the cards counted, and it is Confirmed', () => {",
+                  "    const mine = rows.find((b) => String(b.id) === String(pm.collectionVariables.get('pendingBookingId')));",
+                  "    pm.expect(mine, 'the booking this run paid for must be in the list')",
+                  "        .to.be.an('object');",
+                  "    pm.expect(mine.status).to.eql('Confirmed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "bookings"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Four of the seven cards come from this table, so this is where the checkpoint is really decided — the dashboard is compared against the endpoint that lists the same rows, unpaged, in the same run.\n\n**Why unpaged matters.** With no `size` the list is the whole table and carries no paging keys, so `resp.bookings.length` *is* the row count the `count()` behind `totalBookings` answered. Passing `size` would compare one page against a total and fail for the wrong reason.\n\n**Revenue is re-derived, not re-stated.** The card is the sum of `amount` over the non-cancelled bookings, so the rows are filtered the page's way (`status !== 'Cancelled'`) and summed, then compared to the cent. The next assertion proves the filter is load-bearing rather than decorative: while the walk still holds a cancelled booking, the unfiltered sum must be strictly larger — if a future implementation summed every row, that assertion is what goes red.\n\n**This booking is also asserted to be here.** The run paid for `{{pendingBookingId}}` in the payments folder and the refund that followed moved the payment row, not the booking — so it is still `Confirmed` and still inside the revenue sum. That is exactly why the card is defined on the booking rather than on the payment row's `SUCCESS`."
+          }
+        },
+        {
+          "name": "The user roster — Total Users, from the list the Users folder already uses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('Total Users equals the length of the user roster', () => {",
+                  "    pm.expect(body.users.length).to.eql(Number(pm.collectionVariables.get('dashTotalUsers')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The dashboard counts the `users` table with `count()`, and this is the endpoint that lists the same table — so the two must agree exactly, and they are both read in the same run. Unpaged, for the reason the bookings cross-check gives: a page would not be the table."
+          }
+        },
+        {
+          "name": "The flight list — Total Flights, from the admin read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('Total Flights equals the length of the flight list', () => {",
+                  "    pm.expect(body.flights.length).to.eql(Number(pm.collectionVariables.get('dashTotalFlights')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/flights",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "flights"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "`Total Flights` is a `count()` on the `flight` table and this is the admin read of that table. Note that the row shape here differs from the card's — the list carries `bookedSeats` and the dashboard does not need it — which is precisely why the assertion is on the length and not on the rows."
+          }
+        },
+        {
+          "name": "The airline list — Total Airlines (public read — the same table the card counts)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('Total Airlines equals the length of the airline list', () => {",
+                  "    pm.expect(body.airlines.length).to.eql(Number(pm.collectionVariables.get('dashTotalAirlines')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/airlines",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "airlines"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "The last of the three totals, and the only cross-check that needs no token: the Admin · Airlines folder already established that `/api/airlines/**` is a **public** read (the storefront shows a logo per card to signed-out visitors), so this is the same list the guest sees. The dashboard's card counts the same table, so the two lengths must agree.\n\nSending no token here is deliberate rather than an oversight — it keeps the folder's one public read visibly separate from the five admin-only ones."
+          }
+        },
+        {
+          "name": "FAIL — no token (401 NOT_AUTHENTICATED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('the body is the same shape a controller error would give', () => {",
+                  "    pm.expect(body.error).to.eql('NOT_AUTHENTICATED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "The route rule in `SecurityConfig` refuses `/api/admin/**` before a controller is reached, so this is answered by the filter chain rather than by `@PreAuthorize` — and the error body is still the project's own `{ \"error\", \"message\" }`, not Spring's HTML page, because `api.js` parses every failure with one shape.\n\nA dashboard is aggregate rather than personal data, but it is still the whole platform's numbers: revenue, every account count, every booking total. It is admin-only on both layers, and `AdminRouteAuthorizationTest` sweeps every discovered admin route for both — including the one this folder adds."
+          }
+        },
+        {
+          "name": "FAIL — signed-in customer (403 FORBIDDEN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => pm.response.to.have.status(403));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('the body is the project error shape, not Spring HTML', () => {",
+                  "    pm.expect(body.error).to.eql('FORBIDDEN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The case that catches the role check being loosened to `authenticated()`: the caller is fully signed in, so only `hasRole('ADMIN')` stands between them and the platform's revenue, its account count and every booking row behind the table. **403, not 401** — the token is valid, the role is not."
           }
         }
       ]

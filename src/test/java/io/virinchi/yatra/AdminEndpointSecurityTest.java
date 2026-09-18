@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -92,13 +93,20 @@ class AdminEndpointSecurityTest {
     }
 
     /**
-     * Page routes must not be 401'd. No page controller exists yet, so the
-     * expected status is 404 — the point is that it is NOT 401, i.e. security let
-     * the request through. This assertion tightens to 200 once the Thymeleaf
-     * page controllers exist.
+     * Page routes must not be 401'd — they are the site, not the API, and
+     * {@code SecurityConfig} permits {@code /*.html} outright.
+     *
+     * <p>This expected a <b>404</b> until Phases 11–12 added
+     * {@code Controller/PageController}: the point was "not 401", and no page
+     * controller existed to serve one. It now asserts the stronger thing that note
+     * promised. {@code PageControllerTest} is what sweeps all 34 templates; this line
+     * is here so that a security rule loosened or tightened later cannot start
+     * 401ing the site without failing the build.
      */
     @Test
     void pageRoutesAreNotBlockedBySecurity() throws Exception {
-        mockMvc.perform(get("/home.html")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/home.html"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
     }
 }

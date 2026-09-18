@@ -3,6 +3,7 @@ package io.virinchi.yatra.Security;
 import io.virinchi.yatra.Dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -41,6 +42,7 @@ import java.nio.charset.StandardCharsets;
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -130,12 +132,25 @@ public class SecurityConfig {
                 // Errors keep the project's one shape, so a 401/403 never returns
                 // Spring's HTML page to a fetch() caller in api.js.
                 .exceptionHandling(handling -> handling
-                        .authenticationEntryPoint((request, response, ex) ->
-                                writeError(response, HttpStatus.UNAUTHORIZED,
-                                        "NOT_AUTHENTICATED", "Sign-in required."))
-                        .accessDeniedHandler((request, response, ex) ->
-                                writeError(response, HttpStatus.FORBIDDEN,
-                                        "FORBIDDEN", "You do not have permission to perform this action.")))
+                        .authenticationEntryPoint((request, response, ex) -> {
+                            //The roadmap's "auth failures" event (Phase 14), and the half
+                            //GlobalExceptionHandler could never cover: a refusal from the
+                            //filter chain never reaches a controller, so no handler sees it.
+                            //This is the line that says "something with no token is walking
+                            //the admin surface", which is the security signal worth having.
+                            log.warn("Unauthenticated request refused: {} {}",
+                                    request.getMethod(), request.getRequestURI());
+                            writeError(response, HttpStatus.UNAUTHORIZED,
+                                    "NOT_AUTHENTICATED", "Sign-in required.");
+                        })
+                        .accessDeniedHandler((request, response, ex) -> {
+                            //A signed-in caller without the role. `ex.getMessage()` is
+                            //Spring's own wording ("Access Denied"), never a credential.
+                            log.warn("Forbidden request refused: {} {} — {}",
+                                    request.getMethod(), request.getRequestURI(), ex.getMessage());
+                            writeError(response, HttpStatus.FORBIDDEN,
+                                    "FORBIDDEN", "You do not have permission to perform this action.");
+                        }))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

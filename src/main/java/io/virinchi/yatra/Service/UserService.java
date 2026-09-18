@@ -13,6 +13,7 @@ import io.virinchi.yatra.Model.User;
 import io.virinchi.yatra.Repository.BookingRepository;
 import io.virinchi.yatra.Repository.UserRepository;
 import io.virinchi.yatra.Security.Authorities;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -84,6 +85,7 @@ import java.util.Optional;
  * switched off in the test suite rather than mocked away.
  */
 @Service
+@Slf4j
 public class UserService implements UserDetailsService {
 
     /** The two role values the schema and the panel know, and no others. */
@@ -241,6 +243,13 @@ public class UserService implements UserDetailsService {
 
         if (found.isEmpty()) {
             passwordEncoder.matches(password, timingDefenceHash);
+            //The roadmap's "auth failures" event (Phase 14). The login id is logged on
+            //purpose — "someone tried to sign in" is not actionable, "someone tried to
+            //sign in as admin@yatra.com" is — and the password never is, on any path.
+            //This line is not redundant with GlobalExceptionHandler's: that one records
+            //what the caller was told (a generic INVALID_CREDENTIALS), this one records
+            //which account was attempted, which is exactly what must not leak outward.
+            log.warn("Sign-in refused: no account matches the login id {}", loginId);
             throw UnauthorizedException.invalidCredentials();
         }
 
@@ -248,6 +257,10 @@ public class UserService implements UserDetailsService {
         String stored = user.getPassword();
         if (stored == null || stored.isBlank()
                 || !passwordEncoder.matches(password, stored)) {
+            //An account that exists but has no usable credential reaches here too —
+            //the state an admin-created account is in until a password is provisioned.
+            log.warn("Sign-in refused: wrong password (or no credential on file) for {}",
+                    user.getEmail());
             throw UnauthorizedException.invalidCredentials();
         }
 
@@ -295,7 +308,7 @@ public class UserService implements UserDetailsService {
     @Transactional(readOnly = true)
     public Page<AdminUserResponse> listUserPage(String search, String role, String status, String sort,
                                                 int page, int size) {
-        PageRequest request = PageRequest.of(Math.max(page, 0), Math.max(size, 1), sortFor(sort));
+        PageRequest request = Paging.request(page, size, sortFor(sort));
 
         return userRepository.searchPage(
                         like(search), idTerm(search), storedRole(role), storedStatus(status), request)

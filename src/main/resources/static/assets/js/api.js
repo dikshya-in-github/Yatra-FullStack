@@ -24,7 +24,7 @@
      POST /api/users/me                    (own profile — self-service)
      GET  /api/destinations
      GET  /api/airlines
-     GET  /api/admin/dashboard             (planned)
+     GET  /api/admin/dashboard             (+ Phase 13 `stats`)
      GET  /api/admin/bookings              (planned)
      GET  /api/admin/payments               (planned)
      GET  /api/admin/tickets               (planned)
@@ -190,6 +190,45 @@ function updateProfile(patch, currentId, fallback) {
    for mock and real mode (both are async).
    ===================================================== */
 
+/* The dashboard's §2.5 cards (Phase 13) — the mock's mirror of the count/sum
+   queries GET /api/admin/dashboard runs for real (Service/DashboardService).
+   Same four definitions the page used to apply itself:
+     revenue        sum of `amount` over NON-CANCELLED bookings
+     todaysBookings bookings CREATED today
+     pendingPayments bookings whose paymentStatus is 'Pending'
+   The seed-size fallbacks (4/6/10) moved here with the arithmetic — they are
+   still the preview the page shows while a store the owning page self-seeds is
+   empty, and they belong on the fake side, never on the page. */
+function mockDashboardPayload() {
+    var airlines = MockDB.getAirlines();
+    var flights = MockDB.getFlights();
+    var bookings = MockDB.getBookings();
+    var users = MockDB.getUsers();
+
+    var live = bookings.filter(function (b) { return b.status !== "Cancelled"; });
+    var revenue = live.reduce(function (sum, b) {
+        return sum + (Number(b.amount) || 0);
+    }, 0);
+    var todayIso = new Date().toISOString().slice(0, 10);
+    var todays = bookings.filter(function (b) {
+        return String(b.createdAt || "").slice(0, 10) === todayIso;
+    }).length;
+    var pending = bookings.filter(function (b) { return b.paymentStatus === "Pending"; }).length;
+
+    return {
+        bookings: bookings,
+        stats: {
+            totalUsers: users.length || 10,      // 10 = seed roster size
+            totalFlights: flights.length || 6,   // 6  = seed schedule size
+            totalAirlines: airlines.length || 4, // 4  = seed fleet size
+            totalBookings: bookings.length,
+            todaysBookings: todays,
+            revenue: revenue,
+            pendingPayments: pending
+        }
+    };
+}
+
 var MOCK_GET_ROUTES = [
     { pattern: /^\/api\/flights\/search$/, handle: function (match, params) {
         return MockDB.searchFlights({
@@ -245,14 +284,11 @@ var MOCK_GET_ROUTES = [
        Mock responses mirror the §36/§2.4 admin shapes so the Spring
        API can return the same JSON later (real routes protected by
        @PreAuthorize("hasRole('ADMIN')") — Backend Roadmap Phases 4–13). */
+    /* GET /api/admin/dashboard (Phase 13) — the real endpoint answers the booking
+       rows plus a `stats` block it computes with count/sum queries; this mirrors
+       that shape exactly, so admin-dashboard.js never branches on mock vs real. */
     { pattern: /^\/api\/admin\/dashboard$/, handle: function () {
-        return {
-            airlines: MockDB.getAirlines(),
-            flights: MockDB.getFlights(),
-            bookings: MockDB.getBookings(),
-            users: MockDB.getUsers()
-        }; // dashboard aggregates (counts/revenue/pending) stay page-side
-           // for now; GET /api/admin/dashboard computes them in Phase 13.
+        return mockDashboardPayload();
     } },
     { pattern: /^\/api\/admin\/bookings$/, handle: function () {
         return { bookings: MockDB.getBookings() };

@@ -107,7 +107,7 @@ public class AirlineService {
                                   int page, int size) {
         String name = search == null ? "" : search.trim();
         String state = blankToNull(status);
-        PageRequest request = PageRequest.of(Math.max(page, 0), Math.max(size, 1), sortFor(sort));
+        PageRequest request = Paging.request(page, size, sortFor(sort));
 
         return state == null
                 ? airlines.findByNameContainingIgnoreCase(name, request)

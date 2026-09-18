@@ -18,6 +18,7 @@ import io.virinchi.yatra.Repository.PaymentRepository;
 import io.virinchi.yatra.Repository.SeatRepository;
 import io.virinchi.yatra.Repository.TicketRepository;
 import io.virinchi.yatra.Repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -115,6 +116,7 @@ import java.util.stream.Collectors;
  * enforced twice, and the service check only exists to turn it into a clean 409.
  */
 @Service
+@Slf4j
 public class BookingService {
 
     private static final String CANCELLED = "CANCELLED";
@@ -255,7 +257,7 @@ public class BookingService {
     public Page<AdminBookingResponse> listBookingPage(String search, String status, String paymentStatus,
                                                       Integer flightId, LocalDate date, LocalDate created,
                                                       String sort, int page, int size) {
-        PageRequest request = PageRequest.of(Math.max(page, 0), Math.max(size, 1), sortFor(sort));
+        PageRequest request = Paging.request(page, size, sortFor(sort));
 
         Page<Booking> rows = bookings.searchPage(
                 like(search), idTerm(search), storedStatus(status), storedPaymentStatus(paymentStatus),
@@ -599,6 +601,14 @@ public class BookingService {
         }
         passengers.saveAll(rows);
         passengers.flush();
+
+        //The roadmap's "bookings created" event (Phase 14). Deliberately no contact
+        //name/email/phone: the id, the flight, the money and the seats are what an
+        //audit trail needs, and the contact block is the customer's personal data
+        //sitting in a log file forever. See the logging rule in the standards doc.
+        log.info("Booking created: id={} flight={} passengers={} seats=[{}] total={} status={}",
+                saved.getId(), flight.getFlightNo(), rows.size(), String.join(",", held),
+                saved.getTotalAmount(), saved.getBookingStatus());
 
         return saved;
     }

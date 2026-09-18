@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -149,4 +150,63 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                              @Param("createdFrom") LocalDateTime createdFrom,
                              @Param("createdTo") LocalDateTime createdTo,
                              Pageable pageable);
+
+    /* ------------------------------------------------------------------ *
+     *  Dashboard aggregates (Roadmap Phase 13)                            *
+     * ------------------------------------------------------------------ */
+
+    /**
+     * The dashboard's <b>Today's Bookings</b> card.
+     *
+     * <p><b>Counted in the database, not by loading the table.</b> The dashboard used
+     * to derive every card from the booking rows it fetched for the recent-bookings
+     * table; now that the response is trimmed to what the page actually renders, each
+     * number is its own {@code count}/{@code sum} and the table's read stays a table's
+     * read. A derived query rather than JPQL because there is nothing to join: it is
+     * one column and a half-open range.
+     *
+     * <p><b>The range is half-open — {@code [from, to)} — and the service passes
+     * midnight-to-midnight.</b> {@code between} would be closed at both ends and double
+     * count a booking created at exactly midnight tomorrow, and comparing a date part in
+     * SQL would be a dialect-dependent expression; two {@code LocalDateTime} bounds are
+     * neither.
+     */
+    long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime from, LocalDateTime to);
+
+    /**
+     * The dashboard's <b>Revenue</b> card — the sum of {@code total_amount} over every
+     * booking that is not cancelled.
+     *
+     * <p><b>Non-cancelled bookings, not successful payments.</b> That is the page's own
+     * definition (its title says "Sum of confirmed (non-cancelled) bookings"), and a
+     * money-first definition would silently renumber the card the first time a payment
+     * row and its booking disagreed. Changing it is a decision, not a refactor.
+     *
+     * <p><b>A null booking status counts.</b> {@code booking_status} is not nullable in
+     * practice, but the clause is written the way the old page-side filter behaved
+     * ({@code b.status !== 'Cancelled'} is true for a missing value too) so this cannot
+     * quietly drop a row the previous implementation counted.
+     *
+     * <p><b>{@code sum} answers {@code null} over an empty table, never 0</b> — the
+     * service maps that to {@link java.math.BigDecimal#ZERO}. Spelling it
+     * {@code coalesce(sum(...), 0)} here would push the literal's type into Hibernate's
+     * inference for no gain.
+     */
+    @Query("""
+            select sum(b.totalAmount) from Booking b
+            where b.bookingStatus is null or upper(b.bookingStatus) <> 'CANCELLED'
+            """)
+    BigDecimal sumNonCancelledRevenue();
+
+    /**
+     * The dashboard's <b>Pending Payments</b> card — bookings whose
+     * {@code payment_status} is {@code Pending}.
+     *
+     * <p><b>The booking's text, not the payment row's {@code PENDING}.</b> The card sits
+     * beside the table's status badges, which render this exact column through
+     * {@code AdminBookingResponse}; counting the payment table instead would let the card
+     * and the rows disagree about the same booking. {@code IgnoreCase} because the column
+     * is stored as the wizard wrote it.
+     */
+    long countByPaymentStatusIgnoreCase(String paymentStatus);
 }

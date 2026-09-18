@@ -13,6 +13,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -140,19 +141,28 @@ class AdminUserApiTest {
         assertThat(count("search", "no-such-" + tag)).as("a term that matches nothing").isZero();
     }
 
-    /** Both vocabularies are accepted, because the filter chips and the storage differ. */
+    /**
+     * Both vocabularies are accepted, because the filter chips and the storage differ.
+     *
+     * <p>Every count is scoped by this run's tag. A bare {@code role=USER} is a question
+     * about the whole {@code users} table — the demo seed fills it and a live Postman
+     * walk adds to it — so an unscoped count is only 1 while the database happens to be
+     * otherwise empty. That is how this test failed once the seed had run: it was
+     * measuring the ambient table, not vocabulary-insensitivity, which is what the name
+     * promises and what the tagged counts below still prove.
+     */
     @Test
     void roleAndStatusFiltersAreCaseInsensitive() throws Exception {
         String tag = tag();
         create(tag, USER, ACTIVE, null);
         createAdmin(tag, "c"); // an inactive admin is refused, so this one is Active
 
-        assertThat(count("role", "USER")).as("role=USER, the storage spelling").isEqualTo(1);
-        assertThat(count("role", "user")).as("role=user, the page's filter spelling").isEqualTo(1);
-        assertThat(count("role", "ADMIN")).as("role=ADMIN").isEqualTo(1);
-        assertThat(count("status", ACTIVE)).as("status=Active").isEqualTo(2);
-        assertThat(count("status", "active")).as("status=active").isEqualTo(2);
-        assertThat(count("status", INACTIVE)).as("status=Inactive").isZero();
+        assertThat(count("search", tag, "role", "USER")).as("role=USER, the storage spelling").isEqualTo(1);
+        assertThat(count("search", tag, "role", "user")).as("role=user, the page's filter spelling").isEqualTo(1);
+        assertThat(count("search", tag, "role", "ADMIN")).as("role=ADMIN").isEqualTo(1);
+        assertThat(count("search", tag, "status", ACTIVE)).as("status=Active").isEqualTo(2);
+        assertThat(count("search", tag, "status", "active")).as("status=active").isEqualTo(2);
+        assertThat(count("search", tag, "status", INACTIVE)).as("status=Inactive").isZero();
     }
 
     /**
@@ -681,9 +691,19 @@ class AdminUserApiTest {
     }
 
     /** Every user whose name/email/mobile/id matches one filter value. */
-    private int count(String param, String value) throws Exception {
-        String body = mockMvc.perform(get("/api/admin/users").param(param, value)
-                        .header(HttpHeaders.AUTHORIZATION, bearer(adminToken())))
+    /**
+     * How many rows the list answers with, for any combination of filters: name/value
+     * pairs, so {@code count("role", "USER")} and
+     * {@code count("search", tag, "role", "USER")} both read naturally. The scoped form
+     * is the one to reach for — an unscoped count is a claim about the whole table.
+     */
+    private int count(String... filter) throws Exception {
+        MockHttpServletRequestBuilder request = get("/api/admin/users");
+        for (int i = 0; i < filter.length; i += 2) {
+            request = request.param(filter[i], filter[i + 1]);
+        }
+
+        String body = mockMvc.perform(request.header(HttpHeaders.AUTHORIZATION, bearer(adminToken())))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 

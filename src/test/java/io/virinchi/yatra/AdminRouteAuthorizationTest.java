@@ -177,7 +177,18 @@ class AdminRouteAuthorizationTest {
                         "PUT /api/admin/users/1",
                         "DELETE /api/admin/users/1",
                         "PUT /api/admin/users/1/status",
-                        "GET /api/admin/users/1/bookings");
+                        "GET /api/admin/users/1/bookings",
+                        // Phase 12 — the ticket read. A read-only controller is exactly
+                        // the case this assertion is for: no write was added, so
+                        // nothing else in the project would have noticed a read route
+                        // that quietly skipped the guard.
+                        "GET /api/admin/tickets",
+                        "GET /api/admin/tickets/1",
+                        // Phase 13 — the dashboard read. A single parameterless GET is
+                        // exactly the mapping shape that a hand-written list or a
+                        // prefix check drops without anything else noticing: no path
+                        // variable, no body, one verb.
+                        "GET /api/admin/dashboard");
     }
 
     /* ------------------------------------------------------------------ *
