@@ -2,7 +2,9 @@ package io.virinchi.yatra.Service;
 
 import io.virinchi.yatra.Dto.AdminUserRequest;
 import io.virinchi.yatra.Dto.AdminUserResponse;
+import io.virinchi.yatra.Dto.ProfileUpdateRequest;
 import io.virinchi.yatra.Dto.RegisterRequest;
+import io.virinchi.yatra.Dto.UserResponse;
 import io.virinchi.yatra.Exception.ConflictException;
 import io.virinchi.yatra.Exception.DuplicateResourceException;
 import io.virinchi.yatra.Exception.ForbiddenException;
@@ -323,6 +325,106 @@ public class UserService implements UserDetailsService {
     @Transactional(readOnly = true)
     public AdminUserResponse getUser(int userId) {
         return AdminUserResponse.of(require(userId));
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  The administrator's own account (admin-profile.html)               *
+     * ------------------------------------------------------------------ */
+
+    /**
+     * The signed-in administrator's own account, in the session shape.
+     *
+     * <p><b>Why {@link UserResponse} and not {@link AdminUserResponse}.</b> The two
+     * records disagree on the id key on purpose — the roster row is {@code id} (what
+     * {@code admin-users.js}'s row actions are built from) while the session is
+     * {@code userId} (what {@code admin-profile.js}, {@code auth.js} and the navbar
+     * chip read). This is the profile page, so it takes the session shape; that is
+     * also what makes the record it re-saves into {@code yatra_admin_session} identical
+     * to the one sign-in produced.
+     *
+     * <p>The caller is resolved from the JWT's {@code sub} claim by the controller, so
+     * there is no id in the URL and an administrator can only ever read their own row.
+     *
+     * @throws ResourceNotFoundException 404 {@code USER_NOT_FOUND} — a token whose
+     *         account has since been deleted, which is a stale session rather than a
+     *         reachable page state
+     */
+    @Transactional(readOnly = true)
+    public UserResponse getOwnProfile(int userId) {
+        return UserResponse.of(require(userId));
+    }
+
+    /**
+     * Edits the signed-in administrator's own name, email and mobile number.
+     *
+     * <h2>Three fields, and nothing else is reachable</h2>
+     * <p>{@link ProfileUpdateRequest} simply has no {@code role} or {@code status}
+     * field, so a caller cannot promote themselves or reactivate a disabled account by
+     * adding a key to the body — the mock's own rule ("only the fields a profile form
+     * owns are writable — never role, status or the id") made structural rather than
+     * remembered. Nothing is written but {@code name}, {@code email} and {@code phone},
+     * so the {@code ADMIN_ACCOUNT_PROTECTED} reasoning that governs
+     * {@link #updateUser} is not bypassed here: there is no transition to refuse.
+     *
+     * <h2>The same uniqueness rules as every other account write, self-excluded</h2>
+     * <p>Lower-cased email, {@code +977}-stripped 10-digit phone, and the frontend's own
+     * {@code EMAIL_EXISTS} / {@code PHONE_EXISTS} codes — the codes
+     * {@code admin-profile.js} paints onto the offending field. The checks use
+     * {@code existsByEmailAndIdNot} / {@code existsByPhoneAndIdNot} because a profile
+     * form resubmits the address it already had, and a plain existence check would make
+     * saving an unchanged form a 409.
+     *
+     * <h2>Blank means unchanged</h2>
+     * <p>A field left out or sent blank keeps its stored value — never cleared. That is
+     * the convention {@link AdminUserRequest} documents for the roster's edit, and it is
+     * what makes it safe for this endpoint to have no "at least one identifier" rule:
+     * an update can never remove an account's last way to sign in.
+     *
+     * @throws ResourceNotFoundException  404 {@code USER_NOT_FOUND}
+     * @throws DuplicateResourceException 409 {@code EMAIL_EXISTS} / {@code PHONE_EXISTS}
+     * @throws ValidationException        a mobile number that is not 10 digits after
+     *                                   normalising
+     */
+    @Transactional
+    public UserResponse updateOwnProfile(int userId, ProfileUpdateRequest request) {
+        User user = require(userId);
+
+        String email = blankToNull(request.email());
+        if (email != null) {
+            email = email.toLowerCase(Locale.ROOT);
+            if (!email.equals(user.getEmail())
+                    && userRepository.existsByEmailAndIdNot(email, userId)) {
+                throw DuplicateResourceException.emailExists();
+            }
+            user.setEmail(email);
+        }
+
+        String phone = blankToNull(normalizePhone(request.phone()));
+        if (phone != null) {
+            if (!phone.matches("\\d{10}")) {
+                throw new ValidationException("Enter a 10-digit mobile number.");
+            }
+            if (!phone.equals(user.getPhone())
+                    && userRepository.existsByPhoneAndIdNot(phone, userId)) {
+                throw DuplicateResourceException.phoneExists();
+            }
+            user.setPhone(phone);
+        }
+
+        // @NotBlank on the record, so the page's own "name is required" rule is enforced
+        // before this runs; the trim is for a hand-written caller with padded whitespace.
+        user.setName(request.name().trim());
+
+        User saved = userRepository.save(user);
+
+        // The roadmap's "auth failures" sibling event on this surface: a profile edit
+        // changes what a sign-in resolves to, so it is worth a line. No email or phone in
+        // it — the id identifies the row, and the contact details are the personal data
+        // this project keeps out of logs (standards doc, logging rule).
+        log.info("Admin profile updated: id={} (name/email/phone only; role and status are not "
+                + "editable from this endpoint)", saved.getId());
+
+        return UserResponse.of(saved);
     }
 
     /**

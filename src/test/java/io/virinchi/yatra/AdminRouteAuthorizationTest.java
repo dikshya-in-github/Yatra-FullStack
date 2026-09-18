@@ -188,7 +188,16 @@ class AdminRouteAuthorizationTest {
                         // exactly the mapping shape that a hand-written list or a
                         // prefix check drops without anything else noticing: no path
                         // variable, no body, one verb.
-                        "GET /api/admin/dashboard");
+                        "GET /api/admin/dashboard",
+                        // Phase 14's checkpoint — the profile read and write, and the
+                        // last admin page to get an endpoint. Both are parameterless:
+                        // the caller is resolved from the JWT's `sub` claim rather than
+                        // from a path variable, so the GET is the same shape as the
+                        // dashboard's and the POST is the one verb-plus-body pair in the
+                        // project with no id anywhere in its URL. A route list built
+                        // from "<VERB> <path>/1" URLs would miss the POST entirely.
+                        "GET /api/admin/profile",
+                        "POST /api/admin/profile");
     }
 
     /* ------------------------------------------------------------------ *
