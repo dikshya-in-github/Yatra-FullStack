@@ -5,9 +5,16 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * The body of {@code POST /api/admin/profile} — what {@code admin-profile.html}'s
- * "Save changes" button submits, and the write half of the one admin page that had
- * no backend endpoint until now.
+ * The body of {@code POST /api/admin/profile} and of {@code POST}/{@code PUT
+ * /api/users/me} — what {@code admin-profile.html}'s and {@code profile.html}'s
+ * "Save changes" buttons both submit.
+ *
+ * <p><b>One record for both surfaces, because it is one form.</b> An administrator
+ * editing their own row and a customer editing theirs send exactly the same three
+ * keys, and the service methods behind them
+ * ({@code UserService.updateOwnProfile}, which both controllers call) enforce exactly
+ * the same rules. Two near-identical records would be a second place for the rules to
+ * disagree, which is the failure this sharing exists to prevent.
  *
  * <h2>Three fields, and the brief's own rule about them</h2>
  * <p>{@code admin-profile.js} posts exactly {@code { name, email, phone }}. The mock
