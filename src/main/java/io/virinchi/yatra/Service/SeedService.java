@@ -110,16 +110,35 @@ import java.util.Optional;
 public class SeedService {
 
     /**
-     * The demo credential, hashed with BCrypt for every seeded account.
+     * The demo credential, hashed with BCrypt for the nine seeded <b>customers</b>.
      *
      * <p>Seeded accounts need a real hash or the panel cannot be signed into on a
-     * freshly seeded database, and a known demo password is the point of demo data —
-     * {@code admin@yatra.com} (the mock's own admin, id 1) plus the nine customers
-     * all take this. It is a documented, local-only credential for an academic demo;
-     * it is not a secret, and nothing here implies production use. Change it here and
-     * the seeded logins change with it.
+     * freshly seeded database, and a known demo password is the point of demo data. It
+     * is a documented, local-only credential for an academic demo; it is not a secret,
+     * and nothing here implies production use. Change it here and the seeded customer
+     * logins change with it.
      */
     private static final String DEMO_PASSWORD = "Yatra@123";
+
+    /**
+     * The administrator's own credential — {@code admin@gmail.com} with this password.
+     *
+     * <p>Deliberately <b>not</b> {@link #DEMO_PASSWORD}. The author asked for the single
+     * administrator to be {@code admin@gmail.com / admin} (2026-09-18, resolving the
+     * standards doc's open question 8), and two constants are honest here because they
+     * answer two different questions: "the demo roster's shared password" and "the one
+     * privileged account". A per-role split also keeps the scope of the change to what
+     * was asked for — the nine customers' documented shared password is untouched, so
+     * the Postman customer sign-in and every existing demo instruction still hold.
+     *
+     * <p><b>The length asymmetry is intended.</b> Five characters is below the
+     * <b>signup</b> minimum ({@code RegisterRequest}'s {@code @Size(min = 8)}), while
+     * {@link io.virinchi.yatra.Dto.LoginRequest} has no length rule at all — so this
+     * password can be <i>seeded and signed in with</i>, but never created through the
+     * public signup form. Do not "fix" it by relaxing the signup rule: that rule is the
+     * one protecting real registrations, and this is a seeded demo account.
+     */
+    private static final String ADMIN_PASSWORD = "admin";
 
     private static final String CONFIRMED = "CONFIRMED";
     private static final String CANCELLED = "CANCELLED";
@@ -190,7 +209,7 @@ public class SeedService {
     }
 
     private static final List<UserSeed> USERS = List.of(
-            new UserSeed("Dikshya Ghising", "admin@yatra.com", "9803660660", "ADMIN", ACTIVE, 47),
+            new UserSeed("Dikshya Ghising", "admin@gmail.com", "9800000001", "ADMIN", ACTIVE, 47),
             new UserSeed("Anju Karki", "anju.karki@example.com", "9841234567", "USER", ACTIVE, 16),
             new UserSeed("Bikash Shrestha", "bikash.s@example.com", "9818765432", "USER", ACTIVE, 12),
             new UserSeed("Sanjay Thapa Magar", "sanjay.tm@example.com", "9801122334", "USER", "Inactive", 11),
@@ -376,7 +395,7 @@ public class SeedService {
 
         return new SeedResponse(
                 "SEED",
-                "Demo data created. Admin sign-in: admin@yatra.com (password: the documented demo credential). "
+                "Demo data created. Admin sign-in: admin@gmail.com (password: the documented admin credential). "
                         + "Destinations are left un-marked, so a reset keeps them.",
                 counts,
                 List.of());
@@ -448,7 +467,8 @@ public class SeedService {
     }
 
     /**
-     * The account roster, with BCrypt hashes of the documented demo password.
+     * The account roster, with BCrypt hashes of the documented demo credential —
+     * {@link #ADMIN_PASSWORD} for the administrator, {@link #DEMO_PASSWORD} for the rest.
      *
      * <p>Email is lower-cased before the lookup because {@code users.email} is
      * {@code utf8mb4_bin} and {@code UserService} lower-cases on registration —
@@ -457,6 +477,7 @@ public class SeedService {
     private Map<String, User> seedUsers(LocalDateTime now) {
         Map<String, User> byEmail = new LinkedHashMap<>();
         String hash = passwordEncoder.encode(DEMO_PASSWORD);
+        String adminHash = passwordEncoder.encode(ADMIN_PASSWORD);
 
         for (UserSeed seed : USERS) {
             String email = seed.email().toLowerCase(Locale.ROOT);
@@ -470,7 +491,9 @@ public class SeedService {
             user.setName(seed.name());
             user.setEmail(email);
             user.setPhone(seed.phone());
-            user.setPassword(hash);
+            /* The administrator is the one account with its own password (see
+               ADMIN_PASSWORD) — every other seeded row shares DEMO_PASSWORD. */
+            user.setPassword("ADMIN".equals(seed.role()) ? adminHash : hash);
             user.setRole(seed.role());
             user.setStatus(seed.status());
             user.setRegisteredAt(now.minusDays(seed.daysAgo()));

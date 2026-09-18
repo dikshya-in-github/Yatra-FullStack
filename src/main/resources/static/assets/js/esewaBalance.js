@@ -63,12 +63,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /* ---------- User details ---------- */
     var user = pending.user || {};
-    document.getElementById("udPhone").textContent = user.phone || "9803660660";
-    document.getElementById("udName").textContent = user.name || "Dikshya Ghising";
-    document.getElementById("udEmail").textContent = user.email || "ghisingleeku@gmail.com";
-    document.getElementById("udContact").textContent = user.phone || "9803660660";
+    document.getElementById("udPhone").textContent = user.phone || "9800000001";
+    document.getElementById("udName").textContent = user.name || "Test User";
+    document.getElementById("udEmail").textContent = user.email || "test@example.com";
+    document.getElementById("udContact").textContent = user.phone || "9800000001";
     document.getElementById("udAddress").textContent =
-        user.address || "Pariwartan, Suryabinayak Municipality-8, Bhaktapur, Bagmati Pradesh";
+        user.address || "Test Ward 1, Kathmandu, Bagmati Pradesh";
 
     /* ---------- Balance refresh (mock) ---------- */
     var refreshBtn = document.getElementById("refreshBal");

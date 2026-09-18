@@ -375,7 +375,7 @@
                 <label for="adminId">Email or Username</label>
                 <div class="input-wrap">
                     <i class="fa-solid fa-user-shield"></i>
-                    <input type="text" id="adminId" name="adminId" placeholder="admin@yatra.com" autocomplete="username">
+                    <input type="text" id="adminId" name="adminId" placeholder="admin@gmail.com" autocomplete="username">
                 </div>
             </div>
 
@@ -403,9 +403,10 @@
         </form>
 
         <p class="demo-hint">
-            <strong>Mock login (frontend-only).</strong> Any email + password (4+ chars) opens the dashboard.
-            Real authentication comes with the Spring backend: <code>POST /api/auth/login</code> → JWT → role check
-            (Master Plan §2.3 / §3.3–3.4).
+            <strong>Real authentication.</strong> <code>POST /api/auth/login</code> → JWT → role check
+            (Master Plan §2.3 / §3.3–3.4). Only a seeded account whose stored role is
+            <code>ADMIN</code> opens the dashboard; the demo credentials are in the Run-and-Test
+            guide, §3. The password is verified against a BCrypt hash — not by this page.
         </p>
 
         <a class="back-link" href="./home.html"><i class="fa-solid fa-arrow-left"></i> Back to Yatra site</a>
@@ -413,11 +414,21 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <!-- Fix plan §4: this page signs in against the REAL API now, so it loads the
+         shared layer (config → api) instead of carrying its own mock session. -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const $ = (s, c = document) => c.querySelector(s);
 
             const ADMIN_SESSION_KEY = 'yatra_admin_session';
+
+            /* The key api.js reads the JWT from (config.js owns it; the fallback
+               keeps this page working if config.js is ever dropped). */
+            const AUTH_TOKEN_KEY =
+                (typeof YATRA_CONFIG !== 'undefined' && YATRA_CONFIG.AUTH_TOKEN_KEY) || 'yatra_auth_token';
 
             // Already signed in? Go straight to the dashboard.
             let existing = null;
@@ -503,24 +514,48 @@
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying…';
 
-                // MOCK auth — replaced by POST /api/auth/login + JWT role check later.
-                // The session shape mirrors what the backend will return (userId, role).
-                const session = {
-                    userId: 1,
-                    name: ident.value.includes('@') ? ident.value.split('@')[0] : ident.value.trim(),
-                    email: ident.value.includes('@') ? ident.value.trim() : 'admin@yatra.com',
-                    role: 'ADMIN'
-                };
+                /* REAL auth (fix plan §4, §13). Worth stating what this replaces: the
+                   mock minted `role: 'ADMIN'` from whatever was typed, so every string
+                   was a valid administrator and the panel's front door could not fail.
+                   Credentials are now checked by the backend against a BCrypt hash, and
+                   the role comes from the row — not from this page.
 
-                setTimeout(() => {
-                    sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
-                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Verified';
-                    toast('Welcome to Yatra Admin!', 'success');
+                   Refusals are surfaced as the API words them (401
+                   INVALID_CREDENTIALS, 403 ACCOUNT_DISABLED), and a 200 carrying a
+                   non-ADMIN role is refused here too. That check is convenience, not
+                   the rule: §6 — never trust the frontend for authorization.
 
-                    setTimeout(() => {
-                        window.location.href = './admin-dashboard.html';
-                    }, 700);
-                }, 800);
+                   Two things are stored on success, deliberately:
+                     - ADMIN_SESSION_KEY → the API's own `user` object, whose keys
+                       (userId, name, email, role) are the ones the mock wrote, so
+                       admin.js's guard and every sidebar work unchanged;
+                     - AUTH_TOKEN_KEY → the JWT, which api.js attaches as a Bearer
+                       header. The admin pages still read mock data (they migrate
+                       module by module), but the token is what makes each one work
+                       the moment it is added to the allow-list. */
+                apiPost('/api/auth/login', {
+                    loginId: ident.value.trim(),
+                    password: password.value
+                })
+                    .then((res) => {
+                        const user = (res && res.user) || null;
+                        if (!user || user.role !== 'ADMIN') {
+                            throw new Error('That account is not an administrator.');
+                        }
+                        sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(user));
+                        if (res.token) sessionStorage.setItem(AUTH_TOKEN_KEY, res.token);
+                        btn.innerHTML = '<i class="fa-solid fa-check"></i> Verified';
+                        toast('Welcome to Yatra Admin!', 'success');
+
+                        setTimeout(() => {
+                            window.location.href = './admin-dashboard.html';
+                        }, 700);
+                    })
+                    .catch((err) => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHTML;
+                        toast((err && err.message) || 'Sign-in failed. Please try again.', 'error');
+                    });
             });
         });
     </script>

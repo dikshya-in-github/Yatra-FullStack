@@ -1009,7 +1009,7 @@ class PaymentApiTest {
     }
 
     private String adminToken() {
-        return jwtUtil.generate(1, "Dikshya Ghising", "admin@yatra.com", ADMIN);
+        return jwtUtil.generate(1, "Dikshya Ghising", "admin@gmail.com", ADMIN);
     }
 
     private static String bearer(String token) {

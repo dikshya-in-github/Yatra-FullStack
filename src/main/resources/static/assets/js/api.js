@@ -190,6 +190,73 @@ function updateProfile(patch, currentId, fallback) {
    for mock and real mode (both are async).
    ===================================================== */
 
+/* Shared by the two flight writes below (POST + PUT).
+
+   The mock is the API's specification, so a flight write has to refuse what
+   FlightService.apply() refuses, with the same status and code — otherwise the
+   mock accepts a body the real API rejects and the page's error path is never
+   exercised. The rules, and where they come from:
+     airline not found  → 404 NOT_FOUND          (ResourceNotFoundException.of)
+     airport not found  → 400 UNKNOWN_AIRPORT    (FlightService.resolveAirport)
+     origin = destination → 400 VALIDATION_FAILED (FlightService.apply)
+     arrival <= departure → 400 VALIDATION_FAILED (FlightService.apply)
+   `date` is carried through as sent — including absent-as-null, because
+   apply() deliberately overwrites the stored date with whatever the request
+   carried, and only the page knows whether this flight has one. */
+function mockFlightBody(body) {
+    body = body || {};
+
+    var no = MockDB.normalizeFlightNo(body.no);
+    var from = String(body.from == null ? "" : body.from).toUpperCase();
+    var to = String(body.to == null ? "" : body.to).toUpperCase();
+
+    if (body.airlineId == null || !MockDB.getAirlines().some(function (a) {
+        return String(a.id) === String(body.airlineId);
+    })) {
+        throw new ApiError(404, "NOT_FOUND", "Airline " + body.airlineId + " not found");
+    }
+    if (!MockDB.getDestinations().some(function (d) { return d.code === from; })) {
+        throw new ApiError(400, "UNKNOWN_AIRPORT", "No airport exists with code " + from + ".");
+    }
+    if (!MockDB.getDestinations().some(function (d) { return d.code === to; })) {
+        throw new ApiError(400, "UNKNOWN_AIRPORT", "No airport exists with code " + to + ".");
+    }
+    if (from === to) {
+        throw new ApiError(400, "VALIDATION_FAILED", "Origin and destination cannot be the same.");
+    }
+    if (String(body.arr) <= String(body.dep)) {
+        throw new ApiError(400, "VALIDATION_FAILED", "Arrival must be after departure (same-day domestic flights).");
+    }
+
+    return {
+        no: no,
+        airlineId: Number(body.airlineId),
+        from: from,
+        to: to,
+        dep: body.dep,
+        arr: body.arr,
+        aircraft: body.aircraft || "",
+        fare: Number(body.fare),
+        seats: Number(body.seats),
+        status: body.status || "Active",
+        date: body.date || null
+    };
+}
+
+/* The flight number is unique across the store, canonicalised before the
+   comparison — the mock's version of the uk_flight_no constraint, answered with
+   the code DuplicateResourceException.flightNoExists uses. `excludeId` is the
+   row being edited, which is allowed to keep its own number. */
+function assertFlightNoFree(no, excludeId) {
+    var taken = MockDB.getFlights().some(function (f) {
+        return String(f.id) !== String(excludeId === undefined ? "" : excludeId)
+            && MockDB.normalizeFlightNo(f.no) === no;
+    });
+    if (taken) {
+        throw new ApiError(409, "FLIGHT_NO_EXISTS", "Flight number " + no + " already exists.");
+    }
+}
+
 /* The dashboard's §2.5 cards (Phase 13) — the mock's mirror of the count/sum
    queries GET /api/admin/dashboard runs for real (Service/DashboardService).
    Same four definitions the page used to apply itself:
@@ -299,8 +366,46 @@ var MOCK_GET_ROUTES = [
     { pattern: /^\/api\/admin\/tickets$/, handle: function () {
         return { bookings: MockDB.getBookings() }; // tickets derived per booking — same shape the page consumes
     } },
-    { pattern: /^\/api\/admin\/flights$/, handle: function () {
-        return { flights: MockDB.getFlights() };
+    /* The admin flight list, with the query parameters the real controller and
+       repository honour (fix plan §5). admin-flights.js sends
+       search/airlineId/status/page/size and renders whatever comes back, so the
+       mock has to filter and page HERE — handing back the whole store would make
+       a migrated page render every row while its counts said "8", and the two
+       modes would disagree about what a search means. Search fields match
+       FlightRepository.searchPage: flight number, origin code, destination code,
+       airline name. Without `size` it answers the unpaged shape (all matches). */
+    { pattern: /^\/api\/admin\/flights$/, handle: function (match, params) {
+        var term = String(params.get("search") || "").trim().toLowerCase();
+        var airlineId = params.get("airlineId");
+        var status = params.get("status");
+        var roster = MockDB.getAirlines();
+
+        var rows = MockDB.getFlights().filter(function (f) {
+            var airline = roster.filter(function (a) {
+                return String(a.id) === String(f.airlineId);
+            })[0];
+            var matchesTerm = !term
+                || String(f.no).toLowerCase().indexOf(term) !== -1
+                || String(f.from).toLowerCase().indexOf(term) !== -1
+                || String(f.to).toLowerCase().indexOf(term) !== -1
+                || (airline && String(airline.name).toLowerCase().indexOf(term) !== -1);
+
+            return matchesTerm
+                && (!airlineId || String(f.airlineId) === String(airlineId))
+                && (!status || f.status === status);
+        });
+
+        var size = parseInt(params.get("size"), 10);
+        if (!(size > 0)) return { flights: rows };
+
+        var page = parseInt(params.get("page"), 10) || 0;
+        return {
+            flights: rows.slice(page * size, page * size + size),
+            page: page,
+            size: size,
+            totalElements: rows.length,
+            totalPages: Math.max(1, Math.ceil(rows.length / size))
+        };
     } },
     { pattern: /^\/api\/admin\/users$/, handle: function () {
         return { users: MockDB.getUsers() };
@@ -318,7 +423,7 @@ var MOCK_GET_ROUTES = [
             throw new ApiError(401, "NOT_AUTHENTICATED", "Admin sign-in required.");
         }
 
-        var record = rosterUserFor(admin) || MockDB.findUser("admin@yatra.com");
+        var record = rosterUserFor(admin) || MockDB.findUser("admin@gmail.com");
         if (record) return { user: publicUser(record) };
 
         return { user: publicUser({
@@ -482,7 +587,7 @@ var MOCK_POST_ROUTES = [
             throw new ApiError(401, "NOT_AUTHENTICATED", "Admin sign-in required.");
         }
 
-        var record = rosterUserFor(admin) || MockDB.findUser("admin@yatra.com");
+        var record = rosterUserFor(admin) || MockDB.findUser("admin@gmail.com");
         var currentId = record ? record.id : (admin.userId || 0);
         return { user: publicUser(updateProfile(
             body, currentId, { userId: admin.userId, name: admin.name,
@@ -513,6 +618,72 @@ var MOCK_POST_ROUTES = [
         }
 
         return { token: mockJwt(user), user: publicUser(user) };
+    } },
+
+    /* POST /api/admin/flights — create (fix plan §5). Returns the bare flight
+       object, which is what FlightController.create returns. */
+    { pattern: /^\/api\/admin\/flights$/, handle: function (match, params, body) {
+        var record = mockFlightBody(body);
+        assertFlightNoFree(record.no);
+        return MockDB.addFlight(record);
+    } }
+];
+
+/* =====================================================
+   PUT / DELETE — the write verbs the admin panel needs
+   (fix plan §3, added 2026-09-18)
+
+   These tables exist BEFORE any page uses them. `api.js` exposed only
+   apiGet/apiPost until now, which is why every admin module wrote straight
+   into its OWN localStorage store (`admin-flights.js` keeps `SEED_FLIGHTS`
+   and its own `save()`) — an Edit or a Delete had no client verb to call at
+   all, so "call the real PUT endpoint" was not implementable rather than
+   merely unimplemented.
+
+   Each module's routes are added HERE as that module is migrated off its
+   private store, so a handler always ships beside the page that calls it
+   (fix plan §5 does the Flights module that way). An unmapped route is not
+   silent: `mockRequest` below answers 404 NOT_IMPLEMENTED.
+   ===================================================== */
+var MOCK_PUT_ROUTES = [
+    /* PUT /api/admin/flights/{id} — the edit, and the Activate/Disable toggle
+       (which is the same write with one field changed). The id comes from the
+       path, never the body: it is the entity's identity, not a page field. */
+    { pattern: /^\/api\/admin\/flights\/(\d+)$/, handle: function (match, params, body) {
+        var id = Number(match[1]);
+        if (!MockDB.findFlight(id)) {
+            throw new ApiError(404, "NOT_FOUND", "No flight with id " + id);
+        }
+
+        var record = mockFlightBody(body);
+        assertFlightNoFree(record.no, id);
+
+        var updated = MockDB.updateFlight(id, record);
+        return updated || MockDB.findFlight(id); // bookedSeats etc. survive the patch
+    } }
+];
+
+var MOCK_DELETE_ROUTES = [
+    /* DELETE /api/admin/flights/{id}. A flight with bookings is a 409 naming the
+       count and pointing at Inactive — the same refusal, wording and code as
+       ConflictException.flightHasBookings, so the page's toast shows the real
+       reason instead of a generic failure. Answers null (204 has no body). */
+    { pattern: /^\/api\/admin\/flights\/(\d+)$/, handle: function (match) {
+        var id = Number(match[1]);
+        var flight = MockDB.findFlight(id);
+        if (!flight) {
+            throw new ApiError(404, "NOT_FOUND", "No flight with id " + id);
+        }
+
+        var bookings = MockDB.bookingsForFlight(flight.no);
+        if (bookings > 0) {
+            throw new ApiError(409, "FLIGHT_HAS_BOOKINGS",
+                "Flight " + flight.no + " has " + bookings + " booking(s) and cannot be deleted. "
+                + "Set its status to Inactive instead, so existing bookings stay valid.");
+        }
+
+        MockDB.deleteFlight(id);
+        return null;
     } }
 ];
 
@@ -521,7 +692,12 @@ function mockRequest(method, path, body) {
     var route = (qIndex === -1 ? path : path.slice(0, qIndex)).replace(/\/+$/, "");
     var params = new URLSearchParams(qIndex === -1 ? "" : path.slice(qIndex + 1));
 
-    var table = method === "POST" ? MOCK_POST_ROUTES : MOCK_GET_ROUTES;
+    /* Method → table. A verb with no table yet still resolves, to a 404 below:
+       loudly unimplemented, never a silent no-op. */
+    var table = method === "POST" ? MOCK_POST_ROUTES
+        : method === "PUT" ? MOCK_PUT_ROUTES
+        : method === "DELETE" ? MOCK_DELETE_ROUTES
+        : MOCK_GET_ROUTES;
     for (var i = 0; i < table.length; i++) {
         var match = route.match(table[i].pattern);
         if (match) {
@@ -588,4 +764,18 @@ async function apiGet(path) {
 async function apiPost(path, body) {
     if (USE_MOCK_DATA) return mockRequest("POST", path, body);
     return httpRequest("POST", path, body);
+}
+
+/* The two verbs the admin CRUD depends on. Same shape as apiGet/apiPost, so a
+   page's call site reads identically in mock and real mode —
+   `apiPut('/api/admin/flights/' + id, payload)` and `apiDelete(...)` — and
+   `httpRequest` already attaches the Bearer token it was always passed. */
+async function apiPut(path, body) {
+    if (USE_MOCK_DATA) return mockRequest("PUT", path, body);
+    return httpRequest("PUT", path, body);
+}
+
+async function apiDelete(path, body) {
+    if (USE_MOCK_DATA) return mockRequest("DELETE", path, body);
+    return httpRequest("DELETE", path, body);
 }

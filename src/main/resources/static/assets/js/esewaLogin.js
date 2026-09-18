@@ -126,10 +126,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: "eSewa",
                 createdAt: new Date().toISOString(),
                 user: {
-                    phone: (pax && pax.phone) || "9803660660",
-                    name: (pax && pax.name) || "Dikshya Ghising",
-                    email: (pax && pax.email) || "ghisingleeku@gmail.com",
-                    address: (pax && pax.address) || "Pariwartan, Suryabinayak Municipality-8, Bhaktapur, Bagmati Pradesh"
+                    phone: (pax && pax.phone) || "9800000001",
+                    name: (pax && pax.name) || "Test User",
+                    email: (pax && pax.email) || "test@example.com",
+                    address: (pax && pax.address) || "Test Ward 1, Kathmandu, Bagmati Pradesh"
                 },
                 flight: flight || null
             };

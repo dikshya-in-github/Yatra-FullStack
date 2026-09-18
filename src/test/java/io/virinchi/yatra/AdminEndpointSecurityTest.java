@@ -54,7 +54,7 @@ class AdminEndpointSecurityTest {
     /** The proof: a real ADMIN token gets past hasRole('ADMIN'). */
     @Test
     void adminTokenReachesTheProtectedEndpoint() throws Exception {
-        String token = jwtUtil.generate(1, "Dikshya Ghising", "admin@yatra.com", "ADMIN");
+        String token = jwtUtil.generate(1, "Dikshya Ghising", "admin@gmail.com", "ADMIN");
 
         mockMvc.perform(get("/api/admin/ping").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
@@ -79,7 +79,7 @@ class AdminEndpointSecurityTest {
 
     @Test
     void aTamperedSignatureIsRejected() throws Exception {
-        String token = jwtUtil.generate(1, "Dikshya Ghising", "admin@yatra.com", "ADMIN");
+        String token = jwtUtil.generate(1, "Dikshya Ghising", "admin@gmail.com", "ADMIN");
         String tampered = token.substring(0, token.length() - 3) + "aaa";
 
         mockMvc.perform(get("/api/admin/ping").header(HttpHeaders.AUTHORIZATION, "Bearer " + tampered))

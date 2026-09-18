@@ -17,10 +17,10 @@ document.addEventListener("DOMContentLoaded", function () {
     var product = typeof pending.productAmount === "number" ? pending.productAmount : payable;
     var hasPromo = !!pending.promo;
     var user = pending.user || {
-        phone: "9803660660",
-        name: "Dikshya Ghising",
-        email: "ghisingleeku@gmail.com",
-        address: "Pariwartan, Suryabinayak Municipality-8, Bhaktapur, Bagmati Pradesh"
+        phone: "9800000001",
+        name: "Test User",
+        email: "test@example.com",
+        address: "Test Ward 1, Kathmandu, Bagmati Pradesh"
     };
     var flight = pending.flight || load("yatra_selected_flight");
 

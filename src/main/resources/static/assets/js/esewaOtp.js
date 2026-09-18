@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /* ---------- Phone (passenger form → pending → demo) ---------- */
     var pax = load("yatra_passenger") || load("yatra_passenger_details") || {};
-    var phone = (pax.phone || pax.contact) || (pending.user && pending.user.phone) || "9803660660";
+    var phone = (pax.phone || pax.contact) || (pending.user && pending.user.phone) || "9800000001";
     var phoneEl = document.getElementById("otpPhone");
     if (phoneEl) phoneEl.textContent = phone;
 

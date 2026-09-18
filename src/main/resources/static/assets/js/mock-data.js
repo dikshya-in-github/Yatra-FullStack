@@ -57,7 +57,7 @@ var MockDB = (function () {
         airlines: "yatra_admin_airlines",
         destinations: "yatra_admin_destinations",
         bookings: "yatra_bookings",
-        flights: "yatra_admin_flights",             // owned by admin-flights.js — this layer only bumps bookedSeats on checkout
+        flights: "yatra_admin_flights",             // owned HERE since fix-plan §5 (2026-09-18) — self-seeds and holds the CRUD helpers the admin page reaches through api.js
         users: "yatra_admin_users",                 // shared roster (seeds here) — CRUD UI in admin-users.js
         bookingsSeedFlag: "yatra_bookings_seeded_v1" // owned by admin-bookings.js — read-only here
     };
@@ -136,8 +136,7 @@ var MockDB = (function () {
        Returns the new booked count, or null when there is no matching
        flight row. Same matching rule esewaConfirm.js used (no + date). */
     function incrementBookedSeats(flightNo, from, to, count) {
-        var flights = lsGet(KEYS.flights, []);
-        if (!Array.isArray(flights)) return null;
+        var flights = getFlights(); // seeded on first read — was a raw key read
         for (var i = 0; i < flights.length; i++) {
             var f = flights[i];
             if (f && f.no === flightNo && f.from === from && f.to === to) {
@@ -367,24 +366,144 @@ var MockDB = (function () {
         return { pnr: pnr, ticketNo: "784-24" + seed.slice(0, 10) };
     }
 
-    /* Read-only read paths for the admin pages (item 16): the
-       owning pages keep writes; the mock layer exposes reads so
-       page JS never touches localStorage for domain data. */
+    /* ---------- Flights (self-seeds on first read) ----------
+       Moved out of admin-flights.js in fix-plan §5 (2026-09-18). The page used to
+       own this store outright — its own STORAGE_KEY (this same key), its own
+       SEED_FLIGHTS, its own load()/save() — so a Save wrote to localStorage and
+       the API was never called. Ownership sits here now, beside the other stores,
+       and the page reaches it only through apiPost/apiPut/apiDelete. The six seed
+       rows below are the page's, moved verbatim: a fresh browser still shows the
+       same schedule, and any already-saved rows are untouched. */
+    var SEED_FLIGHTS = [
+        {
+            id: 1, no: "U4 951", airlineId: 1, from: "KTM", to: "PKR",
+            dep: "06:50", arr: "07:35", aircraft: "ATR 72", fare: 8299.99,
+            seats: 70, bookedSeats: 4, status: "Active"
+        },
+        {
+            id: 2, no: "YT 958", airlineId: 2, from: "KTM", to: "PKR",
+            dep: "09:55", arr: "10:40", aircraft: "ATR 72", fare: 8449.99,
+            seats: 70, bookedSeats: 11, status: "Active"
+        },
+        {
+            id: 3, no: "S3 507", airlineId: 3, from: "KTM", to: "BIR",
+            dep: "11:35", arr: "12:20", aircraft: "CRJ 700", fare: 8899.99,
+            seats: 78, bookedSeats: 6, status: "Active"
+        },
+        {
+            id: 4, no: "ST 221", airlineId: 4, from: "KTM", to: "KEP",
+            dep: "12:50", arr: "13:45", aircraft: "Dornier 228", fare: 9199.99,
+            seats: 19, bookedSeats: 2, status: "Active"
+        },
+        {
+            id: 5, no: "U4 953", airlineId: 1, from: "KTM", to: "BWA",
+            dep: "15:10", arr: "16:00", aircraft: "ATR 72", fare: 8799.99,
+            seats: 70, bookedSeats: 0, status: "Active"
+        },
+        {
+            id: 6, no: "YT 962", airlineId: 2, from: "PKR", to: "KTM",
+            dep: "17:25", arr: "18:10", aircraft: "ATR 42", fare: 8299.99,
+            seats: 46, bookedSeats: 9, status: "Active"
+        }
+    ];
+
     function getFlights() {
-        var data = lsGet(KEYS.flights, []);
-        return Array.isArray(data) ? data : [];
+        var data = lsGet(KEYS.flights, null);
+        if (Array.isArray(data)) return data;
+        lsSet(KEYS.flights, SEED_FLIGHTS);
+        return SEED_FLIGHTS.slice();
+    }
+
+    /* ---------- Flights, the write half (fix-plan §5) ----------
+       The mutations the admin page now performs through api.js. The rules mirror
+       FlightService because the mock is the API's specification:
+         - the id is minted here — the page never sends one (it is the entity's
+           identity, and the real column is AUTO_INCREMENT);
+         - a flight number is canonicalised before any comparison, the same
+           normalisation FlightService.normalizeFlightNo applies, because
+           flight_no is case-sensitive in MySQL and "u4 951" is otherwise a
+           different row from "U4 951";
+         - bookedSeats is NOT writable — it counts checkouts, never an edit;
+         - deleting a flight that has bookings is refused by the route table (409,
+           the same ConflictException the service throws), which is what
+           bookingsForFlight() is for. */
+    function normalizeFlightNo(value) {
+        return String(value == null ? "" : value)
+            .trim().replace(/\s+/g, " ").toUpperCase();
+    }
+
+    function findFlight(id) {
+        var list = getFlights();
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] && String(list[i].id) === String(id)) return list[i];
+        }
+        return null;
+    }
+
+    function addFlight(record) {
+        var list = getFlights();
+        var nextId = list.reduce(function (max, f) {
+            var id = Number(f && f.id) || 0;
+            return id > max ? id : max;
+        }, 0) + 1;
+
+        record = record || {};
+        record.id = nextId;
+        record.bookedSeats = 0; // a flight that was just created cannot have one
+        list.push(record);
+        lsSet(KEYS.flights, list);
+        return record;
+    }
+
+    function updateFlight(id, patch) {
+        patch = patch || {};
+        var list = getFlights();
+        for (var i = 0; i < list.length; i++) {
+            if (!list[i] || String(list[i].id) !== String(id)) continue;
+
+            for (var key in patch) {
+                if (!Object.prototype.hasOwnProperty.call(patch, key)) continue;
+                if (key === "id" || key === "bookedSeats") continue; // system data
+                list[i][key] = patch[key];
+            }
+            lsSet(KEYS.flights, list);
+            return list[i];
+        }
+        return null;
+    }
+
+    function deleteFlight(id) {
+        var list = getFlights();
+        var removed = null;
+        var kept = list.filter(function (f) {
+            if (f && String(f.id) === String(id)) { removed = f; return false; }
+            return true;
+        });
+        if (!removed) return null;
+        lsSet(KEYS.flights, kept);
+        return removed;
+    }
+
+    /* How many live bookings reference this flight number — the delete guard's
+       test, mirroring FlightService.deleteFlight's countByFlightId. Bookings are
+       matched the way the verify handler stores them (booking.flight.flightNo). */
+    function bookingsForFlight(flightNo) {
+        var target = normalizeFlightNo(flightNo);
+        return getBookings().filter(function (b) {
+            return b && b.flight && normalizeFlightNo(b.flight.flightNo) === target;
+        }).length;
     }
 
     /* ---------- Users (self-seeds on first read) ----------
        ONE roster shared by every entry point: signup (POST /api/auth/register),
        login (POST /api/auth/login) and the admin panel's user management page.
        User #1 mirrors the mock admin session admin-login.html writes
-       (userId 1, admin@yatra.com) so the two sides agree.
+       (userId 1, admin@gmail.com) so the two sides agree.
        No password field exists here — no mock user ever stores a credential;
        hashing belongs to the backend's BCryptPasswordEncoder (Master Plan §3.4,
        and admin-users.html's own "no password field" rule). */
     var SEED_USERS = [
-        { id: 1, name: "Dikshya Ghising", email: "admin@yatra.com", phone: "9803660660", role: "ADMIN", status: "Active", registeredAt: "2026-08-01T09:00:00.000Z" },
+        { id: 1, name: "Dikshya Ghising", email: "admin@gmail.com", phone: "9800000001", role: "ADMIN", status: "Active", registeredAt: "2026-08-01T09:00:00.000Z" },
         { id: 2, name: "Anju Karki", email: "anju.karki@example.com", phone: "9841234567", role: "USER", status: "Active", registeredAt: "2026-09-01T10:20:00.000Z" },
         { id: 3, name: "Bikash Shrestha", email: "bikash.s@example.com", phone: "9818765432", role: "USER", status: "Active", registeredAt: "2026-09-05T14:45:00.000Z" },
         { id: 4, name: "Sanjay Thapa Magar", email: "sanjay.tm@example.com", phone: "9801122334", role: "USER", status: "Inactive", registeredAt: "2026-09-06T08:10:00.000Z" },
@@ -404,7 +523,7 @@ var MockDB = (function () {
     }
 
     /* Mobile numbers are stored AND matched in their 10-digit national form:
-       "+977 9803-660-660" and "9803660660" are the same person. The signup
+       "+977 9800-000-001" and "9800000001" are the same person. The signup
        page's +977 dial prefix and the login page's free-text field both feed
        this, and the backend's unique constraint sees one canonical value. */
     function normalizePhone(value) {
@@ -512,6 +631,12 @@ var MockDB = (function () {
         getBookings: getBookings,
         getBookingById: getBookingById,
         getFlights: getFlights,
+        normalizeFlightNo: normalizeFlightNo,
+        findFlight: findFlight,
+        addFlight: addFlight,
+        updateFlight: updateFlight,
+        deleteFlight: deleteFlight,
+        bookingsForFlight: bookingsForFlight,
         getUsers: getUsers,
         addUser: addUser,
         findUser: findUser,

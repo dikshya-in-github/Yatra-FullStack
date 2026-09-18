@@ -56,7 +56,7 @@ var YatraValidation = (function () {
         return EMAIL_RE.test(String(v == null ? "" : v).trim());
     }
 
-    /* Normalize first: "+977 9803-660-660" and "9803660660" both pass. */
+    /* Normalize first: "+977 9800-000-001" and "9800000001" both pass. */
     function digits(v) {
         return String(v == null ? "" : v).replace(/\D/g, "");
     }

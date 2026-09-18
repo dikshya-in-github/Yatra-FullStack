@@ -247,7 +247,7 @@ public class UserService implements UserDetailsService {
             passwordEncoder.matches(password, timingDefenceHash);
             //The roadmap's "auth failures" event (Phase 14). The login id is logged on
             //purpose — "someone tried to sign in" is not actionable, "someone tried to
-            //sign in as admin@yatra.com" is — and the password never is, on any path.
+            //sign in as admin@gmail.com" is — and the password never is, on any path.
             //This line is not redundant with GlobalExceptionHandler's: that one records
             //what the caller was told (a generic INVALID_CREDENTIALS), this one records
             //which account was attempted, which is exactly what must not leak outward.

@@ -154,6 +154,16 @@ class SeedApiTest {
 
         assertThat(bookings.findBySeededTrue()).hasSize(BOOKINGS);
         assertThat(users.findBySeededTrue()).hasSize(USERS);
+
+        /* --- R19: the seeded administrator's contact data is a placeholder --- *
+         * The seeder is the one place a leak regenerates: this row is rewritten by every
+         * reset/seed, so a personal number or mailbox here comes back for ever, no matter
+         * what the templates say. Asserted against the row the seed just wrote, which is
+         * why the check lives here and not in the static guard (PersonalDataLeakTest) —
+         * that guard reads files and cannot see what the database was told. */
+        assertThat(users.findByEmailIgnoreCase("admin@gmail.com").orElseThrow().getPhone())
+                .as("the seeded admin's phone is the placeholder, not the author's mobile")
+                .isEqualTo("9800000001");
         assertThat(airlines.findBySeededTrue()).hasSize(AIRLINES);
 
         /* --- the dates are relative, so a dated search always finds something --- */
@@ -167,7 +177,7 @@ class SeedApiTest {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"loginId":"admin@yatra.com","password":"Yatra@123"}"""))
+                                {"loginId":"admin@gmail.com","password":"admin"}"""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.user.role").value("ADMIN"));
@@ -437,7 +447,7 @@ class SeedApiTest {
     }
 
     private String adminToken() {
-        return jwtUtil.generate(1, "Dikshya Ghising", "admin@yatra.com", "ADMIN");
+        return jwtUtil.generate(1, "Dikshya Ghising", "admin@gmail.com", "ADMIN");
     }
 
     /** Flushes and drops the persistence context so the next read comes from the database. */

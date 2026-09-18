@@ -560,7 +560,7 @@ class BookingApiTest {
     }
 
     private String adminToken() {
-        return jwtUtil.generate(1, "Dikshya Ghising", "admin@yatra.com", "ADMIN");
+        return jwtUtil.generate(1, "Dikshya Ghising", "admin@gmail.com", "ADMIN");
     }
 
     /** Isolates each test's rows from other tests and from any future seed data. */

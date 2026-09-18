@@ -1,105 +1,70 @@
 /* =========================================
    YATRA ADMIN — FLIGHTS PAGE JS
-   CRUD (Master Plan §2.1 #4). Reads go through
-   the API layer (item 16 — GET /api/admin/flights);
-   writes stay in localStorage until the Spring
-   API replaces them in Phase 5 (same data shapes
-   either way, per the dynamic-readiness rule).
+   CRUD (Master Plan §2.1 #4). Full backend wiring as of the
+   fix-plan §5 pass (2026-09-18) — this page is the REFERENCE
+   PATTERN every other admin module is migrated to follow.
+
+   Reads  : GET /api/admin/flights, and GET /api/airlines +
+            GET /api/destinations for the two dropdown groups.
+   Writes : POST /api/admin/flights  (create)
+            PUT /api/admin/flights/{id}  (edit, and the status toggle)
+            DELETE /api/admin/flights/{id}  (delete)
+   All of them through api.js, so this file contains no
+   localStorage access and no seed rows of its own. It used to
+   own both (`STORAGE_KEY`, `SEED_FLIGHTS`, `load()`, `save()`),
+   which meant a Save wrote to the browser and never reached the
+   database.
 
    Key rules baked in:
-   - The airline dropdown is fed from the AIRLINES
-     store (via GET /api/airlines here) — flights
-     always reference an airline by id, never
-     free text.
+   - Both dropdown groups are fed from real backend lists, and
+     flights always reference an airline by id, never free text.
    - Seat Capacity is the ONLY seat input. Available
      seats = capacity − booked, calculated for display;
      there is no manual available-seats field
      (Master Plan §2.6, teacher-flagged rule).
+   - After any write the list is re-read from the API, so the
+     table can never show a row the database does not hold.
+   - A rejected write surfaces the server's own message (e.g. a
+     flight with bookings refusing to delete) instead of
+     pretending to succeed.
    ========================================= */
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (s, c = document) => c.querySelector(s);
 
-  const STORAGE_KEY = 'yatra_admin_flights';
-  const AIRLINE_KEY = 'yatra_admin_airlines'; // read-only here — owned by admin-airlines.js
   const PAGE_SIZE = 8;
 
-  /* ---------- Nepali domestic airports (matches searchFlight.js CITY map) ---------- */
+  /* ---------- Nepali domestic airports ----------
+     Offline fallback for a route cell label only: the origin/destination SELECTS
+     are built from GET /api/destinations (the rows the API resolves a flight's
+     `from`/`to` against), so the form cannot offer an airport that does not
+     exist. This map still names a code in the table when the airline/destination
+     read fails, which is why it stays. */
   const CITIES = {
     KTM: 'Kathmandu', PKR: 'Pokhara', BWA: 'Bhairahawa', BDP: 'Bhadrapur',
     BIR: 'Biratnagar', BHR: 'Bharatpur', JKR: 'Janakpur', SIM: 'Simara',
     DHI: 'Dhangadhi', KEP: 'Nepalgunj', TMI: 'Tumlingtar'
   };
 
-  /* ---------- Fallback airlines (used only if the airlines store is empty) ---------- */
-  const FALLBACK_AIRLINES = [
-    { id: 1, name: 'Buddha Air', iata: 'U4', logo: 'assets/imgs/airline-buddha.jpg' },
-    { id: 2, name: 'Yeti Airlines', iata: 'YT', logo: 'assets/imgs/airline-yeti.jpg' },
-    { id: 3, name: 'Shree Airlines', iata: 'S3', logo: 'assets/imgs/airline-shree.svg' },
-    { id: 4, name: 'Sita Air', iata: 'ST', logo: 'assets/imgs/airline-sita.jpeg' }
-  ];
+  /* ---------- State ----------
+     Every list below is a backend read: flights from GET /api/admin/flights,
+     airlines from GET /api/airlines, destinations from GET /api/destinations.
+     The old page-private store (STORAGE_KEY + SEED_FLIGHTS + load()/save()) is
+     gone: it is why an Add looked like it worked and never reached MySQL. */
+  let flights = [];
+  let airlines = [];       // airline filter + the modal's airline select
+  let destinations = [];   // the modal's origin / destination selects
+  /* `page` is 1-based here (the UI shows "Page 2"), `totalPages`/`totalElements`
+     are the server's own counts from the last list call — never recomputed from
+     the rows on screen, which are one page of them. */
+  let state = { search: '', airline: 'ALL', status: 'ALL', page: 1, totalPages: 1, totalElements: 0 };
 
-  /* ---------- Seed flights (4 real Nepali carriers, per project scope) ---------- */
-  const SEED_FLIGHTS = [
-    {
-      id: 1, no: 'U4 951', airlineId: 1, from: 'KTM', to: 'PKR',
-      dep: '06:50', arr: '07:35', aircraft: 'ATR 72', fare: 8299.99,
-      seats: 70, bookedSeats: 4, status: 'Active'
-    },
-    {
-      id: 2, no: 'YT 958', airlineId: 2, from: 'KTM', to: 'PKR',
-      dep: '09:55', arr: '10:40', aircraft: 'ATR 72', fare: 8449.99,
-      seats: 70, bookedSeats: 11, status: 'Active'
-    },
-    {
-      id: 3, no: 'S3 507', airlineId: 3, from: 'KTM', to: 'BIR',
-      dep: '11:35', arr: '12:20', aircraft: 'CRJ 700', fare: 8899.99,
-      seats: 78, bookedSeats: 6, status: 'Active'
-    },
-    {
-      id: 4, no: 'ST 221', airlineId: 4, from: 'KTM', to: 'KEP',
-      dep: '12:50', arr: '13:45', aircraft: 'Dornier 228', fare: 9199.99,
-      seats: 19, bookedSeats: 2, status: 'Active'
-    },
-    {
-      id: 5, no: 'U4 953', airlineId: 1, from: 'KTM', to: 'BWA',
-      dep: '15:10', arr: '16:00', aircraft: 'ATR 72', fare: 8799.99,
-      seats: 70, bookedSeats: 0, status: 'Active'
-    },
-    {
-      id: 6, no: 'YT 962', airlineId: 2, from: 'PKR', to: 'KTM',
-      dep: '17:25', arr: '18:10', aircraft: 'ATR 42', fare: 8299.99,
-      seats: 46, bookedSeats: 9, status: 'Active'
-    }
-  ];
-
-  /* ---------- State (mock "repository") ---------- */
-  let flights = [];     // initial read goes through the API layer (item 16)
-  let airlines = [];    // read via GET /api/airlines (item 16)
-  let state = { search: '', airline: 'ALL', status: 'ALL', page: 1 };
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (err) { /* corrupted storage → reseed */ }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_FLIGHTS));
-    return [...SEED_FLIGHTS];
-  }
-
-  function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(flights));
-  }
-
-  /* Airlines are OWNED by admin-airlines.js — this page only reads them
-     (via GET /api/airlines, item 16). Falls back to the 4 built-in
-     carriers if that store/route returns empty. */
-  function loadAirlines() {
-    try {
-      const raw = localStorage.getItem(AIRLINE_KEY);
-      const data = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(data) && data.length) return data;
-    } catch (err) { /* fall through */ }
-    return [...FALLBACK_AIRLINES];
+  /* A route cell's city name: the destination row is the authority, CITIES is
+     the offline fallback for a code the API did not return. */
+  function cityName(code) {
+    const d = destinations.find(
+      (x) => String(x.code).toUpperCase() === String(code).toUpperCase()
+    );
+    return (d && d.city) || CITIES[code] || code;
   }
 
   function airlineById(id) {
@@ -117,30 +82,21 @@ document.addEventListener('DOMContentLoaded', () => {
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
   }
 
-  /* ---------- Filtering + pagination ---------- */
-  function filtered() {
-    const q = state.search.trim().toLowerCase();
-    return flights.filter((f) => {
-      const al = airlineById(f.airlineId);
-      const airlineName = al ? al.name.toLowerCase() : '';
-      const route = `${f.from} ${f.to}`.toLowerCase();
-      const matchesQ =
-        !q ||
-        f.no.toLowerCase().includes(q) ||
-        route.includes(q) ||
-        airlineName.includes(q);
-      const matchesAirline =
-        state.airline === 'ALL' || String(f.airlineId) === state.airline;
-      const matchesStatus =
-        state.status === 'ALL' || f.status === state.status;
-      return matchesQ && matchesAirline && matchesStatus;
-    });
-  }
-
-  const totalPages = () => Math.max(1, Math.ceil(filtered().length / PAGE_SIZE));
-
-  function clampPage() {
-    state.page = Math.min(Math.max(1, state.page), totalPages());
+  /* ---------- Query, not filtering ----------
+     The toolbar used to filter this page's own array and paginate it here, which
+     meant the table showed a subset the DATABASE never agreed to — a search could
+     hit one page of rows and miss the rest. The list call now carries the filters
+     and the page number, exactly as GET /api/admin/flights supports them (see the
+     repository's searchPage), and MySQL decides the result set and the counts.
+     `page` is 1-based in this UI and 0-based on the wire (Spring's convention). */
+  function listQuery() {
+    const p = new URLSearchParams();
+    if (state.search.trim()) p.set('search', state.search.trim());
+    if (state.airline !== 'ALL') p.set('airlineId', state.airline);
+    if (state.status !== 'ALL') p.set('status', state.status);
+    p.set('page', String(Math.max(0, state.page - 1)));
+    p.set('size', String(PAGE_SIZE));
+    return '/api/admin/flights?' + p.toString();
   }
 
   /* ---------- Render helpers ---------- */
@@ -163,15 +119,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return `<span class="logo-chip"><span class="logo-fallback">${escapeHtml(al.iata)}</span></span>`;
   }
 
-  /* ---------- Table render ---------- */
+  /* ---------- Table render ----------
+     `flights` is the server's page as returned — nothing is sliced, filtered or
+     counted in the browser, so an empty table means "the backend matched no
+     rows", never "the row was not in the cached array". */
   function render() {
-    clampPage();
-    const rows = filtered();
-    const start = (state.page - 1) * PAGE_SIZE;
-    const pageRows = rows.slice(start, start + PAGE_SIZE);
-
     const tbody = $('#flightTableBody');
-    tbody.innerHTML = pageRows
+    tbody.innerHTML = flights
       .map((f) => {
         const al = airlineById(f.airlineId);
         const available = f.seats - f.bookedSeats;
@@ -186,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </td>
         <td>
           <strong>${escapeHtml(f.from)} → ${escapeHtml(f.to)}</strong>
-          <span class="cell-sub">${escapeHtml((CITIES[f.from] || f.from) + ' → ' + (CITIES[f.to] || f.to))}</span>
+          <span class="cell-sub">${escapeHtml(cityName(f.from) + ' → ' + cityName(f.to))}</span>
         </td>
         <td><strong>${escapeHtml(f.dep)} → ${escapeHtml(f.arr)}</strong></td>
         <td>${escapeHtml(f.aircraft || '—')}</td>
@@ -207,15 +161,16 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .join('');
 
-    $('#emptyState').hidden = rows.length > 0;
-    $('#resultCount').textContent = `${rows.length} flight${rows.length === 1 ? '' : 's'}`;
-    renderPagination(rows.length);
+    $('#emptyState').hidden = flights.length > 0;
+    $('#resultCount').textContent = `${state.totalElements} flight${state.totalElements === 1 ? '' : 's'}`;
+    renderPagination();
   }
 
-  function renderPagination(totalRows) {
-    const pages = totalPages();
-    $('#pageInfo').textContent = totalRows
-      ? `Showing ${Math.min((state.page - 1) * PAGE_SIZE + 1, totalRows)}–${Math.min(state.page * PAGE_SIZE, totalRows)} of ${totalRows} flights`
+  function renderPagination() {
+    const pages = Math.max(1, state.totalPages);
+    const total = state.totalElements;
+    $('#pageInfo').textContent = total
+      ? `Showing ${Math.min((state.page - 1) * PAGE_SIZE + 1, total)}–${Math.min(state.page * PAGE_SIZE, total)} of ${total} flights`
       : 'No flights';
 
     const btns = $('#pageBtns');
@@ -227,10 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
       b.className = 'page-btn' + (opts.active ? ' active' : '');
       b.innerHTML = opts.icon ? `<i class="fa-solid ${opts.icon}"></i>` : label;
       b.setAttribute('aria-label', opts.label || `Page ${label}`);
-      b.addEventListener('click', () => {
-        state.page = page;
-        render();
-      });
+      b.addEventListener('click', () => goToPage(page));
       return b;
     };
 
@@ -249,12 +201,36 @@ document.addEventListener('DOMContentLoaded', () => {
       airlines
         .map((a) => `<option value="${a.id}">${escapeHtml(a.name)}</option>`)
         .join('');
+
+    /* This runs on EVERY read, and rebuilding innerHTML puts a <select> back on
+       its first option — which would silently drop the very filter the request
+       was just made with, leaving the toolbar disagreeing with the table. So the
+       current selection is re-applied; if that airline is gone from the list
+       (deleted on the Airlines page), fall back to All airlines. */
+    sel.value = state.airline;
+    if (sel.selectedIndex === -1) {
+      state.airline = 'ALL';
+      sel.value = 'ALL';
+    }
   }
 
+  /* Origin / Destination come from GET /api/destinations — the very rows the API
+     resolves `from`/`to` against, so the form can only offer airports that
+     exist. Inactive destinations are still listed, with a suffix, exactly like
+     the airline select below: a flight that points at one has to keep its value
+     when the edit modal opens. */
   function populateRouteSelects(selFrom, selTo) {
-    const options = Object.entries(CITIES)
-      .map(([code, city]) => `<option value="${code}">${escapeHtml(city)} (${code})</option>`)
+    const options = destinations
+      .map((d) => `<option value="${escapeHtml(d.code)}">${escapeHtml(d.city)} (${escapeHtml(d.code)})${d.status === 'Inactive' ? ' — Inactive' : ''}</option>`)
       .join('');
+
+    if (!options) {
+      const none = '<option value="">No destinations — add one on the Destinations page first</option>';
+      selFrom.innerHTML = none;
+      selTo.innerHTML = none;
+      return;
+    }
+
     selFrom.innerHTML = '<option value="">Select origin…</option>' + options;
     selTo.innerHTML = '<option value="">Select destination…</option>' + options;
   }
@@ -278,23 +254,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (selectedId) sel.value = String(selectedId);
   }
 
-  /* ---------- Toolbar events ---------- */
+  /* ---------- Toolbar events ----------
+     Each one re-queries the backend (page reset to 1, because page 3 of the old
+     result set has nothing to do with page 3 of the new one). Typing is
+     debounced so a search fires one request, not one per keystroke. */
+  let searchTimer;
   $('#flightSearch').addEventListener('input', (e) => {
     state.search = e.target.value;
     state.page = 1;
-    render();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(reloadOrToast, 250);
   });
 
   $('#airlineFilter').addEventListener('change', (e) => {
     state.airline = e.target.value;
     state.page = 1;
-    render();
+    reloadOrToast();
   });
 
   $('#statusFilter').addEventListener('change', (e) => {
     state.status = e.target.value;
     state.page = 1;
-    render();
+    reloadOrToast();
   });
 
   /* ---------- Modal open/close ---------- */
@@ -437,8 +418,84 @@ document.addEventListener('DOMContentLoaded', () => {
     return ok;
   }
 
-  /* ---------- Create / Update / Delete / Toggle ---------- */
-  form.addEventListener('submit', (e) => {
+  /* ---------- Reads: one path, used on load, on every filter/page change and
+     after every write ----------
+     GET /api/admin/flights (with the current query) + GET /api/airlines +
+     GET /api/destinations, then render. There is deliberately no seed fallback:
+     if the API cannot be reached the page says so, rather than drawing rows that
+     are not in the database. */
+  async function reload() {
+    const [flResp, alResp, destResp] = await Promise.all([
+      apiGet(listQuery()),
+      apiGet('/api/airlines'),
+      apiGet('/api/destinations')
+    ]);
+
+    flights = Array.isArray(flResp.flights) ? flResp.flights : [];
+    airlines = Array.isArray(alResp.airlines) ? alResp.airlines : [];
+    destinations = Array.isArray(destResp.destinations) ? destResp.destinations : [];
+
+    const total = Number(flResp.totalElements);
+    state.totalElements = Number.isFinite(total) ? total : flights.length;
+    const pages = Number(flResp.totalPages);
+    state.totalPages = Number.isFinite(pages) && pages > 0
+      ? pages
+      : Math.max(1, Math.ceil(state.totalElements / PAGE_SIZE));
+
+    populateAirlineFilter();
+    render();
+  }
+
+  /* A failed read that has nothing on screen (first load): say so plainly. */
+  function showLoadFailure(err) {
+    flights = [];
+    airlines = [];
+    destinations = [];
+    state.totalElements = 0;
+    state.totalPages = 1;
+    populateAirlineFilter();
+    render();
+    toast('Could not load flights: ' + ((err && err.message) || err), 'error');
+  }
+
+  /* A failed read while a table is already displayed (filter, page, refresh):
+     keep what is on screen and report the failure. */
+  function reloadOrToast() {
+    return reload().catch((err) => {
+      toast('Could not load flights: ' + ((err && err.message) || err), 'error');
+    });
+  }
+
+  function goToPage(page) {
+    const last = Math.max(1, state.totalPages);
+    state.page = Math.min(Math.max(1, page), last);
+    reloadOrToast();
+  }
+
+  /* ---------- Create / Update ----------
+     A row → the request body FlightRequest expects. `bookedSeats` is
+     deliberately absent (it is derived from the seat map, never written), and
+     `date` is carried whenever the row has one: FlightService.apply()
+     overwrites the stored date with whatever the request carried, so dropping
+     it here would erase a scheduled flight's date on every unrelated edit. */
+  function toRequest(f, overrides = {}) {
+    const body = {
+      no: f.no,
+      airlineId: f.airlineId,
+      from: f.from,
+      to: f.to,
+      dep: f.dep,
+      arr: f.arr,
+      aircraft: f.aircraft || '',
+      fare: f.fare,
+      seats: f.seats,
+      status: f.status
+    };
+    if (f.date) body.date = f.date;
+    return { ...body, ...overrides };
+  }
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
@@ -456,21 +513,29 @@ document.addEventListener('DOMContentLoaded', () => {
       status: $('#flightStatus').value
     };
 
-    if (id) {
-      const f = flights.find((x) => String(x.id) === id);
-      // bookedSeats is system data (from bookings) — preserved, never edited here.
-      Object.assign(f, payload);
-      toast(`${payload.no} updated.`, 'success');
-    } else {
-      payload.id = flights.length ? Math.max(...flights.map((f) => f.id)) + 1 : 1;
-      payload.bookedSeats = 0; // new flights start with no bookings
-      flights.push(payload);
-      toast(`${payload.no} added.`, 'success');
+    const saveBtn = $('#modalSave');
+    if (saveBtn) saveBtn.disabled = true;
+
+    try {
+      if (id) {
+        await apiPut('/api/admin/flights/' + id, payload);
+      } else {
+        await apiPost('/api/admin/flights', payload);
+      }
+    } catch (err) {
+      // The modal stays open and the message is the server's own sentence.
+      // A 409 names the flight number that clashed, so it also lands on the
+      // field — the same inline surface the client-side check uses.
+      if (err && err.code === 'FLIGHT_NO_EXISTS') setError($('#flightNo'), err.message);
+      if (saveBtn) saveBtn.disabled = false;
+      toast((err && err.message) || 'The flight could not be saved.', 'error');
+      return;
     }
 
-    save();
+    if (saveBtn) saveBtn.disabled = false;
     closeModal();
-    render();
+    toast(`${payload.no} ${id ? 'updated' : 'added'}.`, 'success');
+    await reloadOrToast();
   });
 
   $('#flightTableBody').addEventListener('click', (e) => {
@@ -483,24 +548,42 @@ document.addEventListener('DOMContentLoaded', () => {
       if (f) openModal(f);
     }
 
+    /* Activate/Disable is the edit write with one field changed — same endpoint,
+       so there is no second code path that could drift from it. */
     if (toggleBtn) {
       const f = flights.find((x) => String(x.id) === toggleBtn.dataset.toggle);
-      if (f) {
-        f.status = f.status === 'Active' ? 'Inactive' : 'Active';
-        save();
-        render();
-        toast(`${f.no} is now ${f.status.toLowerCase()}.`, 'success');
-      }
+      if (!f) return;
+      const next = f.status === 'Active' ? 'Inactive' : 'Active';
+      toggleBtn.disabled = true;
+      apiPut('/api/admin/flights/' + f.id, toRequest(f, { status: next }))
+        .then(() => {
+          toast(`${f.no} is now ${next.toLowerCase()}.`, 'success');
+          return reload();
+        })
+        .catch((err) => {
+          toggleBtn.disabled = false;
+          toast((err && err.message) || 'The flight could not be updated.', 'error');
+        });
     }
 
     if (deleteBtn) {
       const f = flights.find((x) => String(x.id) === deleteBtn.dataset.delete);
-      if (f && confirm(`Delete flight "${f.no}"? This cannot be undone in the demo.`)) {
-        flights = flights.filter((x) => String(x.id) !== deleteBtn.dataset.delete);
-        save();
-        render();
-        toast(`${f.no} deleted.`, 'success');
-      }
+      if (!f) return;
+      if (!confirm(`Delete flight "${f.no}"? This cannot be undone.`)) return;
+
+      deleteBtn.disabled = true;
+      apiDelete('/api/admin/flights/' + f.id)
+        .then(() => {
+          toast(`${f.no} deleted.`, 'success');
+          return reload();
+        })
+        .catch((err) => {
+          // A 409 FLIGHT_HAS_BOOKINGS lands here: the row stays exactly where it
+          // was and the toast carries the server's reason ("… set its status to
+          // Inactive instead"), rather than a silent success.
+          deleteBtn.disabled = false;
+          toast((err && err.message) || 'The flight could not be deleted.', 'error');
+        });
     }
   });
 
@@ -511,19 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }[ch]));
   }
 
-  /* ---------- First render (API reads — item 16) ---------- */
-  Promise.all([
-    apiGet('/api/admin/flights'),
-    apiGet('/api/airlines')
-  ]).then(([flResp, alResp]) => {
-    flights = Array.isArray(flResp.flights) && flResp.flights.length ? flResp.flights : load();
-    airlines = Array.isArray(alResp.airlines) && alResp.airlines.length ? alResp.airlines : loadAirlines();
-    populateAirlineFilter();
-    render();
-  }).catch(() => {
-    flights = load();     // mock fallbacks (also seed)
-    airlines = loadAirlines();
-    populateAirlineFilter();
-    render();
-  });
+  /* ---------- First render ---------- */
+  reload().catch(showLoadFailure);
 });

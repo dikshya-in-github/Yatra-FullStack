@@ -350,9 +350,18 @@ class DestinationApiTest {
                 .andExpect(jsonPath("$.destinations[0].id").value(id))
                 .andExpect(jsonPath("$.destinations[0].code").value(airportCode));
 
-        // ...and searchable by the lower-case code, because the column is utf8mb4_bin.
+        /* ...and searchable by the lower-case code, because the column is utf8mb4_bin.
+           Assert the row is FOUND, not that it is the ONLY match. The search box spans
+           city, airport and code (DestinationRepository.searchAll), so a random 3-letter
+           code is a legitimate substring of a seeded name — "AIR" matches every
+           "... Airport", "ITY" matches "City". Demanding a length of 1 made this test
+           depend on the draw never colliding: a ~1% flake that fired on 2026-09-18 and
+           looked like a service bug. Exclusivity is a different test's job
+           (aDuplicateAirportCodeIsRefusedEvenInAnotherCase); code uniqueness is the
+           unique key's. */
         mockMvc.perform(get("/api/destinations").param("search", airportCode.toLowerCase()))
-                .andExpect(jsonPath("$.destinations.length()").value(1));
+                .andExpect(jsonPath("$.destinations[?(@.code == '%s')]".formatted(airportCode))
+                        .isNotEmpty());
     }
 
     /** The duplicate code, refused in either case, with the code the UI can branch on. */
@@ -509,7 +518,7 @@ class DestinationApiTest {
      * ------------------------------------------------------------------ */
 
     private String adminToken() {
-        return jwtUtil.generate(1, "Dikshya Ghising", "admin@yatra.com", "ADMIN");
+        return jwtUtil.generate(1, "Dikshya Ghising", "admin@gmail.com", "ADMIN");
     }
 
     private Destination seed() {
