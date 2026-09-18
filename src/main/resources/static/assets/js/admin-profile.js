@@ -61,18 +61,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* ---------- Toast ---------- */
-    var toastTimer = null;
-    function toast(message, type) {
-        var el = $id('toast');
-        if (!el) return;
-        type = type || 'success';
-        el.className = 'toast ' + type;
-        el.innerHTML = '<i class="fa-solid ' +
-            (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check') + '"></i> ' + message;
-        requestAnimationFrame(function () { el.classList.add('show'); });
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3400);
-    }
+    /* showToast() lives in toast.js (§9) — one implementation for every page,
+       which also creates the #toast element it writes to. */
 
     /* ---------- Formatting ---------- */
     function initialOf(name) {
@@ -181,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
             else if (!V.isNepaliMobile(phoneEl.value)) paint(phoneEl, 'Enter a 10-digit mobile number starting with 9.');
 
             if (errors.length) {
-                toast(errors[0], 'error');
+                showToast(errors[0], 'error');
                 return;
             }
 
@@ -198,9 +188,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 saveAdminSession(user);   // the guard + sidebar read this key
                 render(user);
                 prefill(user);
-                toast('Profile updated.');
+                showToast('Profile updated.');
             }).catch(function (err) {
-                toast((err && err.message) || 'Could not save your profile.', 'error');
+                showToast((err && err.message) || 'Could not save your profile.', 'error');
                 if (err && err.code === 'EMAIL_EXISTS') {
                     $id('pfEmail').closest('.a-field').classList.add('has-error');
                 } else if (err && err.code === 'PHONE_EXISTS') {
@@ -220,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
             $id('pfName').value = pristine.name;
             $id('pfEmail').value = pristine.email;
             $id('pfPhone').value = pristine.phone;
-            toast('Form reset to the saved values.');
+            showToast('Form reset to the saved values.');
         });
     }
 
@@ -321,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
             else if (pwNew.value && confirm.value !== pwNew.value) paint(confirm, 'Passwords do not match.');
 
             if (errors.length) {
-                toast(errors[0], 'error');
+                showToast(errors[0], 'error');
                 return;
             }
 
@@ -337,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 $id('pwMeter').hidden = true;
                 btn.disabled = false;
                 btn.innerHTML = original;
-                toast('Password updated (demo — the backend hashes it in Phase 3).');
+                showToast('Password updated (demo — the backend hashes it in Phase 3).');
             }, 800);
         });
     }
@@ -362,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
         render(user);
         prefill(user);
     }).catch(function (err) {
-        toast((err && err.message) || 'Could not load your profile.', 'error');
+        showToast((err && err.message) || 'Could not load your profile.', 'error');
         // 401 means the session is gone (expired tab) — admin.js's guard cannot
         // catch that case because it runs once at load.
         if (err && err.status === 401) {

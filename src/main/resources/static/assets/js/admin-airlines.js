@@ -80,15 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- Toast ---------- */
-  let toastTimer;
-  function toast(message, type = 'success') {
-    const toastEl = $('#toast');
-    toastEl.className = 'toast ' + type;
-    toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
-    requestAnimationFrame(() => toastEl.classList.add('show'));
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
-  }
+  /* showToast() lives in toast.js (§9) — one implementation for every page,
+     which also creates the #toast element it writes to. */
 
   /* ---------- Filtering + pagination ---------- */
   function filtered() {
@@ -238,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = logoInput.files && logoInput.files[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast('Logo must be under 2 MB (demo limit).', 'error');
+      showToast('Logo must be under 2 MB (demo limit).', 'error');
       logoInput.value = '';
       return;
     }
@@ -246,9 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.onload = () => {
       logoData = reader.result; // base64 data URL — same shape the backend will store
       renderLogoPreview();
-      toast('Logo ready — saved with the airline.', 'success');
+      showToast('Logo ready — saved with the airline.', 'success');
     };
-    reader.onerror = () => toast('Could not read that file.', 'error');
+    reader.onerror = () => showToast('Could not read that file.', 'error');
     reader.readAsDataURL(file);
   });
 
@@ -323,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ok = false;
     }
 
-    if (!ok) toast('Please fix the highlighted fields.', 'error');
+    if (!ok) showToast('Please fix the highlighted fields.', 'error');
     return ok;
   }
 
@@ -344,11 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (id) {
       const a = airlines.find((x) => String(x.id) === id);
       Object.assign(a, payload);
-      toast(`${payload.name} updated.`, 'success');
+      showToast(`${payload.name} updated.`, 'success');
     } else {
       payload.id = airlines.length ? Math.max(...airlines.map((a) => a.id)) + 1 : 1;
       airlines.push(payload);
-      toast(`${payload.name} added.`, 'success');
+      showToast(`${payload.name} added.`, 'success');
     }
 
     save();
@@ -372,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         a.status = a.status === 'Active' ? 'Inactive' : 'Active';
         save();
         render();
-        toast(`${a.name} is now ${a.status.toLowerCase()}.`, 'success');
+        showToast(`${a.name} is now ${a.status.toLowerCase()}.`, 'success');
       }
     }
 
@@ -404,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function deleteAirline(a) {
     flightsUsing(a.id).then((inUse) => {
       if (inUse.length) {
-        toast(
+        showToast(
           `${a.name} (${a.iata}) is used by ${inUse.length} flight${inUse.length === 1 ? '' : 's'} — disable it instead.`,
           'error'
         );
@@ -415,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
         airlines = airlines.filter((x) => String(x.id) !== String(a.id));
         save();
         render();
-        toast(`${a.name} deleted.`, 'success');
+        showToast(`${a.name} deleted.`, 'success');
       }
     });
   }

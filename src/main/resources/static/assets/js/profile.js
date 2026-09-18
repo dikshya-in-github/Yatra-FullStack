@@ -45,18 +45,8 @@ document.addEventListener('DOMContentLoaded', function () {
     /* =========================================================
        Toast (same look as the admin panel's, styled in profile.css)
        ========================================================= */
-    var toastTimer = null;
-    function toast(message, type) {
-        var el = $id('toast');
-        if (!el) return;
-        type = type || 'success';
-        el.className = 'toast ' + type;
-        el.innerHTML = '<i class="fa-solid ' +
-            (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check') + '"></i> ' + message;
-        requestAnimationFrame(function () { el.classList.add('show'); });
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () { el.classList.remove('show'); }, 3600);
-    }
+    /* showToast() lives in toast.js (§9) — one implementation, shared with
+       the admin panel rather than a second copy that can drift. */
 
     /* =========================================================
        Formatting helpers
@@ -219,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var check = validateDetails();
             if (!check.valid) {
-                toast(check.errors[0], 'error');
+                showToast(check.errors[0], 'error');
                 return;
             }
 
@@ -240,10 +230,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 YatraAuth.updateCurrentUser(user);
                 renderIdentity(user);
                 prefillForm(user);
-                toast('Profile updated.');
+                showToast('Profile updated.');
             }).catch(function (err) {
                 // 409 EMAIL_EXISTS / PHONE_EXISTS carry the backend's message.
-                toast((err && err.message) || 'Could not save your profile.', 'error');
+                showToast((err && err.message) || 'Could not save your profile.', 'error');
                 if (err && err.code === 'EMAIL_EXISTS') {
                     var email = $id('pfEmail');
                     email.closest('.field').classList.add('has-error');
@@ -265,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
             $id('pfName').value = pristine.name;
             $id('pfEmail').value = pristine.email;
             $id('pfPhone').value = pristine.phone;
-            toast('Form reset to the saved values.');
+            showToast('Form reset to the saved values.');
         });
     }
 
@@ -374,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function () {
             else if (pwNew.value && confirm.value !== pwNew.value) paint(confirm, 'Passwords do not match.');
 
             if (errors.length) {
-                toast(errors[0], 'error');
+                showToast(errors[0], 'error');
                 return;
             }
 
@@ -391,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 $id('pwMeter').hidden = true;
                 btn.disabled = false;
                 btn.innerHTML = original;
-                toast('Password updated (demo — the backend hashes it in Phase 3).');
+                showToast('Password updated (demo — the backend hashes it in Phase 3).');
             }, 800);
         });
     }
@@ -426,6 +416,6 @@ document.addEventListener('DOMContentLoaded', function () {
         prefillForm(user);
         renderStats(user);
     }).catch(function (err) {
-        toast((err && err.message) || 'Could not load your profile.', 'error');
+        showToast((err && err.message) || 'Could not load your profile.', 'error');
     });
 });

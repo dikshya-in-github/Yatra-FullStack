@@ -412,12 +412,11 @@
         <a class="back-link" href="./home.html"><i class="fa-solid fa-arrow-left"></i> Back to Yatra site</a>
     </main>
 
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
     <!-- Fix plan §13 (execution step 4): this page signs in against the REAL API now, so it loads the
          shared layer (config → api) instead of carrying its own mock session. -->
     <script src="assets/js/config.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/toast.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -494,18 +493,13 @@
                 return ok;
             }
 
-            function toast(message, type = 'success') {
-                const toastEl = $('#toast');
-                toastEl.className = 'toast ' + type;
-                toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
-                requestAnimationFrame(() => toastEl.classList.add('show'));
-                setTimeout(() => toastEl.classList.remove('show'), 3200);
-            }
+            /* showToast() lives in toast.js (§9) — one implementation shared
+               with every other page, which creates its own #toast element. */
 
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 if (!validate()) {
-                    toast('Please fix the highlighted fields.', 'error');
+                    showToast('Please fix the highlighted fields.', 'error');
                     return;
                 }
 
@@ -545,7 +539,7 @@
                         sessionStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(user));
                         if (res.token) sessionStorage.setItem(AUTH_TOKEN_KEY, res.token);
                         btn.innerHTML = '<i class="fa-solid fa-check"></i> Verified';
-                        toast('Welcome to Yatra Admin!', 'success');
+                        showToast('Welcome to Yatra Admin!', 'success');
 
                         setTimeout(() => {
                             window.location.href = './admin-dashboard.html';
@@ -554,7 +548,7 @@
                     .catch((err) => {
                         btn.disabled = false;
                         btn.innerHTML = originalHTML;
-                        toast((err && err.message) || 'Sign-in failed. Please try again.', 'error');
+                        showToast((err && err.message) || 'Sign-in failed. Please try again.', 'error');
                     });
             });
         });

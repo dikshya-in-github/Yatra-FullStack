@@ -412,7 +412,7 @@ select {
 }
 
 /* ---------- Toast (shared, light) ---------- */
-.epay2-toast {
+.toast {
   position: fixed;
   bottom: 2rem;
   left: 50%;
@@ -430,7 +430,7 @@ select {
   z-index: 4000;
   box-shadow: 0 16px 40px rgba(18, 33, 26, 0.18);
 }
-.epay2-toast.show {
+.toast.show {
   opacity: 1;
   transform: translate(-50%, 0);
 }

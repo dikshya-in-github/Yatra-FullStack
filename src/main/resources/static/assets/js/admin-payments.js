@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       localStorage.setItem(BOOKING_KEY, JSON.stringify(bookings));
     } catch (err) {
-      toast('Could not save — storage quota reached.', 'error');
+      showToast('Could not save — storage quota reached.', 'error');
     }
   }
 
@@ -73,15 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- Toast ---------- */
-  let toastTimer;
-  function toast(message, type = 'success') {
-    const toastEl = $('#toast');
-    toastEl.className = 'toast ' + type;
-    toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
-    requestAnimationFrame(() => toastEl.classList.add('show'));
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
-  }
+  /* showToast() lives in toast.js (§9) — one implementation for every page,
+     which also creates the #toast element it writes to. */
 
   /* ---------- Filtering + pagination ---------- */
   function txns() {
@@ -293,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBookings();
         render();
         if (currentBkgId === t.bkg.id) openDetail(t.bkg); // refresh an open modal
-        toast(`${t.id} marked Refunded.`, 'success');
+        showToast(`${t.id} marked Refunded.`, 'success');
       }
     });
   }

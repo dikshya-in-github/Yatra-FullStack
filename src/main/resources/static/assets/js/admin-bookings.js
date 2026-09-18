@@ -217,20 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       localStorage.setItem(BOOKING_KEY, JSON.stringify(bookings));
     } catch (err) {
-      toast('Could not save — storage quota reached.', 'error');
+      showToast('Could not save — storage quota reached.', 'error');
     }
   }
 
   /* ---------- Toast ---------- */
-  let toastTimer;
-  function toast(message, type = 'success') {
-    const toastEl = $('#toast');
-    toastEl.className = 'toast ' + type;
-    toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
-    requestAnimationFrame(() => toastEl.classList.add('show'));
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
-  }
+  /* showToast() lives in toast.js (§9) — one implementation for every page,
+     which also creates the #toast element it writes to. */
 
   /* ---------- Filtering + pagination ---------- */
   function filtered() {
@@ -422,7 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
         b.status = 'Cancelled';
         saveBookings();
         render();
-        toast(`${b.pnr || b.id} cancelled — flagged for refund follow-up.`, 'success');
+        showToast(`${b.pnr || b.id} cancelled — flagged for refund follow-up.`, 'success');
       }
     });
   }
@@ -440,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bookings = bookings.filter((x) => x.id !== b.id);
         saveBookings();
         render();
-        toast(`${b.id} removed from the demo data.`, 'success');
+        showToast(`${b.id} removed from the demo data.`, 'success');
       }
     });
   }
@@ -473,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBookings();
         state.page = 1;
         render();
-        toast('Demo bookings reset — live bookings kept.', 'success');
+        showToast('Demo bookings reset — live bookings kept.', 'success');
       }
     });
   });

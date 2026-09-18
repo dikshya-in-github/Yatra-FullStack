@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
     } catch (err) {
-      toast('Could not save — storage quota reached.', 'error');
+      showToast('Could not save — storage quota reached.', 'error');
     }
   }
 
@@ -75,15 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- Toast ---------- */
-  let toastTimer;
-  function toast(message, type = 'success') {
-    const toastEl = $('#toast');
-    toastEl.className = 'toast ' + type;
-    toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
-    requestAnimationFrame(() => toastEl.classList.add('show'));
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
-  }
+  /* showToast() lives in toast.js (§9) — one implementation for every page,
+     which also creates the #toast element it writes to. */
 
   /* ---------- Filtering + pagination ---------- */
   function filtered() {
@@ -331,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ok = false;
     }
 
-    if (!ok) toast('Please fix the highlighted fields.', 'error');
+    if (!ok) showToast('Please fix the highlighted fields.', 'error');
     return ok;
   }
 
@@ -355,12 +348,12 @@ document.addEventListener('DOMContentLoaded', () => {
       Object.assign(u, payload);
       // Admins stay Active — the form lock mirrors the row lock.
       if (wasAdmin) u.status = 'Active';
-      toast(`${payload.name} updated.`, 'success');
+      showToast(`${payload.name} updated.`, 'success');
     } else {
       payload.id = users.length ? Math.max(...users.map((u) => u.id)) + 1 : 1;
       payload.registeredAt = new Date().toISOString();
       users.push(payload);
-      toast(`${payload.name} added.`, 'success');
+      showToast(`${payload.name} added.`, 'success');
     }
 
     save();
@@ -374,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     u.status = u.status === 'Active' ? 'Inactive' : 'Active';
     save();
     render();
-    toast(`${u.name} is now ${u.status.toLowerCase()}.`, 'success');
+    showToast(`${u.name} is now ${u.status.toLowerCase()}.`, 'success');
   }
 
   function deleteUser(u) {
@@ -387,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
         users = users.filter((x) => x.id !== u.id);
         save();
         render();
-        toast(`${u.name} deleted — bookings kept.`, 'success');
+        showToast(`${u.name} deleted — bookings kept.`, 'success');
       }
     });
   }

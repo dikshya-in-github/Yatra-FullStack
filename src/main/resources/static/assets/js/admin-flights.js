@@ -72,15 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- Toast ---------- */
-  let toastTimer;
-  function toast(message, type = 'success') {
-    const toastEl = $('#toast');
-    toastEl.className = 'toast ' + type;
-    toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
-    requestAnimationFrame(() => toastEl.classList.add('show'));
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
-  }
+  /* showToast() lives in toast.js (§9) — one implementation for every page,
+     which also creates the #toast element it writes to. */
 
   /* ---------- Query, not filtering ----------
      The toolbar used to filter this page's own array and paginate it here, which
@@ -414,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ok = false;
     }
 
-    if (!ok) toast('Please fix the highlighted fields.', 'error');
+    if (!ok) showToast('Please fix the highlighted fields.', 'error');
     return ok;
   }
 
@@ -455,14 +448,14 @@ document.addEventListener('DOMContentLoaded', () => {
     state.totalPages = 1;
     populateAirlineFilter();
     render();
-    toast('Could not load flights: ' + ((err && err.message) || err), 'error');
+    showToast('Could not load flights: ' + ((err && err.message) || err), 'error');
   }
 
   /* A failed read while a table is already displayed (filter, page, refresh):
      keep what is on screen and report the failure. */
   function reloadOrToast() {
     return reload().catch((err) => {
-      toast('Could not load flights: ' + ((err && err.message) || err), 'error');
+      showToast('Could not load flights: ' + ((err && err.message) || err), 'error');
     });
   }
 
@@ -528,13 +521,13 @@ document.addEventListener('DOMContentLoaded', () => {
       // field — the same inline surface the client-side check uses.
       if (err && err.code === 'FLIGHT_NO_EXISTS') setError($('#flightNo'), err.message);
       if (saveBtn) saveBtn.disabled = false;
-      toast((err && err.message) || 'The flight could not be saved.', 'error');
+      showToast((err && err.message) || 'The flight could not be saved.', 'error');
       return;
     }
 
     if (saveBtn) saveBtn.disabled = false;
     closeModal();
-    toast(`${payload.no} ${id ? 'updated' : 'added'}.`, 'success');
+    showToast(`${payload.no} ${id ? 'updated' : 'added'}.`, 'success');
     await reloadOrToast();
   });
 
@@ -557,12 +550,12 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleBtn.disabled = true;
       apiPut('/api/admin/flights/' + f.id, toRequest(f, { status: next }))
         .then(() => {
-          toast(`${f.no} is now ${next.toLowerCase()}.`, 'success');
+          showToast(`${f.no} is now ${next.toLowerCase()}.`, 'success');
           return reload();
         })
         .catch((err) => {
           toggleBtn.disabled = false;
-          toast((err && err.message) || 'The flight could not be updated.', 'error');
+          showToast((err && err.message) || 'The flight could not be updated.', 'error');
         });
     }
 
@@ -574,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteBtn.disabled = true;
       apiDelete('/api/admin/flights/' + f.id)
         .then(() => {
-          toast(`${f.no} deleted.`, 'success');
+          showToast(`${f.no} deleted.`, 'success');
           return reload();
         })
         .catch((err) => {
@@ -582,7 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // was and the toast carries the server's reason ("… set its status to
           // Inactive instead"), rather than a silent success.
           deleteBtn.disabled = false;
-          toast((err && err.message) || 'The flight could not be deleted.', 'error');
+          showToast((err && err.message) || 'The flight could not be deleted.', 'error');
         });
     }
   });

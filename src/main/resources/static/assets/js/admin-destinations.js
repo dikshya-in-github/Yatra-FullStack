@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(destinations));
     } catch (err) {
-      toast('Could not save — storage quota reached.', 'error');
+      showToast('Could not save — storage quota reached.', 'error');
     }
   }
 
@@ -138,15 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- Toast ---------- */
-  let toastTimer;
-  function toast(message, type = 'success') {
-    const toastEl = $('#toast');
-    toastEl.className = 'toast ' + type;
-    toastEl.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i> ${message}`;
-    requestAnimationFrame(() => toastEl.classList.add('show'));
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
-  }
+  /* showToast() lives in toast.js (§9) — one implementation for every page,
+     which also creates the #toast element it writes to. */
 
   /* ---------- Filtering + pagination ---------- */
   function filtered() {
@@ -338,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = imgInput.files && imgInput.files[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast('Image must be under 2 MB (demo limit).', 'error');
+      showToast('Image must be under 2 MB (demo limit).', 'error');
       imgInput.value = '';
       return;
     }
@@ -346,9 +339,9 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.onload = () => {
       imgData = reader.result; // demo stand-in for a Cloudinary secure_url
       renderImgPreview();
-      toast('Image ready — the backend will swap this for a Cloudinary URL.', 'success');
+      showToast('Image ready — the backend will swap this for a Cloudinary URL.', 'success');
     };
-    reader.onerror = () => toast('Could not read that file.', 'error');
+    reader.onerror = () => showToast('Could not read that file.', 'error');
     reader.readAsDataURL(file);
   });
 
@@ -432,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ok = false;
     }
 
-    if (!ok) toast('Please fix the highlighted fields.', 'error');
+    if (!ok) showToast('Please fix the highlighted fields.', 'error');
     return ok;
   }
 
@@ -456,11 +449,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (id) {
       const d = destinations.find((x) => String(x.id) === id);
       Object.assign(d, payload);
-      toast(`${payload.city} updated.`, 'success');
+      showToast(`${payload.city} updated.`, 'success');
     } else {
       payload.id = destinations.length ? Math.max(...destinations.map((d) => d.id)) + 1 : 1;
       destinations.push(payload);
-      toast(`${payload.city} added.`, 'success');
+      showToast(`${payload.city} added.`, 'success');
     }
 
     save();
@@ -483,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function deleteDestination(d) {
     flightsUsing(d.code).then((inUse) => {
     if (inUse.length) {
-      toast(
+      showToast(
         `${d.city} (${d.code}) is used by ${inUse.length} flight${inUse.length === 1 ? '' : 's'} — disable it instead.`,
         'error'
       );
@@ -498,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
         destinations = destinations.filter((x) => x.id !== d.id);
         save();
         render();
-        toast(`${d.city} deleted.`, 'success');
+        showToast(`${d.city} deleted.`, 'success');
       }
     });
     });
@@ -508,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     d.status = d.status === 'Active' ? 'Inactive' : 'Active';
     save();
     render();
-    toast(`${d.city} is now ${d.status.toLowerCase()}.`, 'success');
+    showToast(`${d.city} is now ${d.status.toLowerCase()}.`, 'success');
   }
 
   /* ---------- Row action wiring (event delegation) ---------- */

@@ -141,13 +141,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (e.key === "Escape") cancelModal.classList.remove("open");
     });
 
-    /* ---------- Toast helper ---------- */
-    var toast = document.getElementById("epayToast");
-    var toastId = null;
-    function showToast(msg) {
-        toast.textContent = msg;
-        toast.classList.add("show");
-        clearTimeout(toastId);
-        toastId = setTimeout(function () { toast.classList.remove("show"); }, 2600);
-    }
+    /* ---------- Toast ---------- */
+    /* showToast() lives in toast.js (§9). This page used to style its own
+       #epayToast element; it now styles the shared one, so every page runs
+       the same implementation. */
 });
