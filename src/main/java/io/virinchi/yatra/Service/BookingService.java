@@ -2,6 +2,7 @@ package io.virinchi.yatra.Service;
 
 import io.virinchi.yatra.Dto.AdminBookingResponse;
 import io.virinchi.yatra.Dto.BookingRequest;
+import io.virinchi.yatra.Dto.HoldExpiryResponse;
 import io.virinchi.yatra.Exception.ConflictException;
 import io.virinchi.yatra.Exception.ResourceNotFoundException;
 import io.virinchi.yatra.Exception.ValidationException;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,12 +38,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Booking lifecycle — create, cancel, delete, and (Phase 9) the admin management
- * surface: list, filter, page, detail and status changes.
+ * Booking lifecycle — create, cancel, delete, expire an abandoned hold, and (Phase 9)
+ * the admin management surface: list, filter, page, detail and status changes.
  *
  * <p><b>One service per domain, so the admin reads live here too.</b> The admin
  * surface is not a second domain: the transition matrix below has to reach the same
@@ -546,6 +549,176 @@ public class BookingService {
     }
 
     /* ------------------------------------------------------------------ *
+     *  Ending a hold whose window has run out                             *
+     * ------------------------------------------------------------------ */
+
+    /**
+     * Ends every {@code PENDING} hold older than {@code window}, giving the seats
+     * back. The missing half of Phase 6's hold.
+     *
+     * <h2>Why this has to exist at all</h2>
+     *
+     * <p>A booking is created <b>before</b> the gateway is called, and it holds one
+     * seat per passenger from that moment (see the class doc). The wizard's own timer
+     * promises the customer <b>15 minutes</b>, but until this method nothing enforced
+     * the other end of that promise: a customer who closed the tab at the payment page
+     * left a {@code PENDING} row holding its seats, and availability — computed as
+     * {@code seatCapacity − COUNT(BOOKED seats)} — reported those seats as sold
+     * <b>forever</b>. Nothing but an admin deleting the draft could get them back, and
+     * the only caller of {@link #releaseSeats} was {@link #deleteBooking}: a hold with
+     * no way to expire is a seat slowly leaking out of the cabin.
+     *
+     * <h2>The rule, and why it splits two ways</h2>
+     *
+     * <p>The hold is over either way, so the seats are always released — but the
+     * <i>row</i> is treated exactly as R4's policy treats it:
+     *
+     * <ul>
+     *   <li><b>No payment row and no ticket → hard delete</b>, the same rule
+     *       {@link #deleteBooking(int)} applies. An abandoned draft is not the record of
+     *       anything, and deleting it takes its passengers with it.</li>
+     *   <li><b>A payment row → soft cancel</b> ({@link #cancel(Booking)}). A declined or
+     *       abandoned gateway attempt leaves a {@code FAILED}/{@code PENDING} payment
+     *       row that must survive: it is the audit trail of what the customer tried to
+     *       do, and R4 refuses to hard-delete a booking that has one. The booking's
+     *       status flips and its seats come back; the payment row and the booking are
+     *       otherwise untouched.</li>
+     * </ul>
+     *
+     * <p><b>What is deliberately <i>not</i> here: {@link #cancelBooking(int)}'s
+     * "seats stay counted" rule.</b> That rule exists because cancelling a <i>paid</i>
+     * booking is a surrender of a completed sale — the seat really was sold and the
+     * refund is the payments flow's to complete — and {@code admin-bookings.js} tells
+     * the admin exactly that. A hold that expired was never a sale: nobody paid, and
+     * the flight's availability pretending otherwise is the bug this method fixes. So
+     * the sweep releases where the admin's cancel does not, on purpose.
+     *
+     * <p><b>Two exclusions, both about never destroying a sale.</b> A booking that has
+     * a ticket, or a payment row in state {@code SUCCESS}, is <b>skipped</b> — it is a
+     * completed sale whose status text has not caught up (a confirmed booking has a
+     * successful payment by construction), and a sweep has no business editing it.
+     * Those bookings still appear in {@code candidates}, which is why that count can
+     * exceed {@code expired} and the difference is reported rather than hidden.
+     * Seeded rows are excluded by the query itself (R14: {@code POST /api/admin/reset}
+     * owns them).
+     *
+     * <p><b>One transaction, like {@code SeedService}'s seed/reset.</b> The batch is
+     * small (stale holds, not the table) and the operations are the same kind of
+     * maintenance write; a per-booking transaction would need a second bean to get
+     * around self-invocation and would buy nothing at this size.
+     *
+     * <p><b>The three lookups each candidate needs are batched, not looped.</b> Every
+     * candidate asks "does it have a payment?", "does it have a ticket?" and "which
+     * passengers hold its seats?" — one query per candidate each would be three round
+     * trips per stale hold, against a hosted database where that dominates the runtime
+     * and keeps rows locked for longer than the work needs. This is the same batching
+     * Phase 9 introduced for the admin list, applied to a write path.
+     *
+     * <p><b>The refund gap, stated rather than hidden.</b> A customer still sitting at
+     * the gateway when the window closes can be refused after paying: making a payment
+     * against a cancelled booking answers 409 {@code BOOKING_CANCELLED} — which is the
+     * correct behaviour (the seat is gone, it was sold to somebody else) and is exactly
+     * why a real integration would refund that transaction automatically. The mock
+     * gateway has no money to give back, so the only thing it costs here is a clear
+     * error message instead of a booking that cannot exist.
+     *
+     * @param window how old a hold must be to expire; the wizard's promise is 15
+     *               minutes, and {@code 0} ends every open hold (the manual trigger a
+     *               demo uses, since nobody wants to wait a quarter of an hour in one)
+     * @throws ValidationException 400 {@code INVALID_HOLD_WINDOW} — a negative window
+     */
+    @Transactional
+    public HoldExpiryResponse expireHolds(Duration window) {
+        if (window == null || window.isNegative()) {
+            throw new ValidationException("INVALID_HOLD_WINDOW",
+                    "The hold window must be zero minutes or more.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime cutoff = now.minus(window);
+
+        List<Booking> candidates = bookings
+                .findByBookingStatusAndSeededFalseAndCreatedAtBeforeOrderByIdAsc(PENDING, cutoff);
+
+        if (candidates.isEmpty()) {
+            return HoldExpiryResponse.of(window, cutoff, 0, 0, 0, 0);
+        }
+
+        //The three lookups every candidate needs, batched — one query each instead of
+        //three per stale hold. This is the Phase 9 batching rule applied to a write
+        //path: the database is remote, so a per-row loop spends its time in round trips
+        //(and holds the rows it is walking for measurably longer). Grouping by booking id
+        //is free because each child's to-one booking is already in the persistence
+        //context by then.
+        List<Integer> ids = candidates.stream().map(Booking::getId).toList();
+
+        Map<Integer, Payment> paymentsByBooking = payments.findByBookingIdIn(ids).stream()
+                .collect(Collectors.toMap(payment -> payment.getBooking().getId(), payment -> payment));
+
+        Set<Integer> bookedWithATicket = tickets.findByBookingIdIn(ids).stream()
+                .map(ticket -> ticket.getBooking().getId())
+                .collect(Collectors.toSet());
+
+        Map<Integer, List<Passenger>> passengersByBooking = passengers.findByBookingIdIn(ids).stream()
+                .collect(Collectors.groupingBy(passenger -> passenger.getBooking().getId()));
+
+        int deleted = 0;
+        int cancelled = 0;
+        int released = 0;
+
+        for (Booking booking : candidates) {
+            Payment payment = paymentsByBooking.get(booking.getId());
+
+            boolean paid = payment != null && SUCCESS.equalsIgnoreCase(payment.getStatus());
+
+            //A ticket, or a payment that actually succeeded, means this is a sale whose
+            //status text has not caught up. Never touched by a sweep.
+            if (paid || bookedWithATicket.contains(booking.getId())) {
+                continue;
+            }
+
+            List<Passenger> bookingPassengers = passengersByBooking.getOrDefault(booking.getId(), List.of());
+            released += releaseSeats(booking.getFlight(), bookingPassengers);
+
+            if (payment != null) {
+                //A gateway attempt is on record (declined, or initiated and abandoned),
+                //so R4 keeps the row: cancel it and let the seats go.
+                cancel(booking);
+                bookings.save(booking);
+                cancelled++;
+                log.info("Hold expired: booking={} flight={} seats={} outcome=cancelled (payment {})",
+                        booking.getId(), flightNo(booking), bookingPassengers.size(), payment.getStatus());
+            } else {
+                //No sale records at all: the same delete rule as deleteBooking, and the
+                //same FK-safe order — children before the parent, or Hibernate's pre-flush
+                //transient check throws TransientPropertyValueException (R4).
+                passengers.deleteAll(bookingPassengers);
+                passengers.flush();
+                bookings.delete(booking);
+                bookings.flush();
+                deleted++;
+                log.info("Hold expired: booking={} flight={} seats={} outcome=deleted",
+                        booking.getId(), flightNo(booking), bookingPassengers.size());
+            }
+        }
+
+        //One summary line, and only when there was something to do: this runs on a timer,
+        //so a quiet minute must not write a log line every interval.
+        if (deleted + cancelled > 0) {
+            log.info("Hold sweep: window={}m cutoff={} candidates={} expired={} seatsReleased={}",
+                    window.toMinutes(), cutoff, candidates.size(), deleted + cancelled, released);
+        }
+
+        return HoldExpiryResponse.of(window, cutoff, candidates.size(), deleted, cancelled, released);
+    }
+
+    /** The flight number for a log line — never the customer's contact block (see the logging rule). */
+    private static String flightNo(Booking booking) {
+        Flight flight = booking.getFlight();
+        return flight == null ? "" : String.valueOf(flight.getFlightNo());
+    }
+
+    /* ------------------------------------------------------------------ *
      *  Creating a booking (Roadmap Phase 6)                                *
      * ------------------------------------------------------------------ */
 
@@ -842,6 +1015,11 @@ public class BookingService {
      * can never be sold again. Only seats that a passenger actually holds are
      * touched, and only cancel-free deletes reach here.
      *
+     * <p><b>Returns how many rows the database actually changed</b> — the sum of
+     * {@link SeatRepository#release}'s verdicts, so a seat that was already free
+     * contributes 0 rather than being counted as given back. The expiry sweep
+     * reports that number; the delete path ignores it.
+     *
      * <p><b>The release is a conditional UPDATE, not a {@code setStatus}.</b> The
      * read-then-write version is a silent no-op whenever the seat was claimed
      * earlier in the same transaction: {@link SeatRepository#claim} changes the row
@@ -850,9 +1028,9 @@ public class BookingService {
      * why both directions now go through the database's own verdict
      * ({@link SeatRepository#release}).
      */
-    private void releaseSeats(Flight flight, List<Passenger> bookingPassengers) {
+    private int releaseSeats(Flight flight, List<Passenger> bookingPassengers) {
         if (flight == null) {
-            return;
+            return 0;
         }
         Set<String> seatNumbers = bookingPassengers.stream()
                 .map(Passenger::getSeatNumber)
@@ -860,11 +1038,15 @@ public class BookingService {
                 .filter(seatNumber -> !seatNumber.isBlank())
                 .collect(Collectors.toSet());
 
+        int released = 0;
         for (String seatNumber : seatNumbers) {
             //Find the row for its id; the status decision is the UPDATE's.
-            seats.findByFlightIdAndSeatNumber(flight.getId(), seatNumber)
-                    .ifPresent(seat -> seats.release(seat.getId(), AVAILABLE, BOOKED));
+            Optional<Seat> seat = seats.findByFlightIdAndSeatNumber(flight.getId(), seatNumber);
+            if (seat.isPresent()) {
+                released += seats.release(seat.get().getId(), AVAILABLE, BOOKED);
+            }
         }
+        return released;
     }
 
     private Booking require(int bookingId) {

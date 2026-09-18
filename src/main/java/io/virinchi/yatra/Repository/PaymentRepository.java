@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +22,19 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
 
     //Gateway reference unique — duplicate txn save hunna.
     Optional<Payment> findByTxnId(String txnId);
+
+    /**
+     * The payments of <b>several</b> bookings in one query — the hold sweep's batch
+     * fetch, the same device {@code PassengerRepository.findByBookingIdIn} provides for
+     * the admin list.
+     *
+     * <p>{@code payment.booking_id} is UNIQUE, so at most one row comes back per id and
+     * the caller can key the result by booking id without worrying about collisions.
+     * The sweep asks which of its candidates have a payment <i>at all</i> (the row must
+     * survive — R4), and doing that one candidate at a time is a round trip per stale
+     * hold against a remote database.
+     */
+    List<Payment> findByBookingIdIn(Collection<Integer> bookingIds);
 
     //Admin payments monitoring: GET /api/admin/payments.
     List<Payment> findByStatus(String status);

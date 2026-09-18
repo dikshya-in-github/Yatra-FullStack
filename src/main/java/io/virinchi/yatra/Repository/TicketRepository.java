@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,18 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
 
     //Ek booking ko ek ticket (1:1 — booking_id unique).
     Optional<Ticket> findByBookingId(int bookingId);
+
+    /**
+     * The tickets of <b>several</b> bookings in one query — the hold sweep's batch fetch,
+     * the same device {@code PassengerRepository.findByBookingIdIn} provides for the
+     * admin list.
+     *
+     * <p>{@code ticket.booking_id} is UNIQUE, so one row per id at most. The sweep only
+     * needs to know <i>which</i> of its candidates have a document, because a ticketed
+     * booking is a sale the sweep must not touch — and asking per candidate is a round
+     * trip per stale hold against a remote database.
+     */
+    List<Ticket> findByBookingIdIn(Collection<Integer> bookingIds);
 
     //Admin ticket search: PNR wa ticket number le. Duitai unique hunuparxa.
     Optional<Ticket> findByPnr(String pnr);

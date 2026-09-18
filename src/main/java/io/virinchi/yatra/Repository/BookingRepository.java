@@ -33,6 +33,35 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     //The demo seeder's own rows (Phase 7) — what `POST /api/admin/reset` removes.
     List<Booking> findBySeededTrue();
 
+    /**
+     * The abandoned holds — every {@code PENDING} booking whose 15-minute window has
+     * run out. The expiry sweep's candidate list ({@code BookingService.expireHolds}).
+     *
+     * <p><b>Three clauses, and each one is a deliberate exclusion:</b>
+     * <ul>
+     *   <li>{@code bookingStatus = PENDING} — the only state that <i>is</i> a hold. A
+     *       confirmed booking owns its seats and a cancelled one has already been
+     *       dealt with by the admin, so neither is a leak.</li>
+     *   <li>{@code seeded = false} — the seeder's own rows belong to
+     *       {@code POST /api/admin/reset}, which removes marked rows and reports what
+     *       it kept (R14). Sweeping them here would make the demo dataset shrink on a
+     *       timer, which is the opposite of what the seeder exists for.</li>
+     *   <li>{@code createdAt &lt; cutoff} — the window itself. A {@code null}
+     *       {@code created_at} never matches, so a legacy row without a timestamp is
+     *       left alone rather than guessed at.</li>
+     * </ul>
+     *
+     * <p><b>Ordered by id so a sweep is reproducible</b>, and because the caller
+     * deletes as it walks: an unordered delete loop is the shortest path to a
+     * non-deterministic test.
+     *
+     * <p>A derived query rather than {@code @Query}: there is nothing to join and no
+     * nullable filter to fold, which is exactly where Spring Data's method names are
+     * clearer than JPQL.
+     */
+    List<Booking> findByBookingStatusAndSeededFalseAndCreatedAtBeforeOrderByIdAsc(
+            String bookingStatus, LocalDateTime cutoff);
+
     //Reset guard: has this user kept a booking of their own? A seeded account that
     //does is left in place, because deleting it would take that booking with it.
     long countByUserId(int userId);

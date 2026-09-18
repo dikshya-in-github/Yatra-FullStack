@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b7c3a1e2-4f5d-4a6b-9c8e-1d2f3a4b5c6d",
     "name": "Yatra 2.0 — API",
-    "description": "Yatra 2.0 — domestic flight booking platform for Nepal (CPJ119 Advanced Java).\n\n## What is in here\n\n| Folder | Contents |\n|---|---|\n| **00 · Setup** | Sign in (captures the Bearer token), the demo `reset` then `seed`, sign in again (the reset rebuilds the administrator, so its id is re-captured), then sign in as a customer. Run these first, in that order — everything under `/api/admin/**` needs a token. |\n| **Admin · Airlines** | the airline CRUD, the logo bytes endpoint (`ETag` + a conditional `304`) and its failure cases. |\n| **Admin · Destinations** | the Cloudinary upload, the destination CRUD, and the two list paths (admin + public) that share one body. |\n| **Admin · Flights** | the flight CRUD, the seat map it generates (a public read), the filters, and the route/airline validation failures. |\n| **Public · Booking write (Phase 6)** | `POST /api/bookings` — the wizard's own write, and the seat hold it leaves behind. |\n| **Admin · Bookings (Phase 9)** | `GET /api/admin/bookings` (search, filters, paging), `GET /api/admin/bookings/{id}`, `PUT /api/admin/bookings/{id}/status` — success and failure cases. |\n| **Payments (Phase 10)** | the eSewa gateway walk (`initiate` → `verify`, success **and** declined), the admin payments ledger, its filters and paging, and the refund. |\n| **Admin · Users (Phase 11)** | the user roster (search, filters, paging), create, edit, activate/deactivate, delete — the `ADMIN_ACCOUNT_PROTECTED` and `USER_HAS_BOOKINGS` refusals, and the per-account booking read behind them. |\n| **Admin · Tickets (Phase 12)** | the issued-ticket read: search by PNR / ticket number / customer / flight / booking id, the page's booking-status dropdown, the ticket's own `ISSUED` / `CANCELLED`, paging, the detail read and its 404, and both layers of the admin guard. |\n| **Admin · Dashboard (Phase 13)** | the dashboard read: the two keys the page renders (`bookings` + the seven §2.5 `stats` cards), and the four cross-checks that compare each card against the endpoint listing the same table — plus both layers of the admin guard. |\n| **99 · Delete guards** | why a flight, airline or destination that is in use refuses to be deleted — and the *disable it instead* path that does work. |\n\n**Run order matters, and the folders are arranged for it.** A collection run walks airlines → destinations → flights → booking write → Phase 9 → payments → Phase 11 → tickets (Phase 12) → the dashboard (Phase 13) → the delete guards, which is also the order the modules depend on each other. Each create captures the id the next folder needs (`{{airlineId}}` → `{{newCodeFrom}}`/`{{newCodeTo}}` → `{{flightId}}` → `{{pendingBookingId}}`), so nothing is pasted between tabs by hand.\n\n**The tickets module joined it at Phase 12, and the dashboard at Phase 13** — see those folders. Phase 13 is the one folder that asserts almost nothing about its own endpoint in isolation: it reads the four other lists and checks that the cards agree with them, because the roadmap's checkpoint for a dashboard is that its numbers match the database rather than that the body has the right keys. What is still not here is the auth surface beyond the two sign-ins (register, refresh). The registration confirmation email (Phase 11's other half) needs a real mailbox and is described in the Users folder.\n\n## How to use it\n\n1. Start the app (`./mvnw spring-boot:run` in IntelliJ or the terminal) and import **both** files from `postman/`.\n2. Select the **Yatra 2.0 — local** environment (top-right). `baseUrl` defaults to `http://localhost:8080`; the collection carries the same defaults, so it also works with no environment selected.\n\n> **Where each value lives, and why it matters.** The environment holds only what a human configures (`baseUrl`, the demo account). The transient values — `{{adminToken}}`, `{{userToken}}`, the ids every create captures (`{{airlineId}}`, `{{destIdFrom}}`, `{{flightId}}`, `{{bookingId}}`, `{{pendingBookingId}}`), the codes it generates (`{{newIata}}`, `{{newCodeFrom}}`, `{{newFlightNo}}`) and `{{today}}` — are **collection** variables on purpose: Postman resolves an environment variable *before* a collection variable, so an `adminToken` defined in the environment would shadow the one the sign-in request captures and every admin call would go out with an empty Bearer token.\n3. Run **00 · Setup**, in order: **Sign in (admin)** → **Reset the demo data** → **Seed the demo data** → **Sign in (admin) again** → **Sign in (customer)**. The sign-in requests store their tokens in `{{adminToken}}` / `{{userToken}}` automatically — every admin request sends the token as a Bearer header, and nothing else needs copying between tabs.\n\n## Booting from an empty database (the circle you will hit)\n\n`POST /api/admin/seed` is admin-only, and the `admin@yatra.com` account the sign-in uses is **created by that seed** — so on a database that has never been seeded there is no admin to authorise the first seed. Registering does not close the circle either: `POST /api/auth/register` creates a `USER`.\n\nOne manual step, once per database:\n\n1. `POST /api/auth/register` (that endpoint is public — from Signup, or by hand).\n2. `UPDATE users SET role = 'ADMIN' WHERE email = '<that account>';`\n3. **Sign in again.** The JWT is a snapshot of the role at sign-in time, so a token minted *before* the promotion still claims `USER` and every admin call answers **403**.\n4. Now `POST /api/admin/seed` works, and `admin@yatra.com` / `Yatra@123` exists afterwards for everyone else.\n\n**The cheaper way, if you have the signing key:** mint one admin JWT by hand and use it for that first seed. The token is an HS256 JWT signed with `yatra.jwt.secret` (the `local` profile reads it from `application-local.properties`) and the claims are the ones `JwtUtil` writes — `sub` (the numeric user id), `name`, `email`, `role: \"ADMIN\"`, `iat`, `exp`. Sign it, send it as `Authorization: Bearer …` to `POST /api/admin/seed`, and the seeded `admin@yatra.com` account exists from then on, so the sign-in request above works and nothing else needs hand-editing. That is how this collection's own live walk was bootstrapped.\n\nVerified while writing this: against the current database, `POST /api/auth/login` as `admin@yatra.com` answers **401 `INVALID_CREDENTIALS`** — the live schema is not seeded right now, which is exactly this situation.\n\n## Running the whole collection\n\n**Work down the folders in order.** A request that needs an id reads it from a collection variable the previous folder's create filled in — the module folders are written as a single walk, not as twenty unrelated requests.\n\n**A re-run leaves its own rows behind — that is the design, not a leak.** The run creates a flight, a booking, two airports and an airline; the booking holds a seat, so the flight can no longer be deleted and neither can the airline or the airports its route uses. *99 · Delete guards* runs those deletes on purpose to show the refusal, and `POST /api/admin/reset` deliberately does **not** remove rows the seeder did not create.\n\n## Eight things worth knowing before you judge a red test\n\n- **A booking's `status` is title case on purpose** (`Pending` / `Confirmed` / `Cancelled`), because `admin-bookings.js` compares those exact strings for its badge, its filter options and its cancel button — an uppercase body would silently colour every row red and hide the cancel action (risk R16 in the standards doc). Several tests here assert that vocabulary on purpose: if they fail, a page is about to break, not the test.\n- **The write requests really do change rows.** `Confirm` / `Cancel` are the admin actions; `POST /api/admin/reset` followed by `POST /api/admin/seed` puts the demo dataset back exactly as it was — **in that order**, because `reset` only deletes and `seed` is what recreates. Give the reset a few minutes: it deletes row by row and takes roughly 80 seconds against the hosted database.\n- **The creates invent their own codes** (`{{newIata}}`, `{{newCodeFrom}}`, `{{newFlightNo}}`) from the clock, so a second run does not 409 on the row the first one made. If one ever does collide (`409 IATA_EXISTS` / `DESTINATION_CODE_EXISTS` / `FLIGHT_NO_EXISTS`), edit that variable on the collection's **Variables** tab and resend — the request says so in its own failure message.\n- **The payments folder answers with `bookings`, not `payments`.** `admin-payments.js` derives one transaction per *booking* and reads `resp.bookings`; a purpose-built payments array would leave that undefined and the page would quietly fall back to its localStorage demo seeds (risk R16). Relatedly, `outcome` in the verify body is a **mock-only** switch: a real gateway answers rather than being told.\n- **One request is disabled by default:** *Upload a destination image* needs a file from your machine, so choose one in its form-data row and enable it. The Postman app honours that flag; a CLI runner (`newman`) does not, so its tests only register when a file is attached and a headless run reports it as skipped rather than red. Everything else runs as-is, and the destination creates work with no image at all (the empty string is a legitimate `imageUrl`).\n- **The tickets folder carries two status filters, and they are two different columns.** `status` is the *booking's* vocabulary (`Confirmed` / `Cancelled`) — the dropdown `admin-tickets.js` really sends, where \"Issued\" and \"Voided\" are only its labels — while `ticketStatus` is the document's own `ISSUED` / `CANCELLED`. The refund the payments folder runs after the ticket is minted moves the payment row and nothing else, so this walk leaves an `ISSUED` ticket under a `Refunded` payment: the folder asserts that rather than assuming it.\n\n- **The dashboard answers exactly two keys, and its cards are checked against other endpoints rather than against themselves.** `GET /api/admin/dashboard` is `{ bookings, stats }` — the recent-bookings rows and the seven §2.5 cards. When a dashboard test goes red, read the definition before the query: *Revenue* is the sum of `amount` over **non-cancelled** bookings (so a refunded booking still counts and a cancelled one does not), *Today's Bookings* counts bookings **created** today, and *Pending Payments* counts the booking's `paymentStatus` — not the payment row's `PENDING`. A money-first implementation is wrong here, not the test.\n\n- **A query string has to be in the URL's *parameters*, not only in its `raw` text.** Editing `raw` in the JSON file is enough for the Postman app, which re-parses it whenever the request opens — but a CLI runner (`newman`) resolves the structured parts and sends **no** parameters at all. That is how one ledger request fetched the whole table instead of one transaction while the request itself still looked right in the app. Edit a URL by hand, edit its `query` array too.\n\nThe admin credentials below are the seeder's documented demo account (`SeedService.DEMO_PASSWORD`), not a secret — they exist so demo data nobody can sign into is not the demo data. See the standards doc, open question 8."
+    "description": "Yatra 2.0 — domestic flight booking platform for Nepal (CPJ119 Advanced Java).\n\n## What is in here\n\n| Folder | Contents |\n|---|---|\n| **00 · Setup** | Sign in (captures the Bearer token), the demo `reset` then `seed`, sign in again (the reset rebuilds the administrator, so its id is re-captured), then sign in as a customer. Run these first, in that order — everything under `/api/admin/**` needs a token. |\n| **Admin · Airlines** | the airline CRUD, the logo bytes endpoint (`ETag` + a conditional `304`) and its failure cases. |\n| **Admin · Destinations** | the Cloudinary upload, the destination CRUD, and the two list paths (admin + public) that share one body. |\n| **Admin · Flights** | the flight CRUD, the seat map it generates (a public read), the filters, and the route/airline validation failures. |\n| **Public · Booking write (Phase 6)** | `POST /api/bookings` — the wizard's own write, and the seat hold it leaves behind. |\n| **Admin · Bookings (Phase 9)** | `GET /api/admin/bookings` (search, filters, paging), `GET /api/admin/bookings/{id}`, `PUT /api/admin/bookings/{id}/status` — success and failure cases. |\n| **Payments (Phase 10)** | the eSewa gateway walk (`initiate` → `verify`, success **and** declined), the admin payments ledger, its filters and paging, and the refund. |\n| **Admin · Users (Phase 11)** | the user roster (search, filters, paging), create, edit, activate/deactivate, delete — the `ADMIN_ACCOUNT_PROTECTED` and `USER_HAS_BOOKINGS` refusals, and the per-account booking read behind them. |\n| **Admin · Tickets (Phase 12)** | the issued-ticket read: search by PNR / ticket number / customer / flight / booking id, the page's booking-status dropdown, the ticket's own `ISSUED` / `CANCELLED`, paging, the detail read and its 404, and both layers of the admin guard. |\n| **Admin · Dashboard (Phase 13)** | the dashboard read: the two keys the page renders (`bookings` + the seven §2.5 `stats` cards), and the four cross-checks that compare each card against the endpoint listing the same table — plus both layers of the admin guard. |\n| **99 · Delete guards** | why a flight, airline or destination that is in use refuses to be deleted — and the *disable it instead* path that does work. |\n| **Admin · Hold expiry (Phase 14)** | the abandoned-hold sweep: a 15-minute hold that nobody paid for loses its seats, a draft is deleted while a declined transaction is cancelled, and the cabin count is compared against the baseline the folder took first. |\n\n**Run order matters, and the folders are arranged for it.** A collection run walks airlines → destinations → flights → booking write → Phase 9 → payments → Phase 11 → tickets (Phase 12) → the dashboard (Phase 13) → the delete guards, which is also the order the modules depend on each other. The **hold expiry** sweep is appended after all of it, because it is the one folder that acts on the whole table rather than on its own rows. Each create captures the id the next folder needs (`{{airlineId}}` → `{{newCodeFrom}}`/`{{newCodeTo}}` → `{{flightId}}` → `{{pendingBookingId}}`), so nothing is pasted between tabs by hand.\n\n**The tickets module joined it at Phase 12, and the dashboard at Phase 13** — see those folders. Phase 13 is the one folder that asserts almost nothing about its own endpoint in isolation: it reads the four other lists and checks that the cards agree with them, because the roadmap's checkpoint for a dashboard is that its numbers match the database rather than that the body has the right keys. What is still not here is the auth surface beyond the two sign-ins (register, refresh). The registration confirmation email (Phase 11's other half) needs a real mailbox and is described in the Users folder.\n\n## How to use it\n\n1. Start the app (`./mvnw spring-boot:run` in IntelliJ or the terminal) and import **both** files from `postman/`.\n2. Select the **Yatra 2.0 — local** environment (top-right). `baseUrl` defaults to `http://localhost:8080`; the collection carries the same defaults, so it also works with no environment selected.\n\n> **Where each value lives, and why it matters.** The environment holds only what a human configures (`baseUrl`, the demo account). The transient values — `{{adminToken}}`, `{{userToken}}`, the ids every create captures (`{{airlineId}}`, `{{destIdFrom}}`, `{{flightId}}`, `{{bookingId}}`, `{{pendingBookingId}}`), the codes it generates (`{{newIata}}`, `{{newCodeFrom}}`, `{{newFlightNo}}`) and `{{today}}` — are **collection** variables on purpose: Postman resolves an environment variable *before* a collection variable, so an `adminToken` defined in the environment would shadow the one the sign-in request captures and every admin call would go out with an empty Bearer token.\n3. Run **00 · Setup**, in order: **Sign in (admin)** → **Reset the demo data** → **Seed the demo data** → **Sign in (admin) again** → **Sign in (customer)**. The sign-in requests store their tokens in `{{adminToken}}` / `{{userToken}}` automatically — every admin request sends the token as a Bearer header, and nothing else needs copying between tabs.\n\n## Booting from an empty database (the circle you will hit)\n\n`POST /api/admin/seed` is admin-only, and the `admin@yatra.com` account the sign-in uses is **created by that seed** — so on a database that has never been seeded there is no admin to authorise the first seed. Registering does not close the circle either: `POST /api/auth/register` creates a `USER`.\n\nOne manual step, once per database:\n\n1. `POST /api/auth/register` (that endpoint is public — from Signup, or by hand).\n2. `UPDATE users SET role = 'ADMIN' WHERE email = '<that account>';`\n3. **Sign in again.** The JWT is a snapshot of the role at sign-in time, so a token minted *before* the promotion still claims `USER` and every admin call answers **403**.\n4. Now `POST /api/admin/seed` works, and `admin@yatra.com` / `Yatra@123` exists afterwards for everyone else.\n\n**The cheaper way, if you have the signing key:** mint one admin JWT by hand and use it for that first seed. The token is an HS256 JWT signed with `yatra.jwt.secret` (the `local` profile reads it from `application-local.properties`) and the claims are the ones `JwtUtil` writes — `sub` (the numeric user id), `name`, `email`, `role: \"ADMIN\"`, `iat`, `exp`. Sign it, send it as `Authorization: Bearer …` to `POST /api/admin/seed`, and the seeded `admin@yatra.com` account exists from then on, so the sign-in request above works and nothing else needs hand-editing. That is how this collection's own live walk was bootstrapped.\n\nVerified while writing this: against the current database, `POST /api/auth/login` as `admin@yatra.com` answers **401 `INVALID_CREDENTIALS`** — the live schema is not seeded right now, which is exactly this situation.\n\n## Running the whole collection\n\n**Work down the folders in order.** A request that needs an id reads it from a collection variable the previous folder's create filled in — the module folders are written as a single walk, not as twenty unrelated requests.\n\n**A re-run leaves its own rows behind — that is the design, not a leak.** The run creates a flight, a booking, two airports and an airline; the booking holds a seat, so the flight can no longer be deleted and neither can the airline or the airports its route uses. *99 · Delete guards* runs those deletes on purpose to show the refusal, and `POST /api/admin/reset` deliberately does **not** remove rows the seeder did not create.\n\n## Eight things worth knowing before you judge a red test\n\n- **A booking's `status` is title case on purpose** (`Pending` / `Confirmed` / `Cancelled`), because `admin-bookings.js` compares those exact strings for its badge, its filter options and its cancel button — an uppercase body would silently colour every row red and hide the cancel action (risk R16 in the standards doc). Several tests here assert that vocabulary on purpose: if they fail, a page is about to break, not the test.\n- **The write requests really do change rows.** `Confirm` / `Cancel` are the admin actions; `POST /api/admin/reset` followed by `POST /api/admin/seed` puts the demo dataset back exactly as it was — **in that order**, because `reset` only deletes and `seed` is what recreates. Give the reset a few minutes: it deletes row by row and takes roughly 80 seconds against the hosted database.\n- **The creates invent their own codes** (`{{newIata}}`, `{{newCodeFrom}}`, `{{newFlightNo}}`) from the clock, so a second run does not 409 on the row the first one made. If one ever does collide (`409 IATA_EXISTS` / `DESTINATION_CODE_EXISTS` / `FLIGHT_NO_EXISTS`), edit that variable on the collection's **Variables** tab and resend — the request says so in its own failure message.\n- **The payments folder answers with `bookings`, not `payments`.** `admin-payments.js` derives one transaction per *booking* and reads `resp.bookings`; a purpose-built payments array would leave that undefined and the page would quietly fall back to its localStorage demo seeds (risk R16). Relatedly, `outcome` in the verify body is a **mock-only** switch: a real gateway answers rather than being told.\n- **One request is disabled by default:** *Upload a destination image* needs a file from your machine, so choose one in its form-data row and enable it. The Postman app honours that flag; a CLI runner (`newman`) does not, so its tests only register when a file is attached and a headless run reports it as skipped rather than red. Everything else runs as-is, and the destination creates work with no image at all (the empty string is a legitimate `imageUrl`).\n- **The tickets folder carries two status filters, and they are two different columns.** `status` is the *booking's* vocabulary (`Confirmed` / `Cancelled`) — the dropdown `admin-tickets.js` really sends, where \"Issued\" and \"Voided\" are only its labels — while `ticketStatus` is the document's own `ISSUED` / `CANCELLED`. The refund the payments folder runs after the ticket is minted moves the payment row and nothing else, so this walk leaves an `ISSUED` ticket under a `Refunded` payment: the folder asserts that rather than assuming it.\n\n- **The dashboard answers exactly two keys, and its cards are checked against other endpoints rather than against themselves.** `GET /api/admin/dashboard` is `{ bookings, stats }` — the recent-bookings rows and the seven §2.5 cards. When a dashboard test goes red, read the definition before the query: *Revenue* is the sum of `amount` over **non-cancelled** bookings (so a refunded booking still counts and a cancelled one does not), *Today's Bookings* counts bookings **created** today, and *Pending Payments* counts the booking's `paymentStatus` — not the payment row's `PENDING`. A money-first implementation is wrong here, not the test.\n\n- **A query string has to be in the URL's *parameters*, not only in its `raw` text.** Editing `raw` in the JSON file is enough for the Postman app, which re-parses it whenever the request opens — but a CLI runner (`newman`) resolves the structured parts and sends **no** parameters at all. That is how one ledger request fetched the whole table instead of one transaction while the request itself still looked right in the app. Edit a URL by hand, edit its `query` array too.\n\nThe admin credentials below are the seeder's documented demo account (`SeedService.DEMO_PASSWORD`), not a secret — they exist so demo data nobody can sign into is not the demo data. See the standards doc, open question 8."
   },
   "event": [
     {
@@ -264,6 +264,26 @@
     },
     {
       "key": "dashPendingPayments",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "holdFlightNo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "holdFlightId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "holdBookingId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "holdSeatsBefore",
       "value": "",
       "type": "string"
     }
@@ -7242,6 +7262,482 @@
               ]
             },
             "description": "The last guard, and the one whose wording set the pattern: `\"{name} is used by N flight(s) — disable it instead, so those flights stay valid.\"` — the same sentence `admin-airlines.js` and `admin-destinations.js` use in their own dialogs, so the mock and the real API tell an admin the same thing.\n\n**A soft-disabled flight still counts as a user.** The status flip above changed nothing about the foreign key, and that is deliberate: an Inactive flight is still a row the airline is attached to, and `isInactive` is not a licence to orphan it. Only `DELETE` after the flight row is gone would succeed — which this run cannot reach, because its booking came first. That is the whole point of the folder: the delete guards are not a restriction to work around, they are the record of what the data means."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin · Hold expiry (Phase 14)",
+      "description": "The abandoned-hold sweep: `POST /api/admin/bookings/expire-holds`.\n\n**The hole this closes.** A booking is created *before* the gateway is called and holds one seat per passenger from that moment — the wizard's timer promises the customer 15 minutes, and `SeatRepository.release` used to have exactly one caller (`deleteBooking`, an admin action). So a customer who closed the tab at the payment page left a `PENDING` row holding its seats with no path back short of an admin deleting the draft, and availability — `seatCapacity - COUNT(BOOKED seats)` — kept reporting those seats as sold **for ever**. This walk leaves two such rows behind on purpose (the spare booking and the declined one), which is why the sweep belongs in the run rather than in a footnote.\n\n**Two rows, two outcomes, and that is the rule.** A hold with **no** payment and no ticket is a draft, so it is deleted outright — the same rule `deleteBooking` applies. A hold with a payment row (declined, or initiated and never verified) is **cancelled**, not deleted: R4 keeps the transaction as the audit trail of what the customer tried to do. Either way the seats come back, because the *hold* is over — releasing them is the part that must not outlive the window, and it is deliberately **not** the same rule as the admin's cancel of a *paid* booking (which keeps its seats counted, as `admin-bookings.html` promises).\n\n**Why `?minutes=0`.** Omitted, the window is `yatra.hold.expiry-minutes` (15, the wizard's own promise). `0` ends every open hold, which is the only way to demonstrate the rule in a run without waiting a quarter of an hour — and it is safe to expose because the route is admin-only and the worst case is exactly what the sweep does anyway, just sooner.\n\n**This folder runs last, on purpose:** a sweep has no per-fixture scope, so it ends every open hold in the database, including the two the earlier folders left behind. Nothing after it depends on those rows.\n\n**A scheduled half exists too.** `Config/HoldSweepConfig` runs the same service method on an interval when `yatra.hold.sweep.enabled=true` (off by default: the suite boots 26 `@SpringBootTest` contexts against the live schema, and a job that needs no request and deletes rows is the hazard that made seeding an explicit endpoint rather than a `CommandLineRunner`). This endpoint is how that job is *verified*.",
+      "item": [
+        {
+          "name": "Create the folder's own flight — a clean seat baseline (captures {{holdFlightId}})",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// The folder needs a flight whose booked-seat count starts at zero, so the",
+                  "// sweep's arithmetic is this folder's alone. A fresh number per run, like the",
+                  "// flights folder's own create — the previous run's row must not collide.",
+                  "const digits = String((Date.now() + Math.floor(Math.random() * 9000)) % 9000 + 100);",
+                  "pm.collectionVariables.set('holdFlightNo', 'T7 ' + digits);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code !== 200) {",
+                  "    pm.test('the create was refused — check airlineId and the two airport codes', () =>",
+                  "        pm.expect.fail('Run the Airlines and Destinations folders first. Response: '",
+                  "            + (body.message || pm.response.text())));",
+                  "} else {",
+                  "    pm.collectionVariables.set('holdFlightId', String(body.id));",
+                  "}",
+                  "",
+                  "pm.test('a 4-seat cabin, so each seat below is countable by eye', () => {",
+                  "    pm.expect(body.seats).to.eql(4);",
+                  "    pm.expect(body.bookedSeats).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/flights",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "flights"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"no\": \"{{holdFlightNo}}\",\n    \"airlineId\": {{airlineId}},\n    \"from\": \"{{destCodeFrom}}\",\n    \"to\": \"{{destCodeTo}}\",\n    \"date\": \"{{today}}\",\n    \"dep\": \"06:15\",\n    \"arr\": \"07:30\",\n    \"aircraft\": \"ATR 72-600\",\n    \"fare\": 4250.00,\n    \"seats\": 4,\n    \"status\": \"Active\"\n}"
+            },
+            "description": "Four seats on purpose: the sweep's claim is that availability comes back, and \"4\" is a number a reader can check without counting rows.\n\nThe airline and the two airports come from the folders above (`{{airlineId}}`, `{{destCodeFrom}}`, `{{destCodeTo}}`) — this folder is about holds, not about route setup — while the flight number is generated here so a second run does not 409 on the row the first one made."
+          }
+        },
+        {
+          "name": "Seat map before — nothing is held yet (the baseline)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK — the seat map is a public read', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('holdSeatsBefore', String(body.bookedSeats));",
+                  "",
+                  "pm.test('the baseline this folder has to restore', () => {",
+                  "    pm.expect(body.bookedSeats).to.eql(0);",
+                  "    pm.expect(body.available).to.eql(4);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/{{holdFlightId}}/seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "{{holdFlightId}}",
+                "seats"
+              ]
+            },
+            "description": "Availability is **computed, never stored** (the teacher-flagged rule): `seatCapacity - COUNT(BOOKED seats)`. The number captured here is what the sweep must put back, and the last request in the folder compares against it rather than against a literal."
+          }
+        },
+        {
+          "name": "Abandon a hold — the wizard's payload, no token (captures {{holdBookingId}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK to a guest — no token was sent', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "if (pm.response.code !== 200) {",
+                  "    pm.test('the hold was refused — check the create above ran first', () =>",
+                  "        pm.expect.fail('The flight number, the route and the seat hold come from the create above. Response: ' + (body.message || pm.response.text())));",
+                  "} else {",
+                  "    pm.collectionVariables.set('holdBookingId', String(body.bookingId));",
+                  "}",
+                  "",
+                  "pm.test('PENDING — a draft that holds its seats before any money moves', () => {",
+                  "    pm.expect(body.status).to.eql('PENDING');",
+                  "});",
+                  "",
+                  "pm.test('the price is the flight’s, not the one this body claimed', () => {",
+                  "    pm.expect(body.amount).to.eql(4250);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bookings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"contact\": {\n        \"title\": \"Mr\",\n        \"firstName\": \"Postman\",\n        \"lastName\": \"Hold\",\n        \"email\": \"postman.hold@example.com\",\n        \"phone\": \"+977 9800000001\",\n        \"invoiceParty\": \"\",\n        \"panNo\": \"\",\n        \"isPassenger\": true\n    },\n    \"passengers\": [\n        {\n            \"title\": \"Mr\",\n            \"firstName\": \"Postman\",\n            \"lastName\": \"Hold\",\n            \"nationality\": \"Nepali\",\n            \"type\": \"ADT\"\n        }\n    ],\n    \"flight\": {\n        \"from\": \"{{destCodeFrom}}\",\n        \"to\": \"{{destCodeTo}}\",\n        \"date\": \"{{today}}\",\n        \"depart\": \"06:15\",\n        \"arrive\": \"07:30\",\n        \"flightNo\": \"{{holdFlightNo}}\",\n        \"airline\": \"Yatra\",\n        \"flightClass\": \"E Class\",\n        \"refundable\": true,\n        \"pricePerPassenger\": 1,\n        \"passengerCount\": 1,\n        \"totalPrice\": 1\n    },\n    \"amount\": 1\n}"
+            },
+            "description": "The wizard's own write, and the whole reason a sweep has to exist: the **hold happens at booking time**, before the gateway is called, because releasing a seat only on payment would let two customers fill in every passenger detail and have the second one fail at the gateway (Phase 6's decision).\n\nThe body claims a price of `1` and the response says `4250` — money comes from the flight row `×` paying passengers, never from the request body. The seat is not named either, so the service assigns the lowest free one, which is what the real page sends today.\n\n**The next request is deliberately the only thing this booking ever gets.** No payment is initiated for it, because an abandoned checkout is exactly the case the sweep is for: no payment row, so the sweep *deletes* it."
+          }
+        },
+        {
+          "name": "The seat is held — bookedSeats is one higher, before any payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "const before = Number(pm.collectionVariables.get('holdSeatsBefore'));",
+                  "",
+                  "pm.test('the hold is real: exactly one more seat is counted', () => {",
+                  "    pm.expect(body.bookedSeats).to.eql(before + 1);",
+                  "});",
+                  "",
+                  "pm.test('and the counts are still derived, never stored', () => {",
+                  "    pm.expect(body.available).to.eql(body.seats - body.bookedSeats);",
+                  "});",
+                  "",
+                  "pm.test('the lowest free seat is the one it took', () => {",
+                  "    const booked = body.seatMap.filter((seat) => seat.status === 'BOOKED');",
+                  "    pm.expect(booked.map((seat) => seat.number)).to.eql(['1A']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/{{holdFlightId}}/seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "{{holdFlightId}}",
+                "seats"
+              ]
+            },
+            "description": "The other half of the leak, and the reason the sweep reports `seatsReleased`: a seat left `BOOKED` by a booking nobody will ever pay for is a seat that can never be sold again, and `available` is computed from exactly this count."
+          }
+        },
+        {
+          "name": "Expire every open hold — POST …/bookings/expire-holds?minutes=0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK — admin only, like every /api/admin/** route', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('the window is echoed back, so a manual run is distinguishable from a timed one', () => {",
+                  "    pm.expect(body.windowMinutes).to.eql(0);",
+                  "    pm.expect(body.cutoff).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.test('the report cannot contradict itself: expired = deleted + cancelled', () => {",
+                  "    pm.expect(body.expired).to.eql(body.deleted + body.cancelled);",
+                  "    pm.expect(body.candidates).to.be.at.least(body.expired);",
+                  "});",
+                  "",
+                  "pm.test('this run’s own abandoned hold, plus whatever was already stale', () => {",
+                  "    pm.expect(body.expired).to.be.at.least(1);",
+                  "    pm.expect(body.seatsReleased).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/bookings/expire-holds?minutes=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "bookings",
+                "expire-holds"
+              ],
+              "query": [
+                {
+                  "key": "minutes",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "`minutes=0` ends **every** open hold, which is the only way to prove the rule in a run without waiting 15 minutes. The count is not asserted as an absolute number on purpose: the sweep operates on the whole table, and a previous run's rows are still there.\n\n**`candidates` can exceed `expired`, and that is the paid-sale exclusion showing.** A booking whose payment row says `SUCCESS`, or that already has a ticket, is *skipped*: it is a completed sale whose status text has not caught up, and a sweep has no business editing it. The difference between the two numbers is that exclusion, reported rather than hidden.\n\n**`expired = deleted + cancelled` is asserted as an invariant** because it is what keeps the two halves of the rule honest: a re-implementation that deleted everything (or cancelled everything) would break it while still looking reasonable in isolation."
+          }
+        },
+        {
+          "name": "The abandoned draft is gone — the sweep deleted it (404 BOOKING_NOT_FOUND)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 — the row is not \"cancelled\", it is gone', () => pm.response.to.have.status(404));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('and the refusal is the project error shape', () => {",
+                  "    pm.expect(body.error).to.eql('BOOKING_NOT_FOUND');",
+                  "    pm.expect(body.message).to.include(pm.collectionVariables.get('holdBookingId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/bookings/{{holdBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "bookings",
+                "{{holdBookingId}}"
+              ]
+            },
+            "description": "Half of the rule, stated as an HTTP status: a hold with **no** payment and no ticket is an abandoned draft, so it is removed outright — the same rule `BookingService.deleteBooking` applies. Nothing is lost by deleting it: there is no gateway reference and no PNR in existence, which is exactly what the next request contrasts with."
+          }
+        },
+        {
+          "name": "The declined-payment hold was cancelled, not deleted ({{spareBookingId}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 — the row survives, and that is the R4 rule working', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('cancelled, so the admin table shows it rather than losing it', () => {",
+                  "    pm.expect(body.status).to.eql('Cancelled');",
+                  "});",
+                  "",
+                  "pm.test('the refused transaction is still on record', () => {",
+                  "    pm.expect(body.paymentStatus).to.eql('Failed');",
+                  "    pm.expect(body.payment).to.have.property('txnId');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/bookings/{{spareBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "bookings",
+                "{{spareBookingId}}"
+              ]
+            },
+            "description": "The other half of the rule, and the reason the sweep is more than \"delete the drafts\".\n\n`{{spareBookingId}}` is the booking the payments folder left `PENDING` with a **declined** transaction (`payment.status = FAILED`). A hard delete is refused for anything with a sale record — `payment.booking_id` and `ticket.booking_id` are the FKs, and the FKs, and the payment row is the record of what the customer tried to do — so the sweep **cancels** it instead and releases its seats. A sweep that only deleted would leave this hold leaking a seat for ever, which is the bug this whole folder exists to close.\n\nNote what did **not** change: `paymentStatus` is still `Failed`. Writing `Refunded` here would claim a gateway action nobody performed — a refund is the payments flow's to record."
+          }
+        },
+        {
+          "name": "The seat is sellable again — bookedSeats is back to the baseline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "const before = Number(pm.collectionVariables.get('holdSeatsBefore'));",
+                  "",
+                  "pm.test('the cabin is exactly where it started — the hold did not leak a seat', () => {",
+                  "    pm.expect(body.bookedSeats).to.eql(before);",
+                  "    pm.expect(body.available).to.eql(4 - before);",
+                  "});",
+                  "",
+                  "pm.test('the seat is out of the BOOKED list, not merely uncounted', () => {",
+                  "    const booked = body.seatMap.filter((seat) => seat.status === 'BOOKED');",
+                  "    pm.expect(booked).to.have.length(before);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/flights/{{holdFlightId}}/seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "flights",
+                "{{holdFlightId}}",
+                "seats"
+              ]
+            },
+            "description": "The checkpoint, and the reason `seatsReleased` is reported as the database's own verdict rather than the number of seats a booking referenced: releasing is a conditional `UPDATE … WHERE status = 'BOOKED'` whose **row count** decides (R13), so this request verifies the rows and not the intent."
+          }
+        },
+        {
+          "name": "Run it again — a settled sweep expires nothing (idempotent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "",
+                  "pm.test('nothing left to expire — and that is the settlement check', () => {",
+                  "    pm.expect(body.expired).to.eql(0);",
+                  "    pm.expect(body.seatsReleased).to.eql(0);",
+                  "});",
+                  "",
+                  "pm.test('and the twin is still reported, because the run really did look', () => {",
+                  "    pm.expect(body.expired).to.eql(body.deleted + body.cancelled);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/bookings/expire-holds?minutes=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "bookings",
+                "expire-holds"
+              ],
+              "query": [
+                {
+                  "key": "minutes",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "A repeated release is harmless rather than a double write, which is what makes this operation safe to run on a timer: the second call reports `expired: 0` because there is nothing stale left in the transaction's view. On a live deployment this is also the cheapest way to answer \"is the sweep working?\" — arm it, wait an interval, call this twice."
           }
         }
       ]

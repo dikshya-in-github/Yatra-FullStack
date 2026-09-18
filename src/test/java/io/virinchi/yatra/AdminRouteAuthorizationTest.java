@@ -161,6 +161,13 @@ class AdminRouteAuthorizationTest {
                         "GET /api/admin/bookings",
                         "GET /api/admin/bookings/1",
                         "PUT /api/admin/bookings/1/status",
+                        // The hold sweep: a POST whose path has no variable and whose id is
+                        // absent on purpose — the operation is "every stale hold", not
+                        // "this one". A route list built from "<VERB> <path>/1" shapes
+                        // would still find it, but a hand-written list of the writes a
+                        // reviewer expects on a bookings controller would not have
+                        // guessed that ending a hold is one of them.
+                        "POST /api/admin/bookings/expire-holds",
                         // Phase 10 — the payments ledger and its one write. The refund
                         // route is the case this assertion is really for: a POST that
                         // carries no body is exactly what a hand-written route list or a
