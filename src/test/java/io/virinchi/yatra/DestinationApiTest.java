@@ -223,11 +223,26 @@ class DestinationApiTest {
         Destination destination = destinations.save(
                 row(tag + " Searchable", tag + " Tribhuvan International Airport", null));
 
-        for (String term : new String[]{tag, "searchable", destination.getCode().toLowerCase()}) {
+        /* These two are exclusive to this row, so a count of 1 is a fair statement about
+           them: the tag is random per run, and no seeded city contains "Searchable". */
+        for (String term : new String[]{tag, "searchable"}) {
             mockMvc.perform(get("/api/destinations").param("search", term))
                     .andExpect(jsonPath("$.destinations.length()").value(1))
                     .andExpect(jsonPath("$.destinations[0].id").value(destination.getId()));
         }
+
+        /* The code column is asserted as membership, not as a count — the same rule the
+           read-back in creatingADestinationStoresItAndUppercasesTheCode was fixed for on
+           2026-09-18. The search box spans city, airport AND code, so a random three-letter
+           draw is a legitimate substring of a seeded name ("AIR" matches every
+           "... Airport", "ITY" matches "City"), and demanding a length of 1 made this test
+           depend on the draw never colliding — 102 of the 17576 three-letter codes hit a seeded
+           three-gram, a 0.58% flake per run that would have read as a service bug. Exclusivity
+           is aDuplicateAirportCodeIsRefusedEvenInAnotherCase's job; code uniqueness is the
+           unique key's. */
+        mockMvc.perform(get("/api/destinations").param("search", destination.getCode().toLowerCase()))
+                .andExpect(jsonPath("$.destinations[?(@.code == '%s')]".formatted(destination.getCode()))
+                        .isNotEmpty());
 
         mockMvc.perform(get("/api/destinations").param("search", "tribhuvan"))
                 .andExpect(jsonPath("$.destinations[?(@.id == " + destination.getId() + ")].code")
