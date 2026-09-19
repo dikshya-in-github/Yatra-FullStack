@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
-# Removes the rows tools/walks/bookings.py must leave in the demo database, in
-# FK-safe order, and releases the seats they hold.
+# Removes the probe bookings the admin-module walks must leave in the demo database,
+# in FK-safe order, and releases the seats they hold.
+#
+# Callers, both of them walks:
+#   * tools/walks/bookings.py — its module has no CREATE and no DELETE, so it cannot
+#     clean up after itself through the UI (see below).
+#   * tools/walks/payments.py (added Session 68) — its three probes ARE probe bookings
+#     (a transaction on that page is a booking that reached the gateway), so it reuses
+#     this script rather than copying its 130 lines.
 #
 # Why this is needed at all: the module has no CREATE and no DELETE. The walk creates
 # its probe bookings through the PUBLIC endpoint (that is the only way to verify §13's
@@ -19,7 +26,8 @@
 #            changing anything.
 #   --apply  the same deletes, COMMIT, then verify again from a fresh session.
 #
-# Scope is by MARKER, never by id, so it survives the walk minting new rows:
+# Scope is by MARKER, never by id, so it survives the walk minting new rows (both
+# walks mint from the same marker, which is what makes one script enough):
 #   bookings  contact_email LIKE 'zz.probe.%@example.com' AND contact_name LIKE '%Zzprobe%'
 # The pair is deliberate: a name alone could match something a human typed, and the
 # probe writes both. **The EMAIL is the load-bearing half**: `booking.contact_name`

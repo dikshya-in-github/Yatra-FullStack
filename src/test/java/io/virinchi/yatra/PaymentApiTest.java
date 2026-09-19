@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -678,6 +679,80 @@ class PaymentApiTest {
     }
 
     /**
+     * The four tiles ride with the page, and they are the LEDGER's numbers — not the
+     * rows on screen.
+     *
+     * <p>{@code admin-payments.html} used to sum its tiles in the browser over the whole
+     * list it held, which is only possible while the list <i>is</i> the ledger: the moment
+     * the table pages server-side, a client-side "Collected" describes the eight rows on
+     * screen and drops as the admin walks to page 2. So the totals are {@code sum} /
+     * {@code count} queries — asserted here against those same queries rather than against
+     * a literal, which is what proves the tiles and the rows cannot drift.
+     *
+     * <p>They are also deliberately <b>immune to the toolbar</b>: the tile row summarises
+     * the gateway's traffic, while the filtered figure is the count line beside the search
+     * box. And a refund <i>moves</i> money between two tiles without creating a second
+     * transaction, because it is a status change on one payment row.
+     */
+    @Test
+    void theLedgerCarriesTheTilesAndTheyDescribeTheWholeLedger() throws Exception {
+        Fixture fixture = fixture();
+        String flightNo = createFlight(fixture, 8, "8299.99");
+        int paid = book(fixture, flightNo, 1);
+        int alsoPaid = book(fixture, flightNo, 1);
+        int awaiting = book(fixture, flightNo, 1);
+
+        settle(paid, "esewa", null);
+        settle(alsoPaid, "esewa", null);
+        mockMvc.perform(initiate(awaiting, "esewa", null)).andExpect(status().isOk());
+
+        refresh();
+        long ledger = payments.count();
+        BigDecimal collected = payments.sumAmountByStatus("SUCCESS");
+        BigDecimal alreadyRefunded = payments.sumAmountByStatus("REFUNDED");
+        assertThat(collected).as("the aggregate answers with money, not SQL's null").isPositive();
+
+        JsonNode stats = ledgerBody(flightNo, "size", "2").get("stats");
+        assertThat(stats).as("a paged read carries the tiles").isNotNull();
+        assertThat(stats.get("transactions").asLong())
+                .as("every transaction in the ledger, not the page's two rows")
+                .isEqualTo(ledger);
+        assertThat(stats.get("collected").decimalValue()).isEqualByComparingTo(collected);
+        assertThat(stats.get("pending").asLong()).isEqualTo(1);
+        // Against the query, not zero: the tiles span the whole ledger, and the live
+        // database holds seeded refunds this test did not make (which is the semantics
+        // under test — a filtered read must not narrow a tile).
+        assertThat(stats.get("refunded").decimalValue())
+                .isEqualByComparingTo(alreadyRefunded);
+
+        // The toolbar does not move the tiles: one Pending row on screen, the whole
+        // ledger in the tiles.
+        JsonNode filtered = ledgerBody(flightNo, "status", "Pending", "size", "1");
+        assertThat(filtered.get("totalElements").asLong()).isEqualTo(1);
+        assertThat(filtered.get("stats").get("transactions").asLong()).isEqualTo(ledger);
+        assertThat(filtered.get("stats").get("collected").decimalValue())
+                .isEqualByComparingTo(collected);
+
+        // A refund is a status change on the one row: the money changes tile, and the
+        // ledger does not grow a second transaction.
+        BigDecimal refunded = require(paid).getTotalAmount();
+        mockMvc.perform(refund(paid)).andExpect(status().isOk());
+        JsonNode after = ledgerBody(flightNo, "size", "2").get("stats");
+        assertThat(after.get("refunded").decimalValue())
+                .isEqualByComparingTo(alreadyRefunded.add(refunded));
+        assertThat(after.get("collected").decimalValue())
+                .isEqualByComparingTo(collected.subtract(refunded));
+        assertThat(after.get("transactions").asLong()).isEqualTo(ledger);
+
+        // The unpaged shape is unchanged: the tiles, like the paging counts, exist only
+        // when paging was asked for.
+        mockMvc.perform(get("/api/admin/payments").param("search", flightNo)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(adminToken())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stats").doesNotExist());
+    }
+
+    /**
      * A booking that never reached the gateway is not a transaction — the ledger
      * holds payments, not bookings, which is what makes the page's "Transactions"
      * tile count transactions.
@@ -874,6 +949,25 @@ class PaymentApiTest {
                 .andReturn().getResponse().getContentAsString();
 
         return objectMapper.readTree(body).get("bookings").size();
+    }
+
+    /**
+     * One paged ledger read, scoped to a flight number, as parsed JSON — so the tiles can
+     * be compared against the queries that produce them instead of against literals. The
+     * remaining arguments are {@code name, value} pairs.
+     */
+    private JsonNode ledgerBody(String flightNo, String... params) throws Exception {
+        var request = get("/api/admin/payments").param("search", flightNo)
+                .header(HttpHeaders.AUTHORIZATION, bearer(adminToken()));
+        for (int i = 0; i + 1 < params.length; i += 2) {
+            request = request.param(params[i], params[i + 1]);
+        }
+
+        String body = mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        return objectMapper.readTree(body);
     }
 
     private String firstRowId(String body) throws Exception {

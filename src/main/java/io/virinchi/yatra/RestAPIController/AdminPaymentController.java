@@ -43,11 +43,13 @@ public class AdminPaymentController {
      * The transaction ledger.
      *
      * <p><b>Unpaged by default, paged on request</b> — the same choice every other
-     * admin list makes, and for the same reason: {@code admin-payments.js} filters
-     * and pages client-side over the whole list, so a silent default page size would
-     * look like missing transactions on a page that does not know it was truncated.
-     * Passing {@code size} switches to a real database page and adds
-     * {@code page}/{@code totalElements}/{@code totalPages}.
+     * admin list makes, kept for the callers that want the whole ledger in one body
+     * (Postman, a test). {@code admin-payments.js} now sends {@code page}/{@code size}
+     * like the other five wired modules, so the table, its count line and its paging are
+     * the database's; a silent default page size would still be wrong for an unpaged
+     * caller, so the switch stays explicit. Passing {@code size} adds
+     * {@code page}/{@code totalElements}/{@code totalPages} <i>and</i> {@code stats},
+     * the four tiles — see {@link AdminPaymentListResponse}.
      *
      * <p>The response nests its rows under {@code bookings} — not a slip: the page
      * derives a transaction per booking and reads {@code resp.bookings}, so the
@@ -78,8 +80,8 @@ public class AdminPaymentController {
             return AdminPaymentListResponse.of(paymentService.listPayments(search, method, status, sort));
         }
 
-        return AdminPaymentListResponse.of(paymentService.listPaymentPage(
-                search, method, status, sort, page == null ? 0 : page, size));
+        return paymentService.listPaymentPage(
+                search, method, status, sort, page == null ? 0 : page, size);
     }
 
     /**

@@ -86,14 +86,16 @@
                 <div class="page-header">
                     <div>
                         <h1>Payments</h1>
-                        <p class="page-sub">eSewa transaction monitoring (Master Plan §2.1 #8) — every completed
-                            storefront checkout lands here automatically from <code>yatra_bookings</code>. A refund is
-                            a <strong>status change</strong> (Paid → Refunded); booking seats stay untouched and the
-                            real money movement belongs to the future backend payment flow.</p>
+                        <p class="page-sub">eSewa transaction monitoring (Master Plan §2.1 #8), read from
+                            <code>/api/admin/payments</code> — search, method and status are queries, so the count,
+                            the paging and the four tiles are the database's. A refund is a <strong>money
+                                action</strong> (<code>POST /api/admin/payments/{id}/refund</code>), not an editable
+                            field: it is refused for a payment that never succeeded, and it deliberately leaves
+                            the booking and its seats alone. Amounts, transaction ids and dates are the
+                            gateway's.</p>
                     </div>
-                </div>
-
-                <!-- Payment summary (real numbers from the bookings store) -->
+                </div>                    <!-- Payment summary — the database's own totals (`stats` on the ledger
+                         response), over the whole ledger and not the current search. -->
                 <section class="stat-grid" aria-label="Payment summary">
                     <div class="stat-card">
                         <span class="stat-icon"><i class="fa-solid fa-receipt"></i></span>
@@ -171,8 +173,8 @@
                     <div class="empty-state" id="emptyState" hidden>
                         <i class="fa-solid fa-credit-card"></i>
                         <p>No payments match your search.</p>
-                        <p class="empty-hint">Transactions appear here after a storefront checkout, or load the demo
-                            records from <a href="./admin-bookings.html">Bookings</a>.</p>
+                        <p class="empty-hint">A transaction appears once a booking reaches the gateway —
+                            <a href="./admin-bookings.html">Bookings</a> shows the ones that never did.</p>
                     </div>
 
                     <div class="pagination">
@@ -184,7 +186,8 @@
         </div>
     </div>
 
-    <!-- ===== Payment detail modal (read-only; derived from the booking record) ===== -->
+    <!-- ===== Payment detail modal (read-only; a FRESH read of the booking record
+         behind the transaction, since a payment is 1:1 with its booking) ===== -->
     <div class="modal-overlay" id="payModal" hidden>
         <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="payModalTitle">
             <div class="modal-header">
@@ -207,8 +210,6 @@
                             <dd id="dAmount">—</dd>
                             <dt>Status</dt>
                             <dd id="dPayStatus">—</dd>
-                            <dt id="dRefundAtLabel" hidden>Refunded at</dt>
-                            <dd id="dRefundAt" hidden>—</dd>
                         </dl>
                     </div>
                     <div class="detail-block">
@@ -255,6 +256,8 @@
             <div class="modal-footer">
                 <button type="button" class="a-btn a-btn-danger" id="dRefundBtn" hidden><i
                         class="fa-solid fa-hand-holding-dollar"></i> Mark Refunded</button>
+                <!-- Shown only while the server's copy says Paid — the API refuses a
+                     payment that never succeeded (409 PAYMENT_NOT_REFUNDABLE). -->
                 <button type="button" class="a-btn" id="payModalDone">Done</button>
             </div>
         </div>

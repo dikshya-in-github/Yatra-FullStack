@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,28 @@ public interface PaymentRepository extends JpaRepository<Payment, Integer> {
     //Admin payments monitoring: GET /api/admin/payments.
     List<Payment> findByStatus(String status);
     List<Payment> findByMethod(String method);
+
+    /**
+     * The ledger's money, summed in the database — the payments page's two NPR tiles.
+     *
+     * <p><b>Why an aggregate rather than a sum over the rows.</b> The page holds ONE
+     * page of the ledger, so summing the rows it has would show a "Collected" figure
+     * that shrinks as the admin walks to page 2 — a number that is not the database's
+     * answer to anything. {@code DashboardService} made the same call for its Revenue
+     * card ("a dashboard that counts a table by loading it is doing the database's job
+     * in Java"), and this is that rule applied to the one page whose tiles are money.
+     *
+     * <p>The status is matched case-insensitively like every other payment status in
+     * this API: the row stores {@code SUCCESS}/{@code REFUNDED}, and the caller may
+     * quote either that or the page's {@code Paid} — resolved by the service before it
+     * gets here. {@code coalesce} answers an empty table with {@code 0} rather than SQL's
+     * {@code null}, so the DTO never serialises a null amount.
+     */
+    @Query("select coalesce(sum(p.amount), 0) from Payment p where upper(p.status) = :status")
+    BigDecimal sumAmountByStatus(@Param("status") String status);
+
+    /** The Pending tile: how many transactions are still awaiting the gateway. */
+    long countByStatusIgnoreCase(String status);
 
     /**
      * The admin payments ledger — Roadmap Phase 10.

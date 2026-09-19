@@ -1,6 +1,7 @@
 package io.virinchi.yatra.Service;
 
 import io.virinchi.yatra.Dto.AdminBookingResponse;
+import io.virinchi.yatra.Dto.AdminPaymentListResponse;
 import io.virinchi.yatra.Dto.PaymentInitiateRequest;
 import io.virinchi.yatra.Dto.PaymentInitiateResponse;
 import io.virinchi.yatra.Dto.PaymentVerifyRequest;
@@ -515,19 +516,50 @@ public class PaymentService {
         return responses(rows);
     }
 
-    /** One page of transactions, plus the counts needed to walk the rest. */
+    /**
+     * One page of transactions, the counts needed to walk the rest, and the ledger's
+     * four tiles — in ONE read transaction.
+     *
+     * <p><b>Why the tiles are computed here rather than summed by the page.</b> The page
+     * holds a single page of rows, so "Collected" derived on the client would describe
+     * the page, not the ledger (see {@link AdminPaymentListResponse}): the totals are
+     * {@code sum}/{@code count} queries on {@code payment}. They share this method's
+     * transaction with the rows so the two cannot describe different databases — the
+     * same reason {@code DashboardService.load} is one {@code @Transactional(readOnly)}
+     * read for seven cards and a table.
+     */
     @Transactional(readOnly = true)
-    public Page<AdminBookingResponse> listPaymentPage(String search, String method, String status,
-                                                      String sort, int page, int size) {
+    public AdminPaymentListResponse listPaymentPage(String search, String method, String status,
+                                                    String sort, int page, int size) {
         PageRequest request = Paging.request(page, size, sortFor(sort));
 
         Page<Payment> rows = payments.searchPage(
                 like(search), idTerm(search), storedMethod(method), storedStatus(status), request);
 
         Map<Integer, List<Passenger>> byBooking = passengersFor(bookingsOf(rows.getContent()));
-        return rows.map(payment -> AdminBookingResponse.of(
+        Page<AdminBookingResponse> content = rows.map(payment -> AdminBookingResponse.of(
                 payment.getBooking(),
                 byBooking.getOrDefault(payment.getBooking().getId(), List.of())));
+
+        return AdminPaymentListResponse.of(content, ledgerStats());
+    }
+
+    /**
+     * The payments page's four tiles, over the whole ledger and ignoring its filters.
+     *
+     * <p>{@code transactions} is {@code count()} of the payment table rather than the
+     * filtered total on purpose: the tile row is a summary of what the gateway has seen,
+     * not of the current search — a filtered number is already beside the search box.
+     * {@code collected} sums the {@code SUCCESS} rows and {@code refunded} the
+     * {@code REFUNDED} ones, so a refunded transaction leaves the first and lands in the
+     * second exactly once (the refund is a status change on one row, never a second).
+     */
+    private AdminPaymentListResponse.Stats ledgerStats() {
+        return new AdminPaymentListResponse.Stats(
+                payments.count(),
+                payments.sumAmountByStatus(SUCCESS),
+                payments.sumAmountByStatus(REFUNDED),
+                payments.countByStatusIgnoreCase(PENDING));
     }
 
     /* ------------------------------------------------------------------ *

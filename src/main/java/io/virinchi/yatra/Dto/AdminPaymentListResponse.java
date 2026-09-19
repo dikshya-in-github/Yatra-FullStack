@@ -3,6 +3,7 @@ package io.virinchi.yatra.Dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -30,10 +31,26 @@ import java.util.List;
  * {@code payPending} the ones still awaiting an answer.
  *
  * <p><b>Paging metadata appears only when paging was asked for</b>
- * ({@code @JsonInclude(NON_NULL)}), so the unpaged response — the shape the page
- * consumes today, filtering and paging client-side — stays compatible with the
- * mock, while a caller that passes {@code size} gets real database pages. Same
- * choice, and the same reason, as {@link AdminBookingListResponse}.
+ * ({@code @JsonInclude(NON_NULL)}), so the unpaged response — the shape the mock
+ * answers too — stays compatible, while a caller that passes {@code size} gets real
+ * database pages. Same choice, and the same reason, as
+ * {@link AdminBookingListResponse}.
+ *
+ * <h2>{@code stats}: the four tiles, and why they ride along with the page</h2>
+ * <p>{@code admin-payments.html} leads with Transactions / Collected / Refunded /
+ * Pending, and the page used to compute all four in the browser from the whole list
+ * it held. That is only possible while the list IS the whole ledger — the moment the
+ * table pages server-side, a client-side sum describes the rows on screen, not the
+ * ledger ("Collected" would drop as the admin walked to page 2). So the totals come
+ * from the database, attached to the same response that carries the page, and the
+ * page renders them instead of deriving them.
+ *
+ * <p><b>They are totals for the whole ledger, deliberately independent of the
+ * toolbar filters</b> — that is what the mock's tiles were too (they summed every
+ * booking in the store while the table showed a filtered slice). The tile row answers
+ * "what has the gateway taken, given back and not yet answered", not "what does this
+ * search add up to"; a filtered total is already on screen as the result count beside
+ * the search box.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AdminPaymentListResponse(
@@ -42,21 +59,44 @@ public record AdminPaymentListResponse(
         Integer page,
         Integer size,
         Long totalElements,
-        Integer totalPages
+        Integer totalPages,
+
+        /** The four tiles, over the whole ledger — present only on the paged shape. */
+        Stats stats
 ) {
+
+    /**
+     * The payments page's stat row, computed by {@code PaymentService} in SQL.
+     *
+     * <p>{@code transactions} is the ledger's size (every payment row, which is every
+     * transaction the gateway saw), not the filtered count. {@code collected} and
+     * {@code refunded} are the sums of the {@code SUCCESS} and {@code REFUNDED} rows;
+     * {@code pending} counts the rows still awaiting an answer. The definitions are
+     * pinned here rather than left to whoever writes the next query, for the reason
+     * {@link AdminDashboardResponse.Stats} gives: a card whose meaning drifts is a card
+     * that disagrees with the rows beside it.
+     */
+    public record Stats(
+            long transactions,
+            BigDecimal collected,
+            BigDecimal refunded,
+            long pending
+    ) {
+    }
 
     /** The unpaged shape: every transaction, in the service's deterministic order. */
     public static AdminPaymentListResponse of(List<AdminBookingResponse> bookings) {
-        return new AdminPaymentListResponse(bookings, null, null, null, null);
+        return new AdminPaymentListResponse(bookings, null, null, null, null, null);
     }
 
-    /** The paged shape: one page plus the counts a client needs to walk the rest. */
-    public static AdminPaymentListResponse of(Page<AdminBookingResponse> page) {
+    /** The paged shape: one page, the counts a client needs to walk the rest, and the tiles. */
+    public static AdminPaymentListResponse of(Page<AdminBookingResponse> page, Stats stats) {
         return new AdminPaymentListResponse(
                 page.getContent(),
                 page.getNumber(),
                 page.getSize(),
                 page.getTotalElements(),
-                page.getTotalPages());
+                page.getTotalPages(),
+                stats);
     }
 }

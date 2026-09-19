@@ -122,6 +122,20 @@ var YATRA_CONFIG = {
            SEED_USERS, save()) held a whole roster the database had never seen. */
         "admin-users.html",
 
+        /* §12 + §13 — the Payments module, migrated the same way: the list is a
+           server QUERY (GET /api/admin/payments?search=&method=&status=&page=&size=,
+           matching txn id, booking id, PNR, customer or flight number), the detail
+           modal reads its row fresh from GET /api/admin/bookings/{id} (a payment is
+           1:1 with its booking, which is the id this page's buttons carry), and the
+           one write is POST /api/admin/payments/{bookingId}/refund. Named here only
+           because its WRITES moved with its reads — and its write was the quietest
+           kind of wrong: the page derived its ledger from the storefront's
+           `yatra_bookings` key, so a refund changed a JSON array in the browser while
+           the payment row in MySQL stayed SUCCESS. It is also the page whose tiles
+           could not survive server-side paging, so they now come from the database
+           in the same response (`stats`) rather than being summed on screen. */
+        "admin-payments.html",
+
         /* §7 + §11 — the signed-in account. profile.html is §11's page; both pages
            call ONLY GET/POST/PUT /api/users/me and GET /api/users/me/bookings, so
            naming them here moves no unrelated call with them. They are named
