@@ -83,8 +83,17 @@ public class AirlineService {
      * ------------------------------------------------------------------ */
 
     /**
-     * Every matching airline, sorted — the shape the pages consume today, where
-     * {@code admin-airlines.js} pages the table client-side over the full list.
+     * Every matching airline, sorted — the unpaged shape
+     * ({@code { "airlines": [...] }}), which is what a caller that passes no
+     * {@code size} still gets.
+     *
+     * <p><b>The search matches the name <i>or</i> the IATA code.</b> That is the
+     * contract {@code admin-airlines.html}'s toolbar has always promised ("Search
+     * name or IATA code…"), and before this it was a promise the API did not keep:
+     * the derived query matched the name only, so typing {@code U4} answered
+     * nothing while the page's own client-side filter answered Buddha Air. The page
+     * is now wired to this endpoint, so the two had to agree — see
+     * {@link AirlineRepository#searchAll}.
      *
      * <p>Needs its own query rather than {@code Pageable.unpaged()} because
      * unpaged discards the {@code Sort}, which is exactly how pagination loses
@@ -92,26 +101,33 @@ public class AirlineService {
      */
     @Transactional(readOnly = true)
     public List<Airline> listAll(String search, String status, String sort) {
-        String name = search == null ? "" : search.trim();
-        String state = blankToNull(status);
-        Sort order = sortFor(sort);
-
-        return state == null
-                ? airlines.findByNameContainingIgnoreCase(name, order)
-                : airlines.findByNameContainingIgnoreCaseAndStatus(name, state, order);
+        return airlines.searchAll(like(search), blankToNull(status), sortFor(sort));
     }
 
-    /** One page of matching airlines, plus the counts needed to walk the rest. */
+    /**
+     * One page of matching airlines, plus the counts needed to walk the rest — the
+     * shape the admin table pages with, so the row count and the pages the client
+     * draws are the database's own ("8 airlines", not "8 of the rows I happen to
+     * hold").
+     */
     @Transactional(readOnly = true)
     public Page<Airline> listPage(String search, String status, String sort,
                                   int page, int size) {
-        String name = search == null ? "" : search.trim();
-        String state = blankToNull(status);
         PageRequest request = Paging.request(page, size, sortFor(sort));
+        return airlines.searchPage(like(search), blankToNull(status), request);
+    }
 
-        return state == null
-                ? airlines.findByNameContainingIgnoreCase(name, request)
-                : airlines.findByNameContainingIgnoreCaseAndStatus(name, state, request);
+    /**
+     * A search term as a LIKE pattern, or {@code null} for "no search".
+     *
+     * <p>Deliberately the same two lines {@code FlightService.like} uses: a blank
+     * search must mean "every row" through the same {@code :param is null} clause
+     * both repositories rely on, and lower-casing here is what lets the queries
+     * compare against {@code lower(...)} without a collation surprise.
+     */
+    private static String like(String search) {
+        String term = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+        return term.isEmpty() ? null : "%" + term + "%";
     }
 
     /**

@@ -77,6 +77,17 @@ var YATRA_CONFIG = {
            must stay off this list. */
         "admin-flights.html",
 
+        /* §12 + §13 — the Airlines module (Session 64), migrated to the same
+           pattern as Flights directly above: the list is a server QUERY
+           (GET /api/airlines?search=&status=&page=&size=, so the counts and the
+           pages are MySQL's), the edit modal reads its row fresh from
+           GET /api/airlines/{id}, and the writes are POST/PUT/DELETE
+           /api/admin/airlines. It is named here only because its WRITES moved
+           with its reads: the page's own store (`yatra_admin_airlines`,
+           SEED_AIRLINES, save()) is gone, which is what made §12's step 2 look
+           like it worked while nothing reached the database. */
+        "admin-airlines.html",
+
         /* §7 + §11 — the signed-in account. profile.html is §11's page; both pages
            call ONLY GET/POST/PUT /api/users/me and GET /api/users/me/bookings, so
            naming them here moves no unrelated call with them. They are named

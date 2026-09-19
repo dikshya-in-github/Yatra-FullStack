@@ -85,9 +85,10 @@
                 <div class="page-header">
                     <div>
                         <h1>Airlines</h1>
-                        <p class="page-sub">Manage airline information — logos are stored as DB BLOB/Base64 in the
-                            backend phase (Master Plan §2.6, §3.5). Airline data is separate from flight inventory —
-                            no seat management here (spec §14).</p>
+                        <p class="page-sub">Manage airline information — logos are stored in the database as
+                            Base64 and served from <code>GET /api/airlines/{id}/logo</code> (Master Plan §2.6,
+                            §3.5). Airline data is separate from flight inventory — no seat management here
+                            (spec §14).</p>
                     </div>
                     <div class="page-actions">
                         <button class="a-btn a-btn-primary" id="addAirlineBtn"><i class="fa-solid fa-plus"></i> Add
@@ -192,8 +193,9 @@
                                     <button type="button" class="a-btn a-btn-outline" id="removeLogoBtn"
                                         hidden><i class="fa-solid fa-trash"></i> Remove</button>
                                 </div>
-                                <p class="upload-hint">PNG/JPG/SVG · stored as DB BLOB/Base64 in the backend (Master
-                                    Plan §3.5) — preview is mocked client-side for now.</p>
+                                <p class="upload-hint">PNG/JPG/SVG, up to 2 MB · stored in the database as Base64
+                                    and served from <code>GET /api/airlines/{id}/logo</code> (Master Plan §3.5). The
+                                    preview below is local until you save.</p>
                             </div>
                         </div>
                         <input type="file" id="logoInput" accept="image/png,image/jpeg,image/svg+xml"

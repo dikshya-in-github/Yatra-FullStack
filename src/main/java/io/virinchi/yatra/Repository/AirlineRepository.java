@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,26 +24,48 @@ public interface AirlineRepository extends JpaRepository<Airline, Integer> {
 
     //Admin list + customer storefront ko read path (search + pagination).
     List<Airline> findByStatus(String status);
-    List<Airline> findByNameContainingIgnoreCase(String name);
-    Page<Airline> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
-    /*
-     * The filter pairs below exist because BOTH filters are optional and Spring
-     * Data is literal about a null argument: `...AndStatus(null)` generates
-     * `status is null`, which matches nothing rather than "any status". So the
-     * service picks the method that matches what the caller actually sent,
-     * instead of passing nulls and wondering why the list came back empty.
+    /**
+     * The admin list's search: <b>name OR IATA code</b>, one optional status, sorted.
      *
-     * An empty `name` is fine — `Containing` turns it into `like '%%'`, which
-     * matches every row.
+     * <p>Two reasons this is a query rather than a derived method. The derived
+     * {@code findByNameContainingIgnoreCase} can only match ONE column, and the page
+     * it serves promises both — {@code admin-airlines.html}'s toolbar is "Search name
+     * or IATA code…", and an admin typing {@code U4} expects Buddha Air. A second
+     * reason is the nulls: spring-data is literal about a null argument, so
+     * {@code ...AndStatus(null)} would generate {@code status is null} and match
+     * nothing rather than "any status", which is why every optional filter here is
+     * written as {@code :param is null or ...}. {@link #searchPage} is the same query,
+     * one page at a time.
      *
-     * The `Sort` overloads are what make an UNPAGED list deterministic: a
-     * Pageable carries its own Sort, but `Pageable.unpaged()` discards it, so
+     * <p>{@code search} is {@code null} when nothing was typed and a
+     * {@code %term%} string otherwise — {@code FlightRepository.searchAll} takes its
+     * term the same way, so the two list endpoints agree on what a blank search means.
+     *
+     * <p>The {@code Sort} overload is what makes an <b>unpaged</b> list deterministic:
+     * a Pageable carries its own Sort, but {@code Pageable.unpaged()} discards it, so
      * "all rows, in a stable order" needs the sort to travel separately (R6).
      */
-    Page<Airline> findByNameContainingIgnoreCaseAndStatus(String name, String status, Pageable pageable);
+    @Query("""
+            select a from Airline a
+            where (:search is null
+                   or lower(a.name) like :search
+                   or lower(a.iata) like :search)
+              and (:status is null or a.status = :status)
+            """)
+    List<Airline> searchAll(@Param("search") String search,
+                            @Param("status") String status,
+                            Sort sort);
 
-    List<Airline> findByNameContainingIgnoreCase(String name, Sort sort);
-
-    List<Airline> findByNameContainingIgnoreCaseAndStatus(String name, String status, Sort sort);
+    /** The same filters, one page at a time. */
+    @Query("""
+            select a from Airline a
+            where (:search is null
+                   or lower(a.name) like :search
+                   or lower(a.iata) like :search)
+              and (:status is null or a.status = :status)
+            """)
+    Page<Airline> searchPage(@Param("search") String search,
+                             @Param("status") String status,
+                             Pageable pageable);
 }

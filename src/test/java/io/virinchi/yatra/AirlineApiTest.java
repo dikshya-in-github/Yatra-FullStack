@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
+import java.util.Locale;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -243,6 +244,48 @@ class AirlineApiTest {
         mockMvc.perform(get("/api/airlines").param("search", tag).param("status", "Active"))
                 .andExpect(jsonPath("$.airlines.length()").value(1))
                 .andExpect(jsonPath("$.airlines[0].id").value(active.getId()));
+    }
+
+    /**
+     * The search matches the <b>IATA code</b> as well as the name.
+     *
+     * <p>This is the contract {@code admin-airlines.html}'s toolbar has always
+     * promised — its placeholder reads "Search name or IATA code…" — and until this
+     * query existed the API did not keep it: the derived finder matched the name
+     * only, so an admin typing {@code U4} got nothing while the page's own
+     * client-side filter answered Buddha Air. The page is wired to this endpoint now,
+     * which is why the two had to agree.
+     *
+     * <p>Both directions are asserted, because a widened query could regress either
+     * one: the code finds the carrier, and the name still does.
+     */
+    @Test
+    void theSearchMatchesTheIataCodeAsWellAsTheName() throws Exception {
+        String tag = tag();
+        Airline carrier = seedNamed(tag + " Coded", null);
+
+        // By IATA code — the case that was broken. Searched with the tag's name kept
+        // out of the way, so a match can only have come from the code column.
+        mockMvc.perform(get("/api/airlines").param("search", carrier.getIata()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.airlines[?(@.id == %d)]".formatted(carrier.getId()))
+                        .exists());
+
+        // Lower-cased, because a browser's search box sends what was typed.
+        mockMvc.perform(get("/api/airlines")
+                        .param("search", carrier.getIata().toLowerCase(Locale.ROOT)))
+                .andExpect(jsonPath("$.airlines[?(@.id == %d)]".formatted(carrier.getId()))
+                        .exists());
+
+        // And the name still works — the half that already did.
+        mockMvc.perform(get("/api/airlines").param("search", tag))
+                .andExpect(jsonPath("$.airlines.length()").value(1))
+                .andExpect(jsonPath("$.airlines[0].id").value(carrier.getId()));
+
+        // With the status filter, which is the other half of the same query.
+        mockMvc.perform(get("/api/airlines").param("search", carrier.getIata())
+                        .param("status", "Inactive"))
+                .andExpect(jsonPath("$.airlines").isEmpty());
     }
 
     /* ------------------------------------------------------------------ *
