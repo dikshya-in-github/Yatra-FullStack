@@ -86,10 +86,11 @@
                 <div class="page-header">
                     <div>
                         <h1>Users</h1>
-                        <p class="page-sub">Registered customers and administrators (Master Plan §2.1 #6) from the mock
-                            store <code>yatra_admin_users</code>. Admin accounts are <strong>protected</strong>: they
-                            can be edited, but never disabled or deleted. When the Spring API lands, this store swaps
-                            for <code>/api/users</code> and signup starts writing real registrations.</p>
+                        <p class="page-sub">Registered customers and administrators (Master Plan §2.1 #6), read from
+                            <code>/api/admin/users</code> — search, role and status are queries, so the count and
+                            paging are the database's. Admin accounts are <strong>protected</strong>: they can be
+                            edited, but never demoted, disabled or deleted, and the API refuses all three.
+                            A password is optional on this form — without one the account exists but cannot sign in.</p>
                     </div>
                     <div class="page-actions">
                         <button class="a-btn" id="addUserBtn"><i class="fa-solid fa-plus"></i> Add User</button>
@@ -135,8 +136,7 @@
                         </table>
                     </div>
 
-                    <div class="empty-state" id="emptyState" hidden>
-                        <i class="fa-solid fa-users"></i>
+                    <div class="empty-state" id="emptyState" hidden>                                <i class="fa-solid fa-users"></i>
                         <p>No users match your search.</p>
                     </div>
 
@@ -190,13 +190,59 @@
                             <option value="Inactive">Inactive</option>
                         </select>
                     </div>
+                    <div class="a-field">
+                        <label for="userPassword">Password</label>
+                        <input type="password" class="a-input" id="userPassword" placeholder="At least 8 characters"
+                            autocomplete="new-password">
+                        <small class="form-hint" id="passwordHint">Optional. Without one the account exists but cannot
+                            sign in until a password is set.</small>
+                    </div>
                 </div>
-                <p class="form-hint rule">The backend owns passwords (BCrypt hashing) — the demo store never stores
-                    one. New users are registered with today's date.</p>
+                <p class="form-hint rule" id="lockNote" hidden><i class="fa-solid fa-lock"></i> This is an
+                    <strong>admin</strong> account: the role and status are locked here, and the API refuses a demote,
+                    a deactivate or a delete for it (409 <code>ADMIN_ACCOUNT_PROTECTED</code>) even if asked directly.</p>
             </form>
             <div class="modal-footer">
                 <button type="button" class="a-btn a-btn-outline" id="modalCancel">Cancel</button>
                 <button type="submit" class="a-btn" form="userForm" id="userSaveBtn">Save User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== User bookings modal =====
+         Backed by GET /api/admin/users/{id}/bookings — built for this page in
+         Phase 11 and previously unused, so an admin could learn that an account
+         had history but not what it was. -->
+    <div class="modal-overlay" id="bookingsModal" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bookingsTitle">
+            <div class="modal-header">
+                <div>
+                    <h2 id="bookingsTitle">Bookings</h2>
+                    <p class="page-sub" id="bookingsMeta" style="margin:0;"></p>
+                </div>
+                <button type="button" class="modal-close" id="bookingsClose" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Booking</th>
+                                <th>Flight</th>
+                                <th>Route</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingsBody">
+                            <!-- rows rendered by admin-users.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="a-btn a-btn-outline" id="bookingsDone">Close</button>
             </div>
         </div>
     </div>

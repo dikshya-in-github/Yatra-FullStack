@@ -1,106 +1,81 @@
 /* =========================================
    YATRA ADMIN — USERS PAGE JS
-   User management CRUD (Master Plan §2.1 #6).
-   Data lives in localStorage `yatra_admin_users`
-   until the Spring API replaces it — the store
-   self-seeds on first open so the dashboard's
-   Total Users stat reads a real count.
+   User management CRUD (Master Plan §2.1 #6). Fully wired to the
+   backend as of the fix-plan §12/§13 pass — the same migration
+   admin-flights.js, admin-airlines.js, admin-destinations.js and
+   admin-bookings.js went through.
+
+   Reads  : GET /api/admin/users              (search + role + status + paging, server-side)
+            GET /api/admin/users/{id}         (the edit modal's FRESH copy)
+            GET /api/admin/users/{id}/bookings (the bookings modal)
+   Writes : POST   /api/admin/users           (create)
+            PUT    /api/admin/users/{id}      (edit)
+            PUT    /api/admin/users/{id}/status (the Activate/Disable toggle)
+            DELETE /api/admin/users/{id}      (delete — refused for an account with history)
+
+   All of them through api.js, so this file contains no localStorage
+   access and no seed rows of its own. It used to own both (`yatra_admin_users`,
+   `load()`/`save()`, `normalize()`), which meant every write here — create,
+   edit, toggle, delete — changed a JSON array in the browser while MySQL held
+   the roster. The store also *self-seeded* from `MockDB.SEED_USERS`, so the page
+   could draw ten users the database had never heard of.
 
    Rules baked in:
-   - ADMIN accounts are protected: editable,
-     never disabled or deleted (a disabled admin
-     could lock everyone out of the panel —
-     the backend's RBAC will own that later).
-   - No password field: passwords belong to
-     the backend (BCrypt) and are never stored
-     or displayed here (Master Plan §3.4; the
-     spec's DTO rule says never expose hashes).
-   - Deleting a user keeps their bookings: the
-     bookings store references customers by
-     name/email snapshot, not by user id, so
-     records stay intact — matching how the
-     future API would soft-reference them.
-   - When the Spring API lands, the store read
-     + CRUD swap for apiGet()/apiPost() calls
-     against /api/users.
+   - **ADMIN accounts are protected, and the lock stays on the page.** The row
+     shows a lock instead of toggle/delete, and the edit form disables the role
+     and status selects for an admin (they are still submitted, with their
+     current values, so the write is a no-op on both). The API enforces the same
+     rule independently — 409 ADMIN_ACCOUNT_PROTECTED for demote, deactivate,
+     delete, and for *creating* an Inactive admin — and the walk proves that
+     refusal by asking the API directly, so the protection is verified twice
+     rather than assumed once.
+   - **A password is optional, and the page now offers it.** The old rule here was
+     "the demo store never stores one", which was true and also why every account
+     an admin created could never sign in. `AdminUserRequest.password` is the
+     API's own way out; blank means *unchanged* on an edit (never "set it to
+     blank") and *no credential* on a create. `canSignIn` comes back on every row,
+     so the table says which accounts are actually usable.
+   - **Deletes keep the bookings.** The API refuses with 409 USER_HAS_BOOKINGS
+     when the account has history, and the page shows that sentence instead of
+     guessing at it.
+   - **The user's bookings are visible**: `GET /api/admin/users/{id}/bookings` was
+     built for this page and had no caller at all — the same class of gap as the
+     Airlines search that promised "name or IATA" and matched names.
+   - Reads are QUERIES (search/role/status/page travel to MySQL, and the count
+     line and pagination come back from it), and each read carries a sequence
+     number so a slow answer for an older query cannot redraw the table.
    ========================================= */
 document.addEventListener('DOMContentLoaded', () => {
   const $ = (s, c = document) => c.querySelector(s);
 
-  const STORAGE_KEY = 'yatra_admin_users';
   const PAGE_SIZE = 8;
 
-  /* ---------- Seed data (self-seeds on first read) ----------
-     The roster now lives in mock-data.js (MockDB.SEED_USERS) — the data
-     layer owns every mock store, and registration (POST /api/auth/register)
-     appends to the SAME roster this page manages, so the two can never
-     drift apart. MockDB.getUsers() self-seeds, so load() below is only a
-     fallback for the (never expected) API failure path. */
-  const SEED_USERS = MockDB.SEED_USERS;
-
-  /* ---------- State (mock "repository") ---------- */
-  let users = []; // initial read goes through the API layer (item 16)
-  let state = { search: '', role: 'ALL', status: 'ALL', page: 1 };
-  let confirmAction = null; // queue for the styled confirm modal
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw);
-        if (Array.isArray(data)) return data;
-      }
-    } catch (err) { /* corrupted storage → reseed */ }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_USERS));
-    return [...SEED_USERS];
-  }
-
-  function save() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-    } catch (err) {
-      showToast('Could not save — storage quota reached.', 'error');
-    }
-  }
-
-  /* Older/edge records may lack fields — normalize for display. */
-  function normalize(u) {
-    if (!u || typeof u !== 'object') return;
-    if (!u.id) u.id = Date.now();
-    if (!u.name) u.name = 'Unnamed';
-    if (!u.email) u.email = '—';
-    if (!u.role) u.role = 'USER';
-    if (!u.status) u.status = 'Active';
-    if (!u.registeredAt) u.registeredAt = '';
-  }
+  /* ---------- State ----------
+     `users` is ONE PAGE of the server's answer — never the whole roster. */
+  let users = [];
+  let state = {
+    search: '', role: 'ALL', status: 'ALL',
+    page: 1, totalPages: 1, totalElements: 0
+  };
+  let readSeq = 0;
+  let confirmAction = null;   // queue for the styled confirm modal
+  let bookingsUserId = null;  // the account the bookings modal is showing
 
   /* ---------- Toast ---------- */
-  /* showToast() lives in toast.js (§9) — one implementation for every page,
-     which also creates the #toast element it writes to. */
+  /* showToast() lives in toast.js (§9) — one implementation for every page. */
 
-  /* ---------- Filtering + pagination ---------- */
-  function filtered() {
-    const q = state.search.trim().toLowerCase();
-    return users.filter((u) => {
-      const matchesQ =
-        !q ||
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        (u.phone || '').toLowerCase().includes(q) ||
-        String(u.id).includes(q);
-      const matchesRole = state.role === 'ALL' || u.role === state.role;
-      const matchesStatus = state.status === 'ALL' || u.status === state.status;
-      return matchesQ && matchesRole && matchesStatus;
-    });
+  /* ---------- Query, not filtering ---------- */
+  function listQuery() {
+    const p = new URLSearchParams();
+    if (state.search.trim()) p.set('search', state.search.trim());
+    if (state.role !== 'ALL') p.set('role', state.role);
+    if (state.status !== 'ALL') p.set('status', state.status);
+    p.set('page', String(Math.max(0, state.page - 1)));
+    p.set('size', String(PAGE_SIZE));
+    return '/api/admin/users?' + p.toString();
   }
 
-  const totalPages = () => Math.max(1, Math.ceil(filtered().length / PAGE_SIZE));
-
-  function clampPage() {
-    state.page = Math.min(Math.max(1, state.page), totalPages());
-  }
-
-  /* ---------- Formatting helpers ---------- */
+  /* ---------- Formatting ---------- */
   function fmtDate(iso) {
     if (!iso) return '—';
     const d = new Date(iso.length > 10 ? iso : iso + 'T00:00:00');
@@ -108,10 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
       : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, (ch) => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[ch]));
+  function fmtNPR(n) {
+    return 'NPR ' + Number(n || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
   }
 
   const roleBadge = (r) => (r === 'ADMIN' ? 'badge-warning' : 'badge-neutral');
@@ -119,17 +94,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- Table render ---------- */
   function render() {
-    clampPage();
-    const rows = filtered();
-    const start = (state.page - 1) * PAGE_SIZE;
-    const pageRows = rows.slice(start, start + PAGE_SIZE);
-    pageRows.forEach(normalize);
-
     const tbody = $('#userTableBody');
-    tbody.innerHTML = pageRows
+    tbody.innerHTML = users
       .map((u) => {
         const isAdmin = u.role === 'ADMIN';
         const initial = (u.name || '?').trim().charAt(0).toUpperCase();
+        /* `canSignIn` is the API's answer to "does this account have a credential
+           and is it active" — the page used to have no idea, because it invented
+           its accounts without one. */
+        const noCredential = u.canSignIn === false
+          ? '<span class="badge badge-neutral" title="No usable credential on file — this account cannot sign in until a password is set">No sign-in</span>'
+          : '';
         return `
       <tr>
         <td>
@@ -137,8 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="admin-avatar" aria-hidden="true">${escapeHtml(initial)}</span>
             <span class="user-cell-info">
               <strong>${escapeHtml(u.name)}</strong>
-              <span class="cell-sub">${escapeHtml(u.email)}</span>
+              <span class="cell-sub">${escapeHtml(u.email || '—')}</span>
             </span>
+            ${noCredential}
           </div>
         </td>
         <td>${escapeHtml(u.phone || '—')}</td>
@@ -147,9 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><span class="badge ${statusBadge(u.status)}">${escapeHtml(u.status)}</span></td>
         <td>
           <div class="row-actions">
+            <button type="button" class="icon-btn" data-bookings="${u.id}" aria-label="Bookings for ${escapeHtml(u.name)}"><i class="fa-solid fa-receipt"></i></button>
             <button type="button" class="icon-btn" data-edit="${u.id}" aria-label="Edit ${escapeHtml(u.name)}"><i class="fa-solid fa-pen"></i></button>
             ${isAdmin
-            ? `<span class="cell-sub" title="Admin accounts are protected — RBAC ownership moves to the backend"><i class="fa-solid fa-lock"></i></span>`
+            ? `<span class="cell-sub" title="Admin accounts are protected — the API refuses demote, deactivate and delete for them too"><i class="fa-solid fa-lock"></i></span>`
             : `<button type="button" class="icon-btn" data-toggle="${u.id}" aria-label="${u.status === 'Active' ? 'Disable' : 'Activate'} ${escapeHtml(u.name)}"><i class="fa-solid fa-${u.status === 'Active' ? 'power-off' : 'rotate-left'}"></i></button>
                  <button type="button" class="icon-btn icon-btn-danger" data-delete="${u.id}" aria-label="Delete ${escapeHtml(u.name)}"><i class="fa-solid fa-trash"></i></button>`}
           </div>
@@ -158,15 +135,18 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .join('');
 
-    $('#emptyState').hidden = rows.length > 0;
-    $('#resultCount').textContent = `${rows.length} user${rows.length === 1 ? '' : 's'}`;
-    renderPagination(rows.length);
+    $('#emptyState').hidden = users.length > 0;
+    $('#resultCount').textContent =
+      `${state.totalElements} user${state.totalElements === 1 ? '' : 's'}`;
+    renderPagination();
   }
 
-  function renderPagination(totalRows) {
-    const pages = totalPages();
-    $('#pageInfo').textContent = totalRows
-      ? `Showing ${Math.min((state.page - 1) * PAGE_SIZE + 1, totalRows)}–${Math.min(state.page * PAGE_SIZE, totalRows)} of ${totalRows} users`
+  function renderPagination() {
+    const pages = Math.max(1, state.totalPages);
+    const total = state.totalElements;
+
+    $('#pageInfo').textContent = total
+      ? `Showing ${Math.min((state.page - 1) * PAGE_SIZE + 1, total)}–${Math.min(state.page * PAGE_SIZE, total)} of ${total} users`
       : 'No users';
 
     const btns = $('#pageBtns');
@@ -178,10 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
       b.className = 'page-btn' + (opts.active ? ' active' : '');
       b.innerHTML = opts.icon ? `<i class="fa-solid ${opts.icon}"></i>` : label;
       b.setAttribute('aria-label', opts.label || `Page ${label}`);
-      b.addEventListener('click', () => {
-        state.page = page;
-        render();
-      });
+      b.addEventListener('click', () => goToPage(page));
       return b;
     };
 
@@ -193,25 +170,72 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- Toolbar events ---------- */
+  let searchTimer;
   $('#userSearch').addEventListener('input', (e) => {
     state.search = e.target.value;
     state.page = 1;
-    render();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(reloadOrToast, 250);
   });
 
   $('#roleFilter').addEventListener('change', (e) => {
     state.role = e.target.value;
     state.page = 1;
-    render();
+    reloadOrToast();
   });
 
   $('#statusFilter').addEventListener('change', (e) => {
     state.status = e.target.value;
     state.page = 1;
-    render();
+    reloadOrToast();
   });
 
-  /* ---------- Styled confirm modal (shared pattern) ---------- */
+  /* ---------- Reads ---------- */
+  async function reload() {
+    const seq = ++readSeq;
+    const resp = await apiGet(listQuery());
+    /* Three controls can be in flight together here; a superseded answer must not
+       redraw the table (see the note in admin-bookings.js — the walk caught it). */
+    if (seq !== readSeq) return;
+
+    users = Array.isArray(resp.users) ? resp.users : [];
+
+    const total = Number(resp.totalElements);
+    state.totalElements = Number.isFinite(total) ? total : users.length;
+    const pages = Number(resp.totalPages);
+    state.totalPages = Number.isFinite(pages) && pages > 0
+      ? pages
+      : Math.max(1, Math.ceil(state.totalElements / PAGE_SIZE));
+
+    if (!users.length && state.page > 1 && state.page > state.totalPages) {
+      state.page = state.totalPages;
+      return reload();
+    }
+
+    render();
+  }
+
+  function showLoadFailure(err) {
+    users = [];
+    state.totalElements = 0;
+    state.totalPages = 1;
+    render();
+    showToast('Could not load users: ' + ((err && err.message) || err), 'error');
+  }
+
+  function reloadOrToast() {
+    return reload().catch((err) => {
+      showToast('Could not load users: ' + ((err && err.message) || err), 'error');
+    });
+  }
+
+  function goToPage(page) {
+    const last = Math.max(1, state.totalPages);
+    state.page = Math.min(Math.max(1, page), last);
+    reloadOrToast();
+  }
+
+  /* ---------- Styled confirm modal ---------- */
   const confirmModal = $('#confirmModal');
 
   function askConfirm(opts) {
@@ -243,38 +267,73 @@ document.addEventListener('DOMContentLoaded', () => {
   const modal = $('#userModal');
   const form = $('#userForm');
 
-  function openModal(user = null) {
-    form.reset();
-    clearErrors();
+  function fillForm(user) {
+    const isAdmin = !!user && user.role === 'ADMIN';
     $('#userId').value = user ? user.id : '';
     $('#userName').value = user ? user.name : '';
-    $('#userEmail').value = user ? (user.email === '—' ? '' : user.email) : '';
+    $('#userEmail').value = user ? user.email || '' : '';
     $('#userPhone').value = user ? user.phone || '' : '';
     $('#userRole').value = user ? user.role : 'USER';
     $('#userStatus').value = user ? user.status : 'Active';
+    $('#userPassword').value = '';
     $('#modalTitle').textContent = user ? 'Edit User' : 'Add User';
+
+    /* The page's lock, and the API's rule made visible: an admin account is
+       editable (name, email, mobile, password) but never demoted or disabled. The
+       selects keep their real values and stay submitted, so the write is a no-op
+       on both fields — and if anything ever did get past this, the service refuses
+       it with 409 ADMIN_ACCOUNT_PROTECTED. */
+    $('#userRole').disabled = isAdmin;
+    $('#userStatus').disabled = isAdmin;
+    $('#lockNote').hidden = !isAdmin;
+
+    $('#passwordHint').textContent = user
+      ? 'Leave blank to keep the current password. An account with no credential cannot sign in.'
+      : 'Optional. Without one the account exists but cannot sign in until a password is set.';
+  }
+
+  function openModal() {
+    form.reset();
+    clearErrors();
+    fillForm(null);
     modal.hidden = false;
     $('#userName').focus({ preventScroll: true });
+  }
+
+  /* Edit opens on the SERVER's copy of that row (§12 step 4), fetched fresh. */
+  function openEditModal(id, button) {
+    if (button) button.disabled = true;
+    apiGet('/api/admin/users/' + id)
+      .then((user) => {
+        form.reset();
+        clearErrors();
+        fillForm(user);
+        modal.hidden = false;
+        $('#userName').focus({ preventScroll: true });
+      })
+      .catch((err) => {
+        showToast('Could not open that account: ' + ((err && err.message) || err), 'error');
+      })
+      .finally(() => {
+        if (button) button.disabled = false;
+      });
   }
 
   function closeModal() {
     modal.hidden = true;
   }
 
-  $('#addUserBtn').addEventListener('click', () => openModal());
+  $('#addUserBtn').addEventListener('click', openModal);
   $('#modalClose').addEventListener('click', closeModal);
   $('#modalCancel').addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
   });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (!confirmModal.hidden) { hideConfirm(); return; }
-      if (!modal.hidden) closeModal();
-    }
-  });
 
-  /* ---------- Validation ---------- */
+  /* ---------- Validation ----------
+     Format and required checks are local. Uniqueness is the SERVER's: this page
+     holds one page of the roster, so "that email is taken" can only be answered by
+     the endpoint (409 EMAIL_EXISTS / PHONE_EXISTS, landed inline on the field). */
   function clearErrors() {
     form.querySelectorAll('.a-field.has-error').forEach((f) => f.classList.remove('has-error'));
     form.querySelectorAll('.error-msg').forEach((m) => m.remove());
@@ -296,6 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = $('#userName');
     const email = $('#userEmail');
     const phone = $('#userPhone');
+    const password = $('#userPassword');
 
     if (!name.value.trim()) {
       setError(name, 'Full name is required');
@@ -308,19 +368,18 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
       setError(email, 'Enter a valid email address');
       ok = false;
-    } else if (
-      users.some(
-        (u) =>
-          u.email.toLowerCase() === email.value.trim().toLowerCase() &&
-          String(u.id) !== $('#userId').value
-      )
-    ) {
-      setError(email, 'A user with this email already exists');
-      ok = false;
     }
 
     if (phone.value.trim() && !/^9[678]\d{8}$/.test(phone.value.trim())) {
       setError(phone, 'Nepali mobile: 10 digits starting 96/97/98');
+      ok = false;
+    }
+
+    /* Mirrors AdminUserRequest's rule exactly: blank is legal (it means
+       "unchanged" on an edit and "no credential" on a create), anything shorter
+       than eight characters is not. */
+    if (password.value && password.value.length < 8) {
+      setError(password, 'Password must be at least 8 characters');
       ok = false;
     }
 
@@ -329,90 +388,174 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- Create / Update ---------- */
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    const id = $('#userId').value;
-    const payload = {
+  function payload() {
+    return {
       name: $('#userName').value.trim(),
       email: $('#userEmail').value.trim().toLowerCase(),
       phone: $('#userPhone').value.trim(),
       role: $('#userRole').value,
-      status: $('#userStatus').value
+      status: $('#userStatus').value,
+      password: $('#userPassword').value
     };
+  }
 
-    if (id) {
-      const u = users.find((x) => String(x.id) === id);
-      const wasAdmin = u.role === 'ADMIN';
-      Object.assign(u, payload);
-      // Admins stay Active — the form lock mirrors the row lock.
-      if (wasAdmin) u.status = 'Active';
-      showToast(`${payload.name} updated.`, 'success');
-    } else {
-      payload.id = users.length ? Math.max(...users.map((u) => u.id)) + 1 : 1;
-      payload.registeredAt = new Date().toISOString();
-      users.push(payload);
-      showToast(`${payload.name} added.`, 'success');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    const id = $('#userId').value;
+    const body = payload();
+    const saveBtn = $('#userSaveBtn');
+    if (saveBtn) saveBtn.disabled = true;
+
+    try {
+      if (id) {
+        await apiPut('/api/admin/users/' + id, body);
+      } else {
+        await apiPost('/api/admin/users', body);
+      }
+    } catch (err) {
+      if (err && err.code === 'EMAIL_EXISTS') setError($('#userEmail'), err.message);
+      if (err && err.code === 'PHONE_EXISTS') setError($('#userPhone'), err.message);
+      if (saveBtn) saveBtn.disabled = false;
+      showToast((err && err.message) || 'The account could not be saved.', 'error');
+      return;
     }
 
-    save();
+    if (saveBtn) saveBtn.disabled = false;
     closeModal();
-    render();
+    showToast(`${body.name} ${id ? 'updated' : 'added'}.`, 'success');
+    await reloadOrToast();
   });
 
-  /* ---------- Toggle / Delete (admin accounts protected) ---------- */
-  function toggleUser(u) {
-    if (u.role === 'ADMIN') return; // belt-and-braces: UI already hides the button
-    u.status = u.status === 'Active' ? 'Inactive' : 'Active';
-    save();
-    render();
-    showToast(`${u.name} is now ${u.status.toLowerCase()}.`, 'success');
-  }
-
-  function deleteUser(u) {
-    askConfirm({
-      title: 'Delete this user?',
-      message: `${u.name} (${u.email}) will be removed permanently. Their past bookings are kept — records snapshot the customer's name, not the account.`,
-      yesLabel: 'Delete user',
-      icon: 'trash',
-      onYes: () => {
-        users = users.filter((x) => x.id !== u.id);
-        save();
-        render();
-        showToast(`${u.name} deleted — bookings kept.`, 'success');
-      }
-    });
-  }
-
-  /* ---------- Row action wiring (event delegation) ---------- */
+  /* ---------- Row actions ---------- */
   $('#userTableBody').addEventListener('click', (e) => {
+    const bookingsBtn = e.target.closest('[data-bookings]');
     const editBtn = e.target.closest('[data-edit]');
     const toggleBtn = e.target.closest('[data-toggle]');
     const deleteBtn = e.target.closest('[data-delete]');
 
-    if (editBtn) {
-      const u = users.find((x) => String(x.id) === editBtn.dataset.edit);
-      if (u) openModal(u);
-    }
+    if (bookingsBtn) openBookings(bookingsBtn.dataset.bookings, bookingsBtn);
+    if (editBtn) openEditModal(editBtn.dataset.edit, editBtn);
+
+    /* Activate/Disable is its own endpoint here (PUT /{id}/status) and is
+       idempotent — the same value twice is a no-op, not an error. */
     if (toggleBtn) {
       const u = users.find((x) => String(x.id) === toggleBtn.dataset.toggle);
-      if (u) toggleUser(u);
+      if (!u) return;
+      const next = u.status === 'Active' ? 'Inactive' : 'Active';
+      toggleBtn.disabled = true;
+      apiPut('/api/admin/users/' + u.id + '/status', { status: next })
+        .then(() => {
+          showToast(`${u.name} is now ${next.toLowerCase()}.`, 'success');
+          return reload();
+        })
+        .catch((err) => {
+          // An admin row should never get here (the lock hides the button), and the
+          // API refuses it anyway with 409 ADMIN_ACCOUNT_PROTECTED.
+          toggleBtn.disabled = false;
+          showToast((err && err.message) || 'The account could not be updated.', 'error');
+        });
     }
+
     if (deleteBtn) {
       const u = users.find((x) => String(x.id) === deleteBtn.dataset.delete);
-      if (u) deleteUser(u);
+      if (u) deleteUser(u, deleteBtn);
     }
   });
 
-  /* ---------- First render (API read — item 16) ---------- */
-  apiGet('/api/admin/users')
-    .then((resp) => {
-      users = Array.isArray(resp.users) && resp.users.length ? resp.users : load();
-      render();
-    })
-    .catch(() => {
-      users = load(); // mock fallback (also seeds)
-      render();
+  /* An account with history is never deleted: the API answers 409
+     USER_HAS_BOOKINGS and the row stays exactly where it was. */
+  function deleteUser(u, button) {
+    askConfirm({
+      title: 'Delete this user?',
+      message: `${u.name} (${u.email || u.phone || u.id}) will be removed. Their booking records are kept — `
+        + 'the database refuses the delete if the account has any.',
+      yesLabel: 'Delete user',
+      icon: 'trash',
+      onYes: () => {
+        button.disabled = true;
+        apiDelete('/api/admin/users/' + u.id)
+          .then(() => {
+            showToast(`${u.name} deleted.`, 'success');
+            return reload();
+          })
+          .catch((err) => {
+            button.disabled = false;
+            showToast((err && err.message) || 'The account could not be deleted.', 'error');
+          });
+      }
     });
+  }
+
+  /* ---------- Bookings modal ----------
+     `GET /api/admin/users/{id}/bookings` was built for this page in Phase 11 and
+     had no caller: an admin could see that an account had history (the delete
+     refusal names the count) but not what it was. */
+  const bookingsModal = $('#bookingsModal');
+
+  function openBookings(id, button) {
+    if (button) button.disabled = true;
+    apiGet('/api/admin/users/' + id + '/bookings')
+      .then((resp) => {
+        bookingsUserId = String(id);
+        const rows = Array.isArray(resp.bookings) ? resp.bookings : [];
+        $('#bookingsTitle').textContent = 'Bookings';
+        $('#bookingsMeta').textContent = rows.length
+          ? `${rows.length} booking${rows.length === 1 ? '' : 's'} on this account`
+          : 'This account has no bookings.';
+        $('#bookingsBody').innerHTML = rows.length
+          ? rows.map((b) => {
+            const f = b.flight || {};
+            return `
+        <tr>
+          <td><strong>${escapeHtml(b.pnr || b.id)}</strong></td>
+          <td>${escapeHtml(f.flightNo || '—')}<span class="cell-sub">${escapeHtml((f.airline && f.airline.name) || '')}</span></td>
+          <td>${escapeHtml(f.from && f.to ? `${f.from} → ${f.to}` : '—')}<span class="cell-sub">${escapeHtml(f.date ? fmtDate(f.date) : '')}</span></td>
+          <td>${fmtNPR(b.amount)}</td>
+          <td><span class="badge ${b.status === 'Confirmed' ? 'badge-success' : 'badge-danger'}">${escapeHtml(b.status || '—')}</span></td>
+        </tr>`;
+          }).join('')
+          : '<tr><td colspan="5" style="text-align:center; color: var(--slate-light);">No bookings on this account.</td></tr>';
+        bookingsModal.hidden = false;
+      })
+      .catch((err) => {
+        showToast('Could not load that account\'s bookings: ' + ((err && err.message) || err),
+          'error');
+      })
+      .finally(() => {
+        if (button) button.disabled = false;
+      });
+  }
+
+  function closeBookings() {
+    bookingsModal.hidden = true;
+    bookingsUserId = null;
+  }
+
+  $('#bookingsClose').addEventListener('click', closeBookings);
+  $('#bookingsDone').addEventListener('click', closeBookings);
+  bookingsModal.addEventListener('click', (e) => {
+    if (e.target === bookingsModal) closeBookings();
+  });
+
+  /* ---------- Escape closes the topmost modal ---------- */
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!confirmModal.hidden) { hideConfirm(); return; }
+    if (!bookingsModal.hidden) { closeBookings(); return; }
+    if (!modal.hidden) closeModal();
+  });
+
+  /* ---------- Utilities ---------- */
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
+  /* ---------- First render ----------
+     No seed fallback: the roster is the database's, and if it cannot be read the
+     page says so rather than drawing ten users MySQL has never heard of. */
+  reload().catch(showLoadFailure);
 });

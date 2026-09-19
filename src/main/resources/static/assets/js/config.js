@@ -110,6 +110,18 @@ var YATRA_CONFIG = {
            with its reads. */
         "admin-bookings.html",
 
+        /* §12 + §13 — the Users module, migrated the same way: the list is a server
+           QUERY (GET /api/admin/users?search=&role=&status=&page=&size=, matching
+           name, email, phone or id), the edit modal reads GET /api/admin/users/{id}
+           fresh, and the writes are POST /api/admin/users, PUT /{id},
+           PUT /{id}/status (the Activate/Disable toggle) and DELETE /{id}. It is
+           also the first page to CALL an endpoint built for it and left unused:
+           GET /api/admin/users/{id}/bookings, now the row's receipts modal.
+           Named here only because its WRITES moved with its reads — and they were
+           the loudest of the set: the page's own store (`yatra_admin_users`,
+           SEED_USERS, save()) held a whole roster the database had never seen. */
+        "admin-users.html",
+
         /* §7 + §11 — the signed-in account. profile.html is §11's page; both pages
            call ONLY GET/POST/PUT /api/users/me and GET /api/users/me/bookings, so
            naming them here moves no unrelated call with them. They are named
