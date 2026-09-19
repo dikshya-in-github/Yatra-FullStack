@@ -478,18 +478,25 @@ public class SeedService {
     }
 
     /**
-     * Refuses a second seed. Guarded by the marker, not by a count of flights, so it
-     * stays correct once the demo's own numbers have moved on.
+     * Refuses a second seed — guarded by the seeded <b>bookings</b> rather than by the
+     * marker, so it stays correct once the demo's own numbers have moved on.
+     *
+     * <p><b>Why the bookings and not every marked table.</b> Carriers, destinations,
+     * flights and accounts are all find-or-create, so a marked row of those is a row this
+     * seeder can simply reuse. Refusing on them contradicts what the reset deliberately
+     * creates: a reset KEEPS the seeded carrier, flight or account that your own records
+     * still use ({@code deleteSeededFlights} and its siblings), leaving their markers on
+     * — so a guard that counted them would make "reset then seed", the documented re-run
+     * path, fail for exactly the state the reset had just reported. The rows that must
+     * not be doubled are the seeded bookings: each one claims seats and mints a payment
+     * and a ticket, which is both the hazard and what the unique keys would refuse.
      */
     private void requireNotSeeded() {
-        boolean alreadySeeded = !airlines.findBySeededTrue().isEmpty()
-                || !flights.findBySeededTrue().isEmpty()
-                || !users.findBySeededTrue().isEmpty()
-                || !bookings.findBySeededTrue().isEmpty();
+        boolean alreadySeeded = !bookings.findBySeededTrue().isEmpty();
 
         if (alreadySeeded) {
             throw new ConflictException("ALREADY_SEEDED",
-                    "The demo data is already seeded. Call POST /api/admin/reset first — seeding twice would "
+                    "The demo bookings are already seeded. Call POST /api/admin/reset first — seeding twice would "
                             + "double every flight's booked seats and mint a second payment and ticket per "
                             + "booking, which the unique keys on the booking row would then refuse anyway.");
         }
@@ -598,6 +605,24 @@ public class SeedService {
             if (airline == null) {
                 throw new IllegalStateException(
                         "seed flight " + seed.no() + " names an airline that was not seeded: " + seed.iata());
+            }
+
+            /* Find-or-create by number, the rule destinations and carriers already follow —
+               and here it is what keeps "reset then seed" working. A reset KEEPS a seeded
+               flight whose booked seats belong to a booking of yours (see
+               deleteSeededFlights), so that row is still there with its marker: creating it
+               again would be refused by the unique flight number, and the documented
+               re-run path would fail for exactly the row the reset went out of its way to
+               preserve. Reused, its seat map and its bookings come with it untouched.
+
+               Only a row that is already SEED carries the marker; a flight of your own
+               that happens to hold one of these numbers is a genuine conflict and is left
+               to createFlight to refuse, rather than being adopted into the demo set and
+               deleted by the next reset. */
+            Flight existing = flights.findByFlightNo(seed.no()).orElse(null);
+            if (existing != null && existing.isSeeded()) {
+                byNo.put(seed.no(), existing);
+                continue;
             }
 
             Flight flight = flightService.createFlight(new FlightRequest(
@@ -739,6 +764,13 @@ public class SeedService {
      * (with a flush), then the booking rows — because a deleted parent with a managed
      * child still pointing at it trips Hibernate's transient-reference check even with
      * {@code cascade = ALL} on the collection.
+     *
+     * <p><b>Three tables are guarded, not one.</b> A seeded user, a seeded airline or a
+     * seeded flight that your own records still reference is kept and named in
+     * {@code kept} rather than deleted, because each would be a foreign-key violation —
+     * and for a while only the first two were, which made the whole operation fail with
+     * a 409 for anyone who had an unpaid booking on a seeded flight. See
+     * {@link #deleteSeededFlights(List)}.
      */
     @Transactional
     public SeedResponse reset() {
@@ -746,7 +778,7 @@ public class SeedService {
         List<String> kept = new ArrayList<>();
 
         int[] bookingRows = deleteSeededBookings();
-        Map<String, Integer> flightRows = deleteSeededFlights();
+        Map<String, Integer> flightRows = deleteSeededFlights(kept);
         int usersDeleted = deleteSeededUsers(kept);
         int airlinesDeleted = deleteSeededAirlines(kept);
 
@@ -807,23 +839,54 @@ public class SeedService {
         return new int[]{seeded.size(), passengerCount, paymentCount, ticketCount};
     }
 
-    /** @return {@code {flights, seats}} deleted — the seat map goes before its flight */
-    private Map<String, Integer> deleteSeededFlights() {
-        List<Flight> seeded = flights.findBySeededTrue();
+    /**
+     * Deletes the seeded flights, keeping any a booking of yours still rides on — and
+     * reporting each one, the same rule {@link #deleteSeededUsers} and
+     * {@link #deleteSeededAirlines} follow for their tables.
+     *
+     * <p><b>Why the flight needed the rule too, and loudest.</b> The other two guards
+     * were added first, and this one was missing — but a booking points at a
+     * <i>flight</i>: an unpaid, hand-made booking on a seeded flight is the ordinary
+     * case (the storefront leaves {@code PENDING} bookings behind), and deleting its
+     * flight is a foreign-key violation, which the error handler maps to
+     * <b>409 {@code CONFLICT}</b>. So the demo's own reset — and every walk's
+     * {@code YATRA_RESEED=1} path — refused to run for anyone holding an unpaid booking,
+     * with a status that says nothing about the reason. Kept here, the same reset reports
+     * what it kept and finishes once those bookings are gone.
+     *
+     * <p>The seat map of a kept flight is kept with it: the booking's own seat row lives
+     * in that map, and a flight with no seats is not a flight.
+     *
+     * <p>Runs <b>after</b> {@link #deleteSeededBookings}, so the count below is bookings
+     * of yours — the seeded ones are already gone and flushed. A kept flight keeps its
+     * marker, deliberately: it is still seed data that simply could not be removed yet.
+     *
+     * @return {@code {flights, seats}} deleted — the seat map goes before its flight
+     */
+    private Map<String, Integer> deleteSeededFlights(List<String> kept) {
+        List<Flight> removable = new ArrayList<>();
         int seatRows = 0;
 
-        for (Flight flight : seeded) {
+        for (Flight flight : flights.findBySeededTrue()) {
+            long booked = bookings.countByFlightId(flight.getId());
+            if (booked > 0) {
+                kept.add(flight.getFlightNo() + " (seeded flight kept — " + booked
+                        + " booking(s) of your own still reference it)");
+                continue;
+            }
+
             List<Seat> map = seats.findByFlightId(flight.getId());
             seatRows += map.size();
             seats.deleteAll(map);
+            removable.add(flight);
         }
 
         seats.flush();
-        flights.deleteAll(seeded);
+        flights.deleteAll(removable);
         flights.flush();
 
         Map<String, Integer> counts = new HashMap<>();
-        counts.put("flights", seeded.size());
+        counts.put("flights", removable.size());
         counts.put("seats", seatRows);
         return counts;
     }

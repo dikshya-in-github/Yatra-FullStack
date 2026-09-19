@@ -93,18 +93,24 @@ class FlightApiTest {
     }
 
     /**
-     * The permit for {@code /api/flights/**} is deliberately in place before the
-     * storefront endpoint exists, because the failure it prevents is silent: a 401
-     * on a search reads as "no flights found" rather than as an auth problem,
-     * which is exactly how the airline logos lost a phase (risk R8).
+     * The permit for {@code /api/flights/**} was put in place <i>before</i> the storefront
+     * endpoint existed, because the failure it prevents is silent: a 401 on a search reads
+     * as "no flights found" rather than as an auth problem, which is exactly how the
+     * airline logos lost a phase (risk R8).
      *
-     * <p>No handler exists under that path yet, so the expected answer is a 404 —
-     * the point is that it is <b>not</b> a 401.
+     * <p><b>§10 has since built that endpoint, and this assertion moved with it.</b> It
+     * asked for a 404 when the path had no handler ("the point is that it is not a 401");
+     * the handler exists now, so a tokenless read of a bare route is its own answer —
+     * {@code 200} with nothing in {@code flights} — and the property this test exists for
+     * is unchanged. No handler is asked for here: a request with no destination and no
+     * date is a real customer search with an empty result, which is what the storefront
+     * draws its empty state from.
      */
     @Test
-    void aFutureFlightReadIsPermittedRatherThanAnswering401() throws Exception {
+    void theSearchIsPermittedRatherThanAnswering401() throws Exception {
         mockMvc.perform(get("/api/flights/search").param("origin", "KTM"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.flights").isEmpty());
     }
 
     /* ------------------------------------------------------------------ *

@@ -15,6 +15,8 @@ import io.virinchi.yatra.Repository.SeatRepository;
 import io.virinchi.yatra.Repository.TicketRepository;
 import io.virinchi.yatra.Repository.UserRepository;
 import io.virinchi.yatra.Security.JwtUtil;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -103,6 +108,8 @@ class SeedApiTest {
     @Autowired private TicketRepository tickets;
     @Autowired private UserRepository users;
     @Autowired private JwtUtil jwtUtil;
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     /* ------------------------------------------------------------------ *
      *  the checkpoint, and the guard that keeps it re-runnable            *
@@ -308,17 +315,41 @@ class SeedApiTest {
         assertThat(seededPaymentIds).as("one seeded payment per seeded booking").hasSize(BOOKINGS);
         assertThat(seededTicketIds).as("one seeded ticket per seeded booking").hasSize(BOOKINGS);
 
-        mockMvc.perform(adminPost("/api/admin/reset"))
+        /* The reset's answer is read as a body as well as matched, because three of its
+           numbers are deltas against a shared LIVE database: a booking somebody made by
+           hand — the storefront leaves PENDING ones behind, and a Postman walk makes paid
+           ones — pins the flight it rides on, and a pinned flight pins its carrier and,
+           through it, is kept off the delete list. The three guarded tables are therefore
+           asserted as an ACCOUNTING: every seeded row is either removed or named in
+           `kept`. That is a stronger statement than a frozen number, and it is the only
+           one that stays true on a database other people also use. The unguarded tables
+           keep their exact numbers. */
+        String resetBody = mockMvc.perform(adminPost("/api/admin/reset"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.action").value("RESET"))
                 .andExpect(jsonPath("$.counts.bookings").value(BOOKINGS))
                 .andExpect(jsonPath("$.counts.passengers").value(PASSENGERS))
-                .andExpect(jsonPath("$.counts.flights").value(FLIGHTS))
-                .andExpect(jsonPath("$.counts.airlines").value(AIRLINES - 1))
-                .andExpect(jsonPath("$.counts.users").value(USERS))
                 .andExpect(jsonPath("$.counts.destinations").value(0))
-                .andExpect(jsonPath("$.kept.length()").value(1))
-                .andExpect(jsonPath("$.kept[0]").value(containsString("Sita Air")));
+                .andExpect(jsonPath("$.counts.flights").value(lessThanOrEqualTo(FLIGHTS)))
+                .andExpect(jsonPath("$.counts.airlines").value(lessThanOrEqualTo(AIRLINES - 1)))
+                .andExpect(jsonPath("$.counts.users").value(lessThanOrEqualTo(USERS)))
+                .andExpect(jsonPath("$.kept", hasItem(containsString("Sita Air"))))
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode reset = mapper.readTree(resetBody);
+        int keptFlights = keptOf(reset, "seeded flight kept");
+        int keptAirlines = keptOf(reset, "seeded airline kept");
+        int keptUsers = keptOf(reset, "seeded account kept");
+        assertThat(reset.path("counts").path("flights").asInt() + keptFlights)
+                .as("every seeded flight is either removed or reported as kept")
+                .isEqualTo(FLIGHTS);
+        /* Balanced against the number the seeder CREATES, not against the old
+           `AIRLINES - 1`: that constant was the removed count back when exactly one
+           carrier was kept, so summing removal and `kept` against it double-counted the
+           kept one. Removed + kept is the whole seeded set. */
+        assertThat(reset.path("counts").path("airlines").asInt() + keptAirlines)
+                .as("every seeded carrier is either removed or reported as kept")
+                .isEqualTo(AIRLINES);
 
         refresh();
 
@@ -326,11 +357,14 @@ class SeedApiTest {
         // still seed data, it just could not be removed yet, so a later reset finishes
         // the job once nothing of yours uses it (proved at the end of this test). If the
         // flag were cleared here, that carrier would be permanent.
-        assertThat(airlines.findBySeededTrue()).as("only the carrier your own flight still uses survives")
-                .extracting(Airline::getIata).containsExactly("ST");
-        assertThat(flights.findBySeededTrue()).as("seeded flights gone").isEmpty();
+        assertThat(airlines.findBySeededTrue()).as("the seeded carriers your records still use survive")
+                .hasSize(keptAirlines)
+                .extracting(Airline::getIata).contains("ST");
+        assertThat(flights.findBySeededTrue()).as("and exactly the seeded flights a booking still rides on")
+                .hasSize(keptFlights);
+        assertThat(users.findBySeededTrue()).as("only seeded accounts a booking of yours owns survive")
+                .hasSize(keptUsers);
         assertThat(bookings.findBySeededTrue()).as("seeded bookings gone").isEmpty();
-        assertThat(users.findBySeededTrue()).as("seeded roster gone").isEmpty();
         assertThat(payments.findAllById(seededPaymentIds)).as("seeded payments gone").isEmpty();
         assertThat(tickets.findAllById(seededTicketIds)).as("seeded tickets gone").isEmpty();
 
@@ -351,15 +385,18 @@ class SeedApiTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(adminPost("/api/admin/reset"))
+        String secondBody = mockMvc.perform(adminPost("/api/admin/reset"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.counts.airlines").value(AIRLINES - 3))
-                .andExpect(jsonPath("$.kept").isEmpty());
+                .andExpect(jsonPath("$.kept", not(hasItem(containsString("Sita Air")))))
+                .andReturn().getResponse().getContentAsString();
 
         refresh();
         assertThat(airlines.findBySeededTrue())
                 .as("a carrier kept earlier is removable as soon as nothing uses it")
-                .isEmpty();
+                .extracting(Airline::getIata).doesNotContain("ST");
+        assertThat(airlines.findBySeededTrue())
+                .as("and what remains is exactly what the second reset reported keeping")
+                .hasSize(keptOf(mapper.readTree(secondBody), "seeded airline kept"));
         assertThat(airlines.findByIata(myIata)).as("your own carrier is never touched").isPresent();
     }
 
@@ -367,6 +404,14 @@ class SeedApiTest {
      * The documented re-run path, and the roadmap's "re-runnable without manual DB
      * cleanup": reset, seed again, land on the same dataset. Also proves a reset is safe
      * when nothing is seeded, so the two-step is always valid.
+     *
+     * <p>It is also the regression test for the seeding half of that promise: a reset KEEPS
+     * a seeded flight whose seats belong to a booking of yours, so the seed that follows
+     * has to <b>reuse</b> that row rather than try to create it again — the flight numbers
+     * are unique, and the re-seed would otherwise fail for exactly the row the reset went
+     * out of its way to preserve. The counts below are the proof it fits back together:
+     * {@code flights}, {@code users} and {@code seats} all return to their full numbers
+     * with a reused row among them.
      */
     @Test
     void resetThenSeedReproducesTheSameDataset() throws Exception {
@@ -376,11 +421,22 @@ class SeedApiTest {
         // reset to report zero only held while the database happened to be unseeded.
         mockMvc.perform(adminPost("/api/admin/reset")).andExpect(status().isOk());
 
-        mockMvc.perform(adminPost("/api/admin/reset"))
+        /* The removals are the claim: a reset with nothing seeded left to remove removes
+           nothing. `kept` is deliberately NOT asserted empty — on a shared database a
+           seeded flight that somebody's booking still rides on is kept (with its
+           operator and its account), which is the correct answer and precisely what the
+           first reset reported. Asserting an empty `kept` here only held while nobody
+           had left a booking behind. */
+        String secondReset = mockMvc.perform(adminPost("/api/admin/reset"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.counts.bookings").value(0))
                 .andExpect(jsonPath("$.counts.flights").value(0))
-                .andExpect(jsonPath("$.kept").isEmpty());
+                .andReturn().getResponse().getContentAsString();
+
+        int keptFlights = keptOf(mapper.readTree(secondReset), "seeded flight kept");
+        assertThat(keptFlights)
+                .as("what it kept is exactly the seeded flights still in the table")
+                .isEqualTo(flights.findBySeededTrue().size());
 
         mockMvc.perform(seed())
                 .andExpect(status().isOk())
@@ -436,6 +492,23 @@ class SeedApiTest {
     /* ------------------------------------------------------------------ *
      *  helpers                                                            *
      * ------------------------------------------------------------------ */
+
+    /**
+     * How many entries of a reset's {@code kept} list name a given kind of row.
+     *
+     * <p>Read out of the response rather than recomputed, so the accounting assertions
+     * compare the database against the report the call itself made — which is the whole
+     * claim being tested, and is why a hand-made booking moves both sides equally.
+     */
+    private static int keptOf(JsonNode reset, String reason) {
+        int count = 0;
+        for (JsonNode entry : reset.path("kept")) {
+            if (entry.asText().contains(reason)) {
+                count++;
+            }
+        }
+        return count;
+    }
 
     private MockHttpServletRequestBuilder seed() {
         return adminPost("/api/admin/seed");

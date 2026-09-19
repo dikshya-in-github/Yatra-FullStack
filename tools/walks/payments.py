@@ -385,9 +385,15 @@ def main():
                status_c == 200 and str((body_c or {}).get("bookingId")) == str(probe_c)
                and one(probe_c).get("paymentStatus") == "Pending",
                "%s %s" % (status_c, json.dumps(body_c)[:160]))
+    # Against the floor the walk recorded, not against a literal 1: the tile describes the
+    # WHOLE ledger, and this is a shared live database — an abandoned attempt somebody left
+    # behind is a PENDING row this walk did not make, so `pending == 1` was an assertion
+    # about the database's state rather than about the walk's own three transactions.
     walk.check("2: the tiles followed the ledger (3 more transactions, 1 more pending)",
-               total() == floor + 3 and int(stats().get("pending") or 0) == 1,
-               "total=%d pending=%s" % (total(), stats().get("pending")))
+               total() == floor + 3
+               and int(stats().get("pending") or 0) == int(floor_stats.get("pending") or 0) + 1,
+               "total=%d pending=%s (floor pending=%s)"
+               % (total(), stats().get("pending"), floor_stats.get("pending")))
 
     # ================================================================ 3. READ
     walk.step("§12 step 3 — READ/LIST (queries, not array filters)")

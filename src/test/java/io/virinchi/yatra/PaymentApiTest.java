@@ -718,7 +718,13 @@ class PaymentApiTest {
                 .as("every transaction in the ledger, not the page's two rows")
                 .isEqualTo(ledger);
         assertThat(stats.get("collected").decimalValue()).isEqualByComparingTo(collected);
-        assertThat(stats.get("pending").asLong()).isEqualTo(1);
+        // Against the query, for the same reason as `refunded` below: this is a shared
+        // LIVE ledger, and a booking somebody left unpaid (the storefront mints PENDING
+        // bookings and an abandoned one outlives the tab) is a second PENDING row that
+        // this test did not make. The tile's claim is that it counts the whole ledger
+        // rather than the page — so it is compared with the ledger's own count, not 1.
+        assertThat(stats.get("pending").asLong())
+                .isEqualTo(payments.countByStatusIgnoreCase("PENDING"));
         // Against the query, not zero: the tiles span the whole ledger, and the live
         // database holds seeded refunds this test did not make (which is the semantics
         // under test — a filtered read must not narrow a tile).
