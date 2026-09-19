@@ -898,6 +898,49 @@ class PaymentApiTest {
                 .andExpect(jsonPath("$.error").value("FORBIDDEN"));
     }
 
+    /**
+     * A declined attempt that the customer retries moves <b>both</b> rows.
+     *
+     * <p>A decline is written on the payment row ({@code FAILED}) <i>and</i> on the
+     * booking's {@code paymentStatus} ({@code Failed}), because the booking is what the
+     * admin surfaces show. The retry replaced only the payment row, so the booking went on
+     * reporting a failure behind a transaction that was live again — and the two rows
+     * describe one attempt.
+     *
+     * <p>What the disagreement cost, and why this test asserts the rendered value as well
+     * as the column: the Payments ledger's filter reads the payment row while its Status
+     * column prints the booking's field, so the retried transaction came back under the
+     * <b>Pending</b> filter displaying <b>"Failed"</b>. One attempt, two rows, one of them
+     * moved — the same shape as a ticket column derived from its booking.
+     */
+    @Test
+    void retryingADeclinedAttemptMovesTheBookingBackWithThePayment() throws Exception {
+        Fixture fixture = fixture();
+        String flightNo = createFlight(fixture, 8, "8299.99");
+        int bookingId = book(fixture, flightNo, 1);
+
+        settle(bookingId, "esewa", "FAILED");
+        assertThat(payments.findByBookingId(bookingId).orElseThrow().getStatus())
+                .as("the decline is on the payment row").isEqualTo("FAILED");
+        assertThat(bookings.findById(bookingId).orElseThrow().getPaymentStatus())
+                .as("and on the booking, which is what the admin pages print").isEqualTo("Failed");
+
+        mockMvc.perform(initiate(bookingId, "esewa", null)).andExpect(status().isOk());
+        refresh();
+
+        assertThat(payments.findByBookingId(bookingId).orElseThrow().getStatus())
+                .as("the retry is a live transaction").isEqualTo("PENDING");
+        assertThat(bookings.findById(bookingId).orElseThrow().getPaymentStatus())
+                .as("and the booking says so too — one attempt, moved together")
+                .isEqualTo("Pending");
+
+        JsonNode rows = ledgerBody(flightNo, "status", "Pending").get("bookings");
+        assertThat(rows).as("the retried transaction is what the filter finds").isNotEmpty();
+        assertThat(rows.get(0).get("paymentStatus").asText())
+                .as("and the row it renders does not disagree with the filter that found it")
+                .isEqualTo("Pending");
+    }
+
     /* ------------------------------------------------------------------ *
      *  request helpers                                                   *
      * ------------------------------------------------------------------ */

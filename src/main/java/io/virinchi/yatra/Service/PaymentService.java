@@ -122,6 +122,7 @@ public class PaymentService {
     private static final String REFUNDED = "REFUNDED";
 
     /** The booking's {@code paymentStatus} vocabulary — title case, as the pages show it. */
+    private static final String PENDING_DISPLAY = "Pending";
     private static final String FAILED_DISPLAY = "Failed";
     private static final String REFUNDED_DISPLAY = "Refunded";
 
@@ -198,6 +199,15 @@ public class PaymentService {
      * {@code SUCCESS}/{@code REFUNDED} is refused instead — that booking is sold, and
      * a second transaction against it is a new booking.
      *
+     * <p><b>A retried attempt moves the booking's {@code paymentStatus} too.</b> A decline
+     * is written on <i>both</i> rows — the payment row {@code FAILED} and the booking's
+     * field {@code Failed} — so replacing only the payment
+     * row would leave the booking reporting a failure while its live transaction is
+     * awaiting an answer. That disagreement is not cosmetic: the Payments ledger filters
+     * on the payment row and prints the booking's field, so it rendered the retried
+     * transaction as a <b>Pending row labelled "Failed"</b>. The two rows describe one
+     * attempt and are moved together on every transition that touches them.
+     *
      * @throws ResourceNotFoundException 404 — no such booking
      * @throws ValidationException       400 {@code METHOD_NOT_SUPPORTED} for a
      *                                   gateway the project does not integrate
@@ -229,6 +239,14 @@ public class PaymentService {
             //callback carrying the old uuid must not settle this attempt (§10).
             payment.setTxnId(transactionUuid());
             payment.setPaidAt(null);
+
+            //The booking follows its attempt back to Pending — see the class-level note on
+            //this method. A row left saying "Failed" behind a live PENDING transaction is
+            //the state the ledger cannot render honestly.
+            if (!PENDING_DISPLAY.equalsIgnoreCase(booking.getPaymentStatus())) {
+                booking.setPaymentStatus(PENDING_DISPLAY);
+                bookings.save(booking);
+            }
 
             //The roadmap's "payments processed" event (Phase 14). A re-initiated
             //abandoned attempt is worth a line of its own: it is the same row coming
