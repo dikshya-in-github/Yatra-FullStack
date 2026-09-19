@@ -72,17 +72,33 @@
     </header>
 
     <main class="et-wrap container">
-        <!-- SUCCESS BANNER -->
-        <div class="success-banner reveal active" id="successBanner">
+        <!-- SUCCESS BANNER — revealed by eticket.js once the booking is read.
+             Hidden by default: the page renders GET /api/bookings/{id}, so before
+             that answers there is nothing true to say about this booking. -->
+        <div class="success-banner reveal active" id="successBanner" hidden>
             <span class="sb-icon"><i class="fa-solid fa-circle-check"></i></span>
             <div>
                 <h1>Payment Successful!</h1>
-                <p id="paidLine">Paid <b>NPR 8,299.99</b> via <b>eSewa</b> · Txn ID: <b id="txnId">9A00000000</b></p>
+                <p id="paidLine">Paid <b>—</b> via <b>—</b> · Txn ID: <b id="txnId">—</b></p>
             </div>
         </div>
 
-        <!-- BOARDING-PASS TICKET -->
-        <div class="ticket reveal active" id="ticket">
+        <!-- NO TICKET TO SHOW — a read that failed, a booking that is not this
+             session's, or one that has not been ticketed yet. Filled and
+             revealed by eticket.js; never shown alongside the ticket. -->
+        <div class="et-note" id="etNotice" hidden>
+            <i class="fa-solid fa-circle-question"></i>
+            <div>
+                <h2 id="etNoticeTitle"></h2>
+                <p id="etNoticeBody"></p>
+                <p class="et-note-hint" id="etNoticeHint"></p>
+            </div>
+        </div>
+
+        <!-- BOARDING-PASS TICKET — revealed by eticket.js with the real document.
+             Its placeholders are dashes rather than plausible sample data, so a
+             script failure shows an empty form, not somebody else's ticket. -->
+        <div class="ticket reveal active" id="ticket" hidden>
             <!-- Header route strip -->
             <div class="t-head">
                 <div class="t-route">
@@ -104,31 +120,33 @@
                     </div>
                 </div>
                 <div class="t-head-right">
-                    <span class="t-status"><i class="fa-solid fa-circle-check"></i> CONFIRMED</span>
-                    <span class="t-pnr-badge">PNR: <b id="tPnrBadge">YATRA6K</b></span>
+                    <!-- The document's OWN status (ticketStatus: ISSUED / CANCELLED),
+                         not the booking's — the two are independent columns. -->
+                    <span class="t-status" id="tStatus"><i class="fa-solid fa-circle-check"></i> —</span>
+                    <span class="t-pnr-badge">PNR: <b id="tPnrBadge">—</b></span>
                 </div>
             </div>
 
             <div class="t-body">
                 <div class="t-grid">
-                    <div class="t-cell"><small>Passenger</small><b id="tPassenger">Dikshya Ghising</b></div>
-                    <div class="t-cell"><small>Date</small><b id="tDate">Tue, 15 Sep</b></div>
-                    <div class="t-cell"><small>Class</small><b id="tClass">E Class</b></div>
+                    <div class="t-cell"><small>Passenger</small><b id="tPassenger">—</b></div>
+                    <div class="t-cell"><small>Date</small><b id="tDate">—</b></div>
+                    <div class="t-cell"><small>Class</small><b id="tClass">—</b></div>
                     <div class="t-cell"><small>Baggage</small><b>15kg + 5kg hand carry</b></div>
-                    <div class="t-cell"><small>Ticket No.</small><b id="tTicketNo">784-2400000000</b></div>
-                    <div class="t-cell"><small>PNR</small><b id="tPnr">YATRA6K</b></div>
+                    <div class="t-cell"><small>Ticket No.</small><b id="tTicketNo">—</b></div>
+                    <div class="t-cell"><small>PNR</small><b id="tPnr">—</b></div>
                 </div>
 
                 <div class="t-fare">
-                    <div class="tf-row"><span>Fare</span><b id="tFare">NPR 8,299.99</b></div>
+                    <div class="tf-row"><span>Fare</span><b id="tFare">—</b></div>
                     <div class="tf-row" id="tPromoRow" hidden><span>Promo Discount</span><b class="tf-green"
                             id="tPromoVal"></b></div>
-                    <div class="tf-row total"><span>Total Paid</span><b id="tTotal">NPR 8,299.99</b></div>
+                    <div class="tf-row total"><span>Total Paid</span><b id="tTotal">—</b></div>
                 </div>
 
                 <div class="t-pay">
-                    <div class="t-cell"><small>Payment Method</small><b id="tMethod">eSewa Wallet</b></div>
-                    <div class="t-cell"><small>Transaction ID</small><b id="tTxn">9A00000000</b></div>
+                    <div class="t-cell"><small>Payment Method</small><b id="tMethod">—</b></div>
+                    <div class="t-cell"><small>Transaction ID</small><b id="tTxn">—</b></div>
                     <div class="t-cell"><small>Paid On</small><b id="tPaidAt">—</b></div>
                 </div>
             </div>
@@ -142,7 +160,7 @@
                             CHECK-IN TIME</b> FOR PROOF OF IDENTITY ALONG WITH THIS NON-TRANSFERABLE ELECTRONIC
                         TICKET. Please arrive at the airport <b>one hour</b> before departure. Thank you for choosing
                         Yatra. We wish for your pleasant flight.</p>
-                    <p class="issued-by">Issued by <b id="tIssuedBy">eSewa</b> · Passenger Copy</p>
+                    <p class="issued-by">Issued by <b id="tIssuedBy">—</b> · Passenger Copy</p>
                 </div>
             </div>
 
@@ -151,8 +169,8 @@
             <div class="t-stub airport-copy">
                 <div class="barcode" aria-hidden="true" id="barcode2"></div>
                 <div class="stub-text">
-                    <p class="stub-note"><b id="acPnr">YATRA6K</b> · <span id="acRoute">KTM - BDP</span> ·
-                        <span id="acDate">Tue, 15 Sep</span>
+                    <p class="stub-note"><b id="acPnr">—</b> · <span id="acRoute">—</span> ·
+                        <span id="acDate">—</span>
                     </p>
                     <p class="issued-by">Airport Copy — retain until boarding</p>
                 </div>
@@ -178,8 +196,11 @@
 
     <button class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fa-solid fa-plane-up"></i></button>
 
-    <!-- Auth layer (config → auth) — the navbar chip + "Log Out" need it -->
+    <!-- config → api → auth: api.js is what apiGet() lives in, and the ticket is
+         read from the API now (GET /api/bookings/{id}, owner-scoped). config.js
+         must load first: api.js reads its globals. -->
     <script src="assets/js/config.js"></script>
+    <script src="assets/js/api.js"></script>
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/eticket.js"></script>
 

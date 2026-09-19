@@ -1,6 +1,7 @@
 package io.virinchi.yatra.Service;
 
 import io.virinchi.yatra.Dto.AdminBookingResponse;
+import io.virinchi.yatra.Dto.BookingDetailResponse;
 import io.virinchi.yatra.Dto.BookingRequest;
 import io.virinchi.yatra.Dto.HoldExpiryResponse;
 import io.virinchi.yatra.Exception.ConflictException;
@@ -308,6 +309,47 @@ public class BookingService {
     public AdminBookingResponse getBooking(int bookingId) {
         Booking booking = require(bookingId);
         return AdminBookingResponse.of(booking, passengers.findByBookingId(bookingId));
+    }
+
+    /**
+     * One booking, for the customer who made it — the read behind {@code eticket.html}.
+     *
+     * <h2>The authorization rule, and why this is not {@link #getBooking}</h2>
+     * Booking ids are allocated by the database, so they are sequential and therefore
+     * guessable: a read by id with no rule would let anyone walk the ledger — every
+     * customer's contact details, PNR and passengers — one integer apart. The route is
+     * authenticated (Spring's {@code anyRequest().authenticated()} already covers it;
+     * opening it would take a new permit rule) and the row is served only to its owner.
+     *
+     * <p><b>"Not yours" is answered as "no such booking".</b> The refusal throws the
+     * same 404, with the same message, as an id that does not exist — a 403 would
+     * confirm that the id is real and belongs to someone else, which is precisely the
+     * fact a sequential-id probe is after. A guest booking has no owner at all
+     * ({@code Booking.user} is null) and is readable by nobody through this route; the
+     * storefront requires sign-in before the wizard, so every booking it makes has one.
+     *
+     * <p>Mapped to a DTO <i>here</i> rather than in the controller: the passengers are a
+     * lazy collection, and a controller runs after this transaction has closed. The
+     * ticket and the payment are fetched the same way for the reason
+     * {@link BookingDetailResponse} records — all three hang off the booking as the
+     * inverse side of their relationships, so the entity's own references to them are
+     * not maintained in memory by whoever creates them.
+     *
+     * @throws ResourceNotFoundException 404 — no such booking, or not the caller's
+     */
+    @Transactional(readOnly = true)
+    public BookingDetailResponse getBookingForCustomer(int bookingId, Integer callerId) {
+        Booking booking = require(bookingId);
+        Integer ownerId = booking.getUser() == null ? null : booking.getUser().getId();
+
+        if (callerId == null || !callerId.equals(ownerId)) {
+            throw ResourceNotFoundException.of("Booking", bookingId);
+        }
+
+        return BookingDetailResponse.of(booking,
+                tickets.findByBookingId(bookingId).orElse(null),
+                payments.findByBookingId(bookingId).orElse(null),
+                passengers.findByBookingId(bookingId));
     }
 
     /**

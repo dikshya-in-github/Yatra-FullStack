@@ -194,7 +194,24 @@ var YATRA_CONFIG = {
            "payment" that never reaches the API. */
         "searchFlight.html",
         "booking.html",
-        "payment.html"
+        "payment.html",
+
+        /* §10 — the e-ticket, the last screen of that flow and the last page in the
+           storefront to be reading its data from nowhere. It renders
+           GET /api/bookings/{id}: the customer's own booking, owner-scoped, carrying
+           the ticket row the checkout minted (POST /api/bookings is public because a
+           visitor may book; this read is not, because it prints a named person's
+           PNR, ticket number, contact and passengers). EsewaController's success
+           redirect already carried `?bookingId=N` and nothing consumed it.
+
+           Before this, the page read sessionStorage and DERIVED its PNR and ticket
+           number from the transaction id — `"DEMO" + Date.now()` when the store was
+           empty — so the two numbers that make a ticket a ticket were invented in the
+           browser and printed as if issued. Same defect class as the search page's
+           flight numbers, at the payoff moment: the screen that proves the booking
+           worked was the one screen the API had never been asked about. Page shape
+           never needed to change for it — it has printed this layout since item 16. */
+        "eticket.html"
     ]
 };
 

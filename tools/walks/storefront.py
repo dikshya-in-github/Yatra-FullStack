@@ -12,11 +12,15 @@ somebody else's website, so the steps are read here as:
     read back from the database, never from the page's own toast.
   * **the gateway** — `payment.html` initiates the payment and the browser lands on
     the server's own signed handoff to eSewa.
+  * **the document** — the gateway's callback settles the booking and issues the
+    ticket, and `eticket.html` renders it from `GET /api/bookings/{id}`: the PNR and
+    ticket number the checkout minted, in the places the page prints them, with the
+    old browser-side derivation asserted to be gone.
   * **the absences** — there is no customer booking delete and no booking update,
     so the walk proves they are not there, and proves the refusal that used to be
     invisible: a booking for a flight number that is not a row is a 404.
 
-Four things it tests that no API test can, and one that no API test would think to:
+Five things it tests that no API test can, and one that no API test would think to:
 
   * **The mock's central lie is gone.** Until §10 the storefront's search answered
     from `mock-data.js`, which *invented* every flight number from the date
@@ -38,6 +42,12 @@ Four things it tests that no API test can, and one that no API test would think 
     three of its seven buttons are in the past and can never hold a flight; the walk
     changes the date and asserts the list that comes back is the API's answer for
     *that* day, then changes it back.
+  * **The payoff screen is the API's.** The e-ticket used to be the one page in the
+    flow that never asked the server anything: it derived its PNR and ticket number
+    from `sessionStorage`, inventing both with `"DEMO" + Date.now()` when empty. The
+    walk settles the booking through the gateway's own callback and then asserts the
+    identifiers on screen are the ones the checkout minted — and that an id which is
+    not this customer's renders the notice instead of a plausible-looking ticket.
 
 **It needs a seed from today**, and that is a property of the data, not the walk: the
 demo seed dates its flights relative to the day it runs (`daysFromToday`), so a
@@ -78,18 +88,28 @@ CUSTOMER_PASSWORD = "Yatra@123"
 TODAY = time.strftime("%Y-%m-%d")
 TOMORROW = time.strftime("%Y-%m-%d", time.localtime(time.time() + 86400))
 
-# Empty on purpose: every refusal this walk asks for is asked through the API, in
-# python, where the harness's browser-side failure trap cannot see it. Nothing the
-# pages do here is expected to fail.
-EXPECTED = []
+# Every refusal this walk asks for is asked through the API, in python, where the
+# harness's browser-side failure trap cannot see it — with ONE exception: step 6 opens
+# the e-ticket on an id that is not this customer's, on purpose, to prove the page
+# shows its notice instead of a plausible-looking ticket.
+#
+# A 404 seen by the PAGE arrives twice: once as the response ("<status> <url>") and once
+# as the browser's own console note, which carries no URL. Every other walk names that
+# pair the same way (airlines/bookings/users all list "status of 409" beside the URL),
+# so this follows it rather than inventing a third shape.
+EXPECTED = [
+    "404 %s/api/bookings/999999999" % BASE,
+    "status of 404",
+]
 
 walk = Walk("storefront")
 walk.assert_serving_working_tree(
     assets=["assets/js/searchFlight.js", "assets/js/booking.js",
-            "assets/js/payment.js", "assets/js/config.js"],
+            "assets/js/payment.js", "assets/js/eticket.js", "assets/js/config.js"],
     markers=[("searchFlight.html", "emptyHint"),
              ("booking.html", "toast.js"),
-             ("payment.html", "toast.js")])
+             ("payment.html", "toast.js"),
+             ("eticket.html", "etNotice")])
 
 if not walk.login_admin():
     print("admin sign-in failed — cannot read the tables back")
@@ -449,9 +469,94 @@ walk.check("the initiate call left a Pending row on the ledger for this booking"
            [(p.get("id"), p.get("paymentStatus")) for p in ledger][:4])
 
 # --------------------------------------------------------------------------- #
-#  step 6 — the absences, and the refusal that used to be invisible          #
+#  step 6 — the callback settles it and the e-ticket prints the real document #
 # --------------------------------------------------------------------------- #
-walk.step("step 6 — what the API deliberately does not do")
+walk.step("step 6 — the e-ticket renders the document the checkout minted")
+
+# The gateway's own callback, the same one the Payments walk uses. In the sandbox a
+# human types the credentials on eSewa's hosted page; an automated run has no business
+# moving money, so the callback is the part of the loop that can be driven honestly.
+txn_id = "9A%08d" % (int(booking_id) % 100000000)
+status, verified = walk.api("POST", "/api/payments/verify", {
+    "txnId": txn_id, "bookingId": int(booking_id), "method": "eSewa", "outcome": "SUCCESS"})
+walk.check("the gateway callback settles the booking", status == 200, (status, verified))
+pnr = str((verified or {}).get("pnr") or "")
+ticket_no = str((verified or {}).get("ticketNo") or "")
+walk.check("and the checkout mints both identifiers (PNR + ticket number)",
+           bool(pnr) and bool(ticket_no), (pnr, ticket_no))
+
+settled = booking_row(booking_id)
+walk.check("the booking is Confirmed and Paid in the database",
+           settled.get("status") == "Confirmed" and settled.get("paymentStatus") == "Paid",
+           (settled.get("status"), settled.get("paymentStatus")))
+
+# Opened the way the redirect opens it: the id in the query string, and nothing
+# relying on what the wizard left in this tab.
+c.goto("%s/eticket.html?bookingId=%s&payment=success" % (BASE, booking_id))
+walk.check("the e-ticket renders the PNR the checkout minted",
+           walk.wait_content(c, "#tPnr", pnr, timeout=30),
+           c.js("document.getElementById('tPnr').textContent"))
+walk.check("in all three places the document prints it",
+           str(c.js("document.getElementById('tPnrBadge').textContent")) == pnr
+           and str(c.js("document.getElementById('acPnr').textContent")) == pnr,
+           (c.js("document.getElementById('tPnrBadge').textContent"),
+            c.js("document.getElementById('acPnr').textContent")))
+walk.check("and the ticket number is that row's, not the one the page used to derive",
+           str(c.js("document.getElementById('tTicketNo').textContent")) == ticket_no,
+           (c.js("document.getElementById('tTicketNo').textContent"), ticket_no))
+
+# The old page built its ticket number and PNR from the transaction id and fell back to
+# "DEMO" + Date.now(). Neither string may appear on screen now.
+legacy_seed = re.sub(r"\D", "", txn_id)[:10]
+walk.check("the removed derivation is gone from the page",
+           str(c.js("document.getElementById('tTicketNo').textContent")) != "784-24" + legacy_seed
+           and "DEMO" not in str(c.js("document.body.innerText")),
+           c.js("document.getElementById('tTicketNo').textContent"))
+
+walk.check("the success banner names the real amount and transaction",
+           txn_id in str(c.js("document.getElementById('paidLine').textContent"))
+           and "{:,.2f}".format(float(settled["amount"]))
+           in str(c.js("document.getElementById('paidLine').textContent")),
+           c.js("document.getElementById('paidLine').textContent"))
+walk.check("the passenger cell prints the passenger that was booked",
+           str(c.js("document.getElementById('tPassenger').textContent")) == "Zz " + LAST_NAME,
+           c.js("document.getElementById('tPassenger').textContent"))
+walk.check("and the route, date and class are the booking's own",
+           str(c.js("document.getElementById('tFromCode').textContent")) == ORIGIN
+           and str(c.js("document.getElementById('tTicketNo').textContent")).startswith("784-")
+           and "Y Class" in str(c.js("document.getElementById('tClass').textContent")),
+           (c.js("document.getElementById('tFromCode').textContent"),
+            c.js("document.getElementById('tClass').textContent")))
+walk.check("the document's own status badge reads ISSUED",
+           "ISSUED" in str(c.js("document.getElementById('tStatus').textContent")),
+           c.js("document.getElementById('tStatus').textContent"))
+walk.check("the ticket is shown and the no-ticket notice is not",
+           c.js("document.getElementById('ticket').hidden === false")
+           and c.js("document.getElementById('etNotice').hidden === true"))
+
+# The refusals, asked through the API: a booking belongs to its customer, not to any
+# signed-in caller and not to the admin panel's token.
+status, _ = walk.api("GET", "/api/bookings/%s" % booking_id)
+walk.check("the read refuses a caller with no session", status == 401, status)
+status, refused = walk.api("GET", "/api/bookings/%s" % booking_id, auth=True)
+walk.check("and refuses the admin's own token — a booking is its owner's",
+           status == 404, (status, refused))
+
+# Last, the page's own failure branch, in the browser: an id that is not this
+# customer's must not render a plausible-looking ticket.
+c.goto("%s/eticket.html?bookingId=999999999&payment=success" % BASE)
+walk.check("an id that is not the customer's shows the notice, not a ticket",
+           c.wait_js("document.getElementById('etNotice').hidden === false", timeout=25)
+           and c.js("document.getElementById('ticket').hidden === true"),
+           c.js("document.getElementById('etNoticeTitle').textContent"))
+walk.check("and that notice explains itself rather than leaving a blank page",
+           bool(str(c.js("document.getElementById('etNoticeBody').textContent")).strip()),
+           c.js("document.getElementById('etNoticeBody').textContent"))
+
+# --------------------------------------------------------------------------- #
+#  step 7 — the absences, and the refusal that used to be invisible          #
+# --------------------------------------------------------------------------- #
+walk.step("step 7 — what the API deliberately does not do")
 
 
 def post_booking(flight_field):
@@ -478,7 +583,7 @@ walk.check("a fare class this server does not sell is refused", status == 400, s
 status, _ = walk.api("DELETE", "/api/bookings/%s" % booking_id, auth=True)
 walk.check("there is no booking delete, even for an admin", status in (404, 405), status)
 walk.check("and the booking is still there afterwards",
-           booking_row(booking_id).get("status") == "Pending")
+           booking_row(booking_id).get("status") == "Confirmed")
 
 status, empty = walk.api("GET", "/api/flights/search?origin=KTM&destination=TMI&date=%s" % TODAY)
 walk.check("a route with nothing on it is an empty list, not an error",

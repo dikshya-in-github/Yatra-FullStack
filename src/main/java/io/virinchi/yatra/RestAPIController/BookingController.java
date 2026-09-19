@@ -1,5 +1,6 @@
 package io.virinchi.yatra.RestAPIController;
 
+import io.virinchi.yatra.Dto.BookingDetailResponse;
 import io.virinchi.yatra.Dto.BookingRequest;
 import io.virinchi.yatra.Dto.BookingResponse;
 import io.virinchi.yatra.Service.BookingService;
@@ -7,13 +8,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The booking write — wizard step 2's {@code POST /api/bookings}.
+ * The booking write — wizard step 2's {@code POST /api/bookings} — and the
+ * customer's own read of one booking, which the e-ticket page renders.
  *
  * <p><b>Public, and deliberately so.</b> The storefront lets a signed-out visitor
  * complete a booking, and the mock's {@code POST /api/bookings} has never asked for
@@ -56,6 +60,32 @@ public class BookingController {
     public BookingResponse create(@Valid @RequestBody BookingRequest request,
                                  Authentication authentication) {
         return BookingResponse.of(bookingService.createBooking(request, userIdOf(authentication)));
+    }
+
+    /**
+     * One booking, for the customer who owns it — what {@code eticket.html} renders.
+     *
+     * <p>The e-ticket is the last screen in the flow and it used to be the one place
+     * the API was not involved at all: the page read {@code sessionStorage} and derived
+     * its PNR and ticket number from the transaction id, inventing both when the store
+     * was empty. {@code EsewaController}'s redirect already carries the booking id
+     * ({@code /eticket.html?bookingId=N}), so this route is what turns that id into the
+     * document — the real PNR, the real ticket number and the real payment, or an empty
+     * ticket for a booking that has not settled.
+     *
+     * <p><b>Authenticated, and owner-scoped.</b> Unlike its {@code POST} sibling below,
+     * which is public because a visitor may book, this read carries a named person's
+     * contact details and travel documents. Booking ids are sequential, so the route is
+     * left to Spring's {@code anyRequest().authenticated()} and
+     * {@link BookingService#getBookingForCustomer} narrows it to the caller's own row,
+     * answering someone else's id exactly as it answers one that does not exist.
+     *
+     * @param authentication the caller; a guest or a bad token is handled by the rule
+     *                       above (401) rather than here
+     */
+    @GetMapping("/bookings/{id}")
+    public BookingDetailResponse get(@PathVariable int id, Authentication authentication) {
+        return bookingService.getBookingForCustomer(id, userIdOf(authentication));
     }
 
     /**

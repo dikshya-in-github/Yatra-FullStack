@@ -90,9 +90,11 @@ public class EsewaController {
      * named, which is where a retry belongs.
      *
      * <p><b>No ticket is rendered from the query string.</b> The redirect carries the
-     * booking id only, and {@code eticket.html}'s own real-data wiring is §10's
-     * recorded follow-up — it is not faked here by stuffing the PNR into a URL, which
-     * would put a customer-visible identifier in a browser history for no reason.
+     * booking id only — never the PNR, which would put a customer-visible identifier in
+     * a browser history for no reason. The id is all {@code eticket.html} needs: it
+     * asks {@code GET /api/bookings/{id}} for the document, and that read is
+     * owner-scoped, so the page shows the ticket to the customer who bought it and to
+     * nobody who guessed an id.
      */
     @GetMapping("/success/{bookingId}")
     public ResponseEntity<Void> success(@PathVariable int bookingId,
