@@ -49,10 +49,11 @@ public class AdminTicketController {
      * The issued-ticket table.
      *
      * <p><b>Unpaged by default, paged on request</b> — the same choice every other
-     * admin list makes, and for the same reason: {@code admin-tickets.js} filters and
-     * pages client-side over the whole list, so a silent default page size would look
-     * like missing tickets on a page that does not know it was truncated. Passing
-     * {@code size} switches to a real database page and adds
+     * admin list makes, kept for the callers that want the whole list in one body
+     * (Postman, a test). {@code admin-tickets.js} now sends {@code page}/{@code size}
+     * like the other five wired modules, so the table, its count line and its paging are
+     * the database's; a silent default page size would still be wrong for an unpaged
+     * caller, so the switch stays explicit. Passing {@code size} adds
      * {@code page}/{@code totalElements}/{@code totalPages}.
      *
      * <p>The response nests its rows under {@code bookings} — not a slip: the page
@@ -97,9 +98,11 @@ public class AdminTicketController {
      * flight, the payment and the amount.
      *
      * <p>Returns the same record the list does rather than a narrower summary, exactly
-     * as {@code GET /api/admin/bookings/{id}} does: {@code admin-tickets.js}'s detail
-     * modal renders the row it already holds, so a second shape would be two things to
-     * keep in step for no gain.
+     * as {@code GET /api/admin/bookings/{id}} does, so there is only one row shape to
+     * keep in step. {@code admin-tickets.js}'s detail modal reads it <b>fresh</b> rather
+     * than rendering the row it already holds — the endpoint had been built for this page
+     * and never called (the gap §12/§13 found on Users and Payments too), which is how a
+     * ticket voided since the list was drawn stayed invisible to the admin.
      *
      * <p><b>Keyed by booking id</b>, because that is the id the page's rows carry
      * ({@code data-view}) and a ticket is 1:1 with its booking — see

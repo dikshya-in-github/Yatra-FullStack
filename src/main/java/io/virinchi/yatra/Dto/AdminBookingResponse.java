@@ -60,13 +60,35 @@ import java.util.Locale;
  * {@code bit(1)} is a reset implementation detail, not part of the JSON contract
  * (R14).
  *
- * <h2>Two keys are additions, and both are safe</h2>
- * <p>{@code passengers[].seatNumber} and the flat {@code ticketNo} both come from
- * the real schema and neither page reads them yet (the detail modal's passenger
- * table has no seat column today) — extra keys break nothing because every page
- * reads named fields. {@code ticketNo} is kept flat rather than nested only to
- * match the mock; {@link PaymentRow} and the flight block stay nested because they
- * are objects there.
+ * <h2>Three keys are additions, and all three are safe</h2>
+ * <p>{@code passengers[].seatNumber} comes from the real schema and no page reads it
+ * yet (the detail modal's passenger table has no seat column today) — extra keys break
+ * nothing because every page reads named fields. {@code ticketNo} is kept flat rather
+ * than nested only to match the mock; {@link PaymentRow} and the flight block stay
+ * nested because they are objects there.
+ *
+ * <p>{@code ticketStatus} is the one with a reader, and it exists because the Tickets
+ * page could not get the answer without it. That page's Status column used to be derived
+ * from the <i>booking's</i> status ({@code 'Cancelled' → "Voided", otherwise "Issued"})
+ * instead of being read from the ticket's own {@code ISSUED}/{@code CANCELLED} column —
+ * and those two are independent states, not two spellings of one:
+ *
+ * <ul>
+ *   <li><b>Nothing in the API voids a document.</b> {@code TicketService.issue} writes
+ *       {@code ISSUED} when a payment settles, {@code PaymentService.refund} moves money
+ *       and touches nothing else, and cancelling a booking leaves the ticket alone — so a
+ *       cancelled booking's document is still {@code ISSUED}, and the derived label
+ *       painted it "Voided".</li>
+ *   <li><b>The demo's one {@code CANCELLED} ticket is the seeder's</b>, on a booking whose
+ *       status {@code SeedService} also seeds as cancelled — which is why the derived
+ *       label looked right everywhere until a real cancellation went through. A refund is
+ *       not what voids a ticket, and a cancellation is not what voids one either: only the
+ *       seeder has ever written that value.</li>
+ * </ul>
+ *
+ * <p>So the page now shows both: the badge is the document's state and the sub-line under
+ * it is the booking's. Nothing reads the field for a booking with no ticket — it is
+ * {@code ""}, like every other absent string here.
  */
 public record AdminBookingResponse(
 
@@ -76,6 +98,12 @@ public record AdminBookingResponse(
         /** From the 1:1 ticket; {@code ""} while the booking is still pending. */
         String pnr,
         String ticketNo,
+
+        /**
+         * The <b>ticket row's own</b> {@code ISSUED}/{@code CANCELLED}, blank when there is
+         * no document. Deliberately not the booking's status — see the class note.
+         */
+        String ticketStatus,
 
         /** The <b>display</b> vocabulary ({@code Confirmed}), not {@code CONFIRMED}. */
         String status,
@@ -118,6 +146,7 @@ public record AdminBookingResponse(
                 String.valueOf(booking.getId()),
                 pnr(booking.getTicket()),
                 ticketNo(booking.getTicket()),
+                ticketStatus(booking.getTicket()),
                 displayStatus(booking.getBookingStatus()),
                 blankIfNull(booking.getPaymentStatus()),
                 blankIfNull(booking.getContactName()),
@@ -262,6 +291,11 @@ public record AdminBookingResponse(
 
     private static String ticketNo(Ticket ticket) {
         return ticket == null ? "" : blankIfNull(ticket.getTicketNo());
+    }
+
+    /** The document's own state, or {@code ""} when this booking has no document yet. */
+    private static String ticketStatus(Ticket ticket) {
+        return ticket == null ? "" : blankIfNull(ticket.getStatus());
     }
 
     /** A route endpoint is the airport code — {@code "KTM"}, not the city name. */

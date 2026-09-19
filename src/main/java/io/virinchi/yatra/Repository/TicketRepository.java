@@ -59,14 +59,23 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
      * {@code PaymentRepository.searchAll} use, with {@code ALL} folded to
      * {@code null} by the service before it gets here.
      *
-     * <p><b>The search spans three entities</b>, which is why it needs a query of
+     * <p><b>The search spans four entities</b>, which is why it needs a query of
      * its own: the search box advertises "Search PNR, ticket no, passenger, flight no
      * or booking ID…" — the PNR and ticket number live on this table, the flight
-     * number on {@code flight}, and the customer on the booking's contact block.
-     * Passenger names are deliberately <b>not</b> searchable: joining the
-     * {@code passengers} collection inside a paged query makes Hibernate paginate in
-     * memory (load every match, return one page), the trap Phase 9 documented — the
-     * page's client-side search still covers it while the list is unpaged.
+     * number on {@code flight}, the customer on the booking's contact block, and the
+     * <b>passenger names on {@code passenger}</b>.
+     *
+     * <p><b>Passenger names are matched by an {@code EXISTS} subquery, and that is not
+     * the trap this note used to warn about.</b> Fetching the {@code passengers}
+     * <i>collection</i> inside a paged query is what makes Hibernate paginate in memory
+     * (load every match, return one page) — Phase 9's finding, and why the shared row
+     * mapper batches passengers separately. A correlated {@code EXISTS} only filters
+     * rows: nothing is loaded, the pageable query stays pageable, and Spring derives the
+     * count query from the same JPQL, so {@code totalElements} still counts matches.
+     * This is the promise the placeholder had been making since the page was written and
+     * the query was not keeping — the state Session 67 found in the Airlines search, one
+     * module later. The three-term match (first, last, and the two together) is the
+     * shape {@code admin-tickets.js}'s old client-side filter used.
      *
      * <p><b>A numeric search also matches the booking id</b> ({@code :idSearch},
      * {@code null} unless the term is numeric), OR'd with the text matches rather than
@@ -103,6 +112,11 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
                    or lower(b.contactEmail) like :search
                    or lower(b.contactPhone) like :search
                    or lower(f.flightNo) like :search
+                   or exists (select 1 from Passenger p
+                              where p.booking = b
+                                and (lower(p.firstName) like :search
+                                     or lower(p.lastName) like :search
+                                     or lower(concat(p.firstName, ' ', p.lastName)) like :search))
                    or (:idSearch is not null and b.id = :idSearch))
               and (:bookingStatus is null or upper(b.bookingStatus) = :bookingStatus)
               and (:ticketStatus is null or upper(t.status) = :ticketStatus)
@@ -128,6 +142,11 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
                    or lower(b.contactEmail) like :search
                    or lower(b.contactPhone) like :search
                    or lower(f.flightNo) like :search
+                   or exists (select 1 from Passenger p
+                              where p.booking = b
+                                and (lower(p.firstName) like :search
+                                     or lower(p.lastName) like :search
+                                     or lower(concat(p.firstName, ' ', p.lastName)) like :search))
                    or (:idSearch is not null and b.id = :idSearch))
               and (:bookingStatus is null or upper(b.bookingStatus) = :bookingStatus)
               and (:ticketStatus is null or upper(t.status) = :ticketStatus)

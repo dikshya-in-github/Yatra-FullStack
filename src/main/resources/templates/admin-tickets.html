@@ -86,11 +86,15 @@
                 <div class="page-header">
                     <div>
                         <h1>Tickets</h1>
-                        <p class="page-sub">Generated e-tickets (Master Plan §2.1 #9), derived from
-                            <code>yatra_bookings</code> — each booking's PNR + ticket number is the document the
-                            customer printed at <code>eticket.html</code>. This view is <strong>read-only</strong>:
-                            issuing, reissuing and voiding tickets belongs to the backend's TicketService. Cancelling
-                            a ticket starts at <a href="./admin-bookings.html">Bookings</a>.</p>
+                        <p class="page-sub">Generated e-tickets (Master Plan §2.1 #9), read from
+                            <code>/api/admin/tickets</code> — the PNR + ticket number the customer printed at
+                            <code>eticket.html</code>. Search, both filters and paging are queries, and the
+                            <strong>Status column is the ticket's own state</strong> (<code>ISSUED</code> →
+                            Issued, <code>CANCELLED</code> → Voided), with the booking's state beside it —
+                            the two are independent: a cancelled booking's document stays <em>Issued</em>,
+                            because nothing in the API voids a ticket. This view is <strong>read-only</strong>
+                            — a document is issued by the checkout when a payment settles, and cancelling a
+                            booking starts at <a href="./admin-bookings.html">Bookings</a>.</p>
                     </div>
                 </div>
 
@@ -103,10 +107,22 @@
                                 placeholder="Search PNR, ticket no, passenger, flight no or booking ID…"
                                 aria-label="Search tickets">
                         </div>
+                        <!-- Two filters, two different columns: the booking's lifecycle, then the
+                             document's own state. The ticket values are the storage spellings
+                             (ISSUED/CANCELLED) because the endpoint folds case but cannot know that
+                             "Voided" means CANCELLED. -->
+                        <select class="a-select" id="bookingStatusFilter" aria-label="Filter by booking status">
+                            <!-- No Pending option: a row on this page HAS a document, and a
+                                 document is minted when a payment settles — "Pending" would be a
+                                 filter that can only ever return zero rows. -->
+                            <option value="ALL">All bookings</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
                         <select class="a-select" id="ticketStatusFilter" aria-label="Filter by ticket status">
-                            <option value="ALL">All tickets</option>
-                            <option value="Confirmed">Issued (Confirmed)</option>
-                            <option value="Cancelled">Voided (Cancelled)</option>
+                            <option value="ALL">All ticket states</option>
+                            <option value="ISSUED">Issued</option>
+                            <option value="CANCELLED">Voided</option>
                         </select>
                         <span class="result-count" id="resultCount"></span>
                     </div>
@@ -122,7 +138,7 @@
                                     <th>Booking</th>
                                     <th>Payment</th>
                                     <th>Amount</th>
-                                    <th>Status</th>
+                                    <th>Ticket status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -135,8 +151,9 @@
                     <div class="empty-state" id="emptyState" hidden>
                         <i class="fa-solid fa-ticket"></i>
                         <p>No tickets match your search.</p>
-                        <p class="empty-hint">Tickets appear after a storefront checkout, or load the demo records
-                            from <a href="./admin-bookings.html">Bookings</a>.</p>
+                        <p class="empty-hint">A ticket appears when a payment settles — a booking that never
+                            reached the gateway has no document, and is listed under
+                            <a href="./admin-bookings.html">Bookings</a>.</p>
                     </div>
 
                     <div class="pagination">
@@ -148,7 +165,8 @@
         </div>
     </div>
 
-    <!-- ===== Ticket detail modal (read-only; mirrors the customer's e-ticket) ===== -->
+    <!-- ===== Ticket detail modal (read-only; a FRESH read of the document via
+         GET /api/admin/tickets/{bookingId}, which this page never used to call) ===== -->
     <div class="modal-overlay" id="ticketModal" hidden>
         <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="ticketModalTitle">
             <div class="modal-header">
@@ -245,6 +263,7 @@
     <script src="assets/js/config.js"></script>
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/toast.js"></script>
     <script src="assets/js/admin-tickets.js"></script>
 </body>
 

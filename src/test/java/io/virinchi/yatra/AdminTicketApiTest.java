@@ -151,9 +151,101 @@ class AdminTicketApiTest {
         assertThat(row.get("amount").asText()).isNotBlank();
     }
 
+    /**
+     * The row carries the <b>document's</b> own state, and it is not the booking's.
+     *
+     * <p>This field exists because the page was getting the answer wrong: its Status
+     * column derived "Issued"/"Voided" from the <i>booking's</i> status rather than
+     * reading the ticket's own column — and the two are independent. <b>Nothing in the
+     * API voids a document</b>: {@code TicketService.issue} writes {@code ISSUED} when a
+     * payment settles, {@code PaymentService.refund} moves money and touches nothing
+     * else, and cancelling a booking leaves the ticket alone. So a cancelled booking's
+     * live document was painted "Voided". The demo's one {@code CANCELLED} ticket is the
+     * seeder's, on a booking whose status the seeder also writes as cancelled — which is
+     * why the derived label looked right until a real cancellation went through.
+     *
+     * <p>The divergent state is therefore built by setting the row directly, and that is
+     * not laziness: since no API call can write {@code CANCELLED}, a hand-set row is the
+     * only way to make the two columns differ. What is under test is the mapper — that the
+     * DTO reports the ticket's own column rather than re-deriving a value from the
+     * booking's status.
+     */
+    @Test
+    void theRowReportsTheTicketsOwnStatusAndNotTheBookings() throws Exception {
+        Fixture fixture = fixture();
+        String flightNo = createFlight(fixture, 8);
+        int bookingId = book(fixture, flightNo, 1);
+        settle(bookingId, "esewa", "SUCCESS");
+
+        JsonNode fresh = only(flightNo);
+        assertThat(fresh.get("ticketStatus").asText()).as("a freshly minted document")
+                .isEqualTo("ISSUED");
+        assertThat(fresh.get("status").asText()).isEqualTo("Confirmed");
+
+        refresh();
+        Ticket ticket = ticketOf(bookingId);
+        ticket.setStatus("CANCELLED");
+        tickets.save(ticket);
+        refresh();
+
+        JsonNode voided = only(flightNo);
+        assertThat(voided.get("ticketStatus").asText())
+                .as("the page's badge reads this, not the booking's status")
+                .isEqualTo("CANCELLED");
+        assertThat(voided.get("status").asText())
+                .as("a voided document is not a cancelled booking — the booking is untouched")
+                .isEqualTo("Confirmed");
+
+        // And the endpoint can be asked for the voided documents directly, which is the
+        // filter the page now offers. The booking-status filter is a different column and
+        // must NOT be what answers this.
+        assertThat(count("search", flightNo, "ticketStatus", "CANCELLED")).isEqualTo(1);
+        assertThat(count("search", flightNo, "ticketStatus", "ISSUED")).isZero();
+        assertThat(count("search", flightNo, "status", "Confirmed"))
+                .as("the voided ticket still belongs to a Confirmed booking")
+                .isEqualTo(1);
+    }
+
     /* ================================================================== *
      *  search                                                             *
      * ================================================================== */
+
+    /**
+     * The search box's fourth term: the passenger's name, which the page prints in its
+     * own Passenger column.
+     *
+     * <p>The query had documented that passenger names were deliberately not matched —
+     * the page promised them in its placeholder anyway, so an admin could read a name
+     * off the screen and get zero rows with no explanation. They are matched now, by a
+     * correlated {@code EXISTS} rather than a join, which is what keeps the paged read a
+     * database page (see {@code TicketRepository}'s class note).
+     *
+     * <p>The booking is made with a passenger whose name is <b>not</b> the contact's on
+     * purpose: {@link #book} names both after the fixture, so a search for the shared name
+     * would be satisfied by the contact clause and this test would pass with the passenger
+     * clause deleted.
+     */
+    @Test
+    void theSearchMatchesThePassengerNamesThePageDisplays() throws Exception {
+        Fixture fixture = fixture();
+        String flightNo = createFlight(fixture, 8);
+        String passengerFirst = "Gita" + fixture.tag();
+        int bookingId = book(fixture, flightNo, 1, passengerFirst);
+        settle(bookingId, "esewa", "SUCCESS");
+
+        assertThat(count("search", passengerFirst))
+                .as("the passenger's first name — the row the Passenger column shows")
+                .isEqualTo(1);
+        assertThat(count("search", passengerFirst + " Rai"))
+                .as("and the two together, the way the old client-side filter matched them")
+                .isEqualTo(1);
+        assertThat(count("search", fixture.contactName()))
+                .as("the contact block still matches too — the new clause is OR'd in")
+                .isEqualTo(1);
+        assertThat(count("search", "Nobody" + fixture.tag()))
+                .as("and a name nobody carries still finds nothing")
+                .isZero();
+    }
 
     /** Every term the page's search box advertises resolves the run's own ticket. */
     @Test
@@ -505,13 +597,24 @@ class AdminTicketApiTest {
         return no;
     }
 
-    /** Creates a booking through the public endpoint and returns its id. */
+    /**
+     * Creates a booking through the public endpoint and returns its id.
+     *
+     * <p>The passenger is named after the contact here, which every other test wants and
+     * the passenger-search test does not — it needs a name the contact does not carry, or
+     * its assertion would be satisfied by the contact clause alone. Hence the overload.
+     */
     private int book(Fixture fixture, String flightNo, int passengerCount) throws Exception {
+        return book(fixture, flightNo, passengerCount, "Sita" + fixture.tag());
+    }
+
+    private int book(Fixture fixture, String flightNo, int passengerCount,
+                     String passengerFirst) throws Exception {
         List<String> rows = new ArrayList<>();
         for (int index = 0; index < passengerCount; index++) {
             rows.add("""
-                    {"title":"Ms","firstName":"Sita%s","middleName":"","lastName":"Rai","nationality":"Nepali","type":"ADT"}
-                    """.formatted(fixture.tag()));
+                    {"title":"Ms","firstName":"%s","middleName":"","lastName":"Rai","nationality":"Nepali","type":"ADT"}
+                    """.formatted(passengerFirst));
         }
 
         String body = mockMvc.perform(post("/api/bookings")

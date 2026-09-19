@@ -136,6 +136,20 @@ var YATRA_CONFIG = {
            in the same response (`stats`) rather than being summed on screen. */
         "admin-payments.html",
 
+        /* §12 + §13 — the Tickets module, migrated the same way, and the last of the
+           seven: the list is a server QUERY (GET /api/admin/tickets?search=&status=
+           &ticketStatus=&page=&size=), and the detail modal reads
+           GET /api/admin/tickets/{bookingId} — an endpoint built for this page in
+           Phase 12 that had no caller at all until now. Named here only because its
+           reads moved: it has no write to move (the API serves no ticket create, void
+           or delete; issuing belongs to the checkout). Two things it also fixes: the
+           search box promised passenger search the query did not do, and the Status
+           column derived "Issued"/"Voided" from the BOOKING's status instead of the
+           document's own column — so a cancelled booking's still-live ticket rendered
+           as Voided. Nothing in the API voids a document; only the seeder writes
+           CANCELLED. */
+        "admin-tickets.html",
+
         /* §7 + §11 — the signed-in account. profile.html is §11's page; both pages
            call ONLY GET/POST/PUT /api/users/me and GET /api/users/me/bookings, so
            naming them here moves no unrelated call with them. They are named
