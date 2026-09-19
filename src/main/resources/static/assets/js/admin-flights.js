@@ -57,6 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
      are the server's own counts from the last list call — never recomputed from
      the rows on screen, which are one page of them. */
   let state = { search: '', airline: 'ALL', status: 'ALL', page: 1, totalPages: 1, totalElements: 0 };
+  /* Every read carries a sequence number (see reload()): this page has THREE
+     controls that can be changed while another query is still in flight, and a
+     slow answer for an older query must not redraw the table. */
+  let readSeq = 0;
 
   /* A route cell's city name: the destination row is the authority, CITIES is
      the offline fallback for a code the API did not return. */
@@ -418,11 +422,13 @@ document.addEventListener('DOMContentLoaded', () => {
      if the API cannot be reached the page says so, rather than drawing rows that
      are not in the database. */
   async function reload() {
+    const seq = ++readSeq;
     const [flResp, alResp, destResp] = await Promise.all([
       apiGet(listQuery()),
       apiGet('/api/airlines'),
       apiGet('/api/destinations')
     ]);
+    if (seq !== readSeq) return; // superseded: a newer read owns the table
 
     flights = Array.isArray(flResp.flights) ? flResp.flights : [];
     airlines = Array.isArray(alResp.airlines) ? alResp.airlines : [];

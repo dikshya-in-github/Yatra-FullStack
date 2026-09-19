@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let airlines = [];
   let state = { search: '', status: 'ALL', page: 1, totalPages: 1, totalElements: 0 };
   let logoData = null; // a `data:` URL from a fresh upload, or the row's own logo URL
+  /* Every read carries a sequence number (see reload()): a slow response for an
+     older query must not land on top of a newer one. */
+  let readSeq = 0;
 
   /* ---------- Toast ---------- */
   /* showToast() lives in toast.js (§9) — one implementation for every page,
@@ -163,7 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ---------- Reads: one path, used on load, on every filter/page change and
      after every write ---------- */
   async function reload() {
+    const seq = ++readSeq;
     const resp = await apiGet(listQuery());
+    /* Two controls can be in flight together — a filter change while the search box's
+       debounced query is still outstanding — and the answers do not have to arrive in
+       order. Without this, the older answer redraws the table and the page shows a
+       result set nobody asked for. The bookings walk caught exactly that: the
+       "payment status = Paid" filter drawn over by the "status = ALL" answer that
+       left a moment earlier. */
+    if (seq !== readSeq) return; // superseded: a newer read owns the table
 
     airlines = Array.isArray(resp.airlines) ? resp.airlines : [];
 
