@@ -87,11 +87,9 @@
                 <div class="page-header">
                     <div>
                         <h1>Profile</h1>
-                        <p class="page-sub">Your own administrator account and session (Master Plan §2.1 #10). The
-                            account row lives in the shared user roster (<code>yatra_admin_users</code>), which is the
-                            same store <a href="./admin-users.html">Users</a> manages — edit it here and the admin
-                            roster reflects it immediately. When Spring Security lands, this page reads and writes
-                            <code>/api/admin/profile</code> behind <code>@PreAuthorize("hasRole('ADMIN')")</code>.</p>
+                        <p class="page-sub">Your administrator account — your name, email and mobile number.
+                            This is the same record the <a href="./admin-users.html">Users</a> page manages, so an
+                            edit here shows up there straight away.</p>
                     </div>
                     <div class="page-actions">
                         <a href="./admin-dashboard.html" class="a-btn a-btn-outline"><i
@@ -123,8 +121,8 @@
                 <!-- ===== Account details ===== -->
                 <section class="admin-card">
                     <h2><i class="fa-solid fa-id-card"></i> Account Details</h2>
-                    <p class="card-sub">The email and mobile number are unique across Yatra accounts — no two accounts
-                        can share one, and the backend enforces that at the database level.</p>
+                    <p class="card-sub">Your email and mobile number must be unique — no two Yatra accounts can
+                        share one.</p>
 
                     <form id="profileForm" novalidate>
                         <div class="form-grid">
@@ -157,9 +155,10 @@
                 <!-- ===== Password ===== -->
                 <section class="admin-card">
                     <h2><i class="fa-solid fa-lock"></i> Change Password</h2>
-                    <p class="card-sub">Passwords are hashed by the backend with BCrypt — the demo store never holds
-                        one, so this form does not persist anything yet. It validates the real rules and will POST
-                        <code>/api/admin/profile/password</code> in Phase 3.</p>
+                    <p class="card-sub">Not available in this build — Yatra has no password-change service yet,
+                        so this form checks your input and then tells you plainly that nothing was saved. Email
+                        <a href="mailto:support@yatra2.0.com">support@yatra2.0.com</a> and an administrator will
+                        reset your password for you.</p>
 
                     <form id="passwordForm" novalidate>
                         <div class="form-grid">
@@ -197,6 +196,10 @@
                             <span class="pw-meter-text" id="pwMeterText">—</span>
                         </p>
 
+                        <p class="form-hint rule" id="pwUnavailable" hidden><i class="fa-solid fa-circle-info"></i>
+                            Nothing was saved — changing your password is not available in this build. Email
+                            support@yatra2.0.com and an administrator will reset it for you.</p>
+
                         <div class="modal-footer">
                             <button type="submit" class="a-btn" id="passwordSaveBtn"><i class="fa-solid fa-key"></i>
                                 Update Password</button>
@@ -207,8 +210,7 @@
                 <!-- ===== Session & access ===== -->
                 <section class="admin-card">
                     <h2><i class="fa-solid fa-shield-halved"></i> Session &amp; Access</h2>
-                    <p class="card-sub">Where this admin session lives and what the backend will enforce once the
-                        JWT + role check land.</p>
+                    <p class="card-sub">Your current administrator session on this device.</p>
 
                     <div class="detail-grid">
                         <div class="detail-block">
@@ -225,15 +227,15 @@
                             </dl>
                         </div>
                         <div class="detail-block">
-                            <h3>Handled by the backend (Phase 3)</h3>
+                            <h3>What Yatra enforces</h3>
                             <ul class="profile-list">
-                                <li><i class="fa-solid fa-check"></i> Password hashing + the credential check
-                                    (BCryptPasswordEncoder)</li>
-                                <li><i class="fa-solid fa-check"></i> The ADMIN role check on every <code>/api/admin/*</code>
-                                    route</li>
-                                <li><i class="fa-solid fa-check"></i> Unique email / mobile constraints</li>
-                                <li><i class="fa-solid fa-check"></i> Session expiry (the mock JWT carries an 8-hour
-                                    <code>exp</code>)</li>
+                                <li><i class="fa-solid fa-check"></i> Passwords are stored hashed — Yatra never keeps
+                                    one in plain text</li>
+                                <li><i class="fa-solid fa-check"></i> Only administrator accounts can reach the admin
+                                    console</li>
+                                <li><i class="fa-solid fa-check"></i> Email and mobile stay unique across accounts</li>
+                                <li><i class="fa-solid fa-check"></i> A session expires after 8 hours — you sign in again
+                                    after that</li>
                             </ul>
                         </div>
                     </div>
@@ -249,13 +251,12 @@
     </div>
 
     <script src="assets/js/admin.js"></script>
-    <!-- Mock API layer (item 16): config → mock-data → api → validation → page -->
+    <!-- API layer: config → mock-data → api → toast → page -->
     <script src="assets/js/config.js"></script>
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/api.js"></script>
-    <!-- Shared §35 rules (email / Nepali mobile / password length) — this page
-         is the first admin page to use them instead of a third copy of the
-         regexes; the CRUD modals can follow the same pattern (see §50). -->
+    <!-- Shared validation rules (email / Nepali mobile / password length) — this
+         page uses them instead of a copy of the regexes. -->
     <script src="assets/js/validation.js"></script>
     <script src="assets/js/toast.js"></script>
     <script src="assets/js/admin-profile.js"></script>

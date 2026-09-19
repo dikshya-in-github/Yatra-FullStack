@@ -86,11 +86,10 @@
                 <div class="page-header">
                     <div>
                         <h1>Users</h1>
-                        <p class="page-sub">Registered customers and administrators (Master Plan §2.1 #6), read from
-                            <code>/api/admin/users</code> — search, role and status are queries, so the count and
-                            paging are the database's. Admin accounts are <strong>protected</strong>: they can be
-                            edited, but never demoted, disabled or deleted, and the API refuses all three.
-                            A password is optional on this form — without one the account exists but cannot sign in.</p>
+                        <p class="page-sub">Everyone with a Yatra account — customers and administrators.
+                            Admin accounts are <strong>protected</strong>: they can be edited, but never demoted,
+                            disabled or deleted. A password is optional when adding someone — without one the
+                            account exists but cannot sign in until you set one.</p>
                     </div>
                     <div class="page-actions">
                         <button class="a-btn" id="addUserBtn"><i class="fa-solid fa-plus"></i> Add User</button>
@@ -199,8 +198,8 @@
                     </div>
                 </div>
                 <p class="form-hint rule" id="lockNote" hidden><i class="fa-solid fa-lock"></i> This is an
-                    <strong>admin</strong> account: the role and status are locked here, and the API refuses a demote,
-                    a deactivate or a delete for it (409 <code>ADMIN_ACCOUNT_PROTECTED</code>) even if asked directly.</p>
+                    <strong>admin</strong> account: its role and status are locked, so it cannot be demoted,
+                    disabled or deleted.</p>
             </form>
             <div class="modal-footer">
                 <button type="button" class="a-btn a-btn-outline" id="modalCancel">Cancel</button>
@@ -256,7 +255,7 @@
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p class="confirm-msg" id="confirmMsg">This action cannot be undone in the demo.</p>
+                <p class="confirm-msg" id="confirmMsg">This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="a-btn a-btn-outline" id="confirmNo">Keep it</button>

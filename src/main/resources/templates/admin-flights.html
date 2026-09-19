@@ -85,9 +85,9 @@
                 <div class="page-header">
                     <div>
                         <h1>Flights</h1>
-                        <p class="page-sub">Manage the mock flight inventory — schedules, fares and seat capacity
-                            (Master Plan §2.1 #4). Available Seats are always calculated as Seat Capacity − Booked
-                            Seats by the backend; they are never entered manually here.</p>
+                        <p class="page-sub">Manage Yatra's flight inventory — schedules, fares and seat
+                            capacity. Available seats are always Seat Capacity minus Booked Seats, so they are
+                            worked out for you and never entered by hand.</p>
                     </div>
                     <div class="page-actions">
                         <button class="a-btn a-btn-primary" id="addFlightBtn"><i class="fa-solid fa-plus"></i> Add
@@ -216,9 +216,8 @@
                             <label for="flightSeats">Seat Capacity <span class="req">*</span></label>
                             <input type="number" class="a-input" id="flightSeats" placeholder="e.g. 70" min="1"
                                 max="999" step="1">
-                            <p class="form-hint rule"><i class="fa-solid fa-lock"></i> Available Seats = Seat Capacity
-                                − Booked Seats — calculated by the backend, never a manual input (Master Plan §2.6,
-                                teacher-flagged rule).</p>
+                            <p class="form-hint rule"><i class="fa-solid fa-lock"></i> Available seats are calculated
+                                for you: Seat Capacity − Booked Seats. There is no field to type them into.</p>
                         </div>
                         <div class="a-field">
                             <label for="flightStatus">Status</label>

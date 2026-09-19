@@ -84,19 +84,16 @@
                 <div class="page-header">
                     <div>
                         <h1>Dashboard</h1>
-                        <p class="page-sub">System overview — the cards and the recent bookings come
-                            from <code>GET /api/admin/dashboard</code>, whose <code>stats</code> block
-                            the backend computes (Phase 13, Master Plan §2.5).</p>
                     </div>
                     <div class="page-actions">
-                        <button class="a-btn a-btn-outline" onclick="return false;"><i
-                                class="fa-solid fa-download"></i> Export</button>
+                        <button class="a-btn a-btn-outline" id="dashExport"><i class="fa-solid fa-download"></i>
+                            Export</button>
                         <button class="a-btn a-btn-primary" id="dashAddFlight"><i
                                 class="fa-solid fa-plus"></i> Add Flight</button>
                     </div>
-                </div>                <!-- Stat cards (Master Plan §2.5) — values wired to the mock stores
-                     (yatra_admin_airlines / yatra_admin_flights / yatra_bookings) by
-                     admin-dashboard.js; dummy fallbacks only while a store is empty -->
+                </div>                <!-- Stat cards — admin-dashboard.js writes every number from
+                     GET /api/admin/dashboard; the markup's values are placeholders
+                     shown only until that first read answers. -->
                 <section class="stat-grid" aria-label="Key statistics">
                     <div class="stat-card">
                         <span class="stat-icon"><i class="fa-solid fa-users"></i></span>
@@ -149,9 +146,9 @@
                     </div>
                 </section>
 
-                <!-- Recent bookings: LIVE rows from the yatra_bookings store
-                     (rendered by admin-dashboard.js) — real PNRs, customers and
-                     status badges from completed eSewa checkouts -->
+                <!-- Recent bookings: rendered by admin-dashboard.js from the
+                     same endpoint — real PNRs, customers and status badges from
+                     completed eSewa checkouts -->
                 <section class="admin-card">
                     <h2>Recent Bookings</h2>
                     <div class="table-wrap">
@@ -188,10 +185,11 @@
     </div>
 
     <script src="assets/js/admin.js"></script>
-    <!-- Mock API layer (item 16): config → mock-data → api → page -->
+    <!-- API layer: config → mock-data → api → toast → page -->
     <script src="assets/js/config.js"></script>
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/toast.js"></script>
     <script src="assets/js/admin-dashboard.js"></script>
 </body>
 

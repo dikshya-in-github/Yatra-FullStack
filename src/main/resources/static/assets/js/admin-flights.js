@@ -61,6 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
      controls that can be changed while another query is still in flight, and a
      slow answer for an older query must not redraw the table. */
   let readSeq = 0;
+  /* Set at the bottom of this file to the initial reload(). The Add/Edit modal
+     builds three dropdowns out of `airlines` and `destinations`, so opening it
+     before that first read had answered left the Airline, Origin and Destination
+     selects empty — the form looked broken and no flight could be added (reported
+     from the admin pages 2026-09-19). "Add Flight" now waits for this promise,
+     which is just a resolved one once the first read is done. */
+  let firstLoad;
 
   /* A route cell's city name: the destination row is the authority, CITIES is
      the offline fallback for a code the API did not return. */
@@ -305,7 +312,10 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.hidden = true;
   }
 
-  $('#addFlightBtn').addEventListener('click', () => openModal());
+  /* finally(), not then(): after a FAILED first read the modal still opens — with
+     the honest "No airlines — add one in Airlines first" options rather than
+     silently doing nothing. */
+  $('#addFlightBtn').addEventListener('click', () => firstLoad.finally(() => openModal()));
   $('#modalClose').addEventListener('click', closeModal);
   $('#modalCancel').addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => {
@@ -594,5 +604,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------- First render ---------- */
-  reload().catch(showLoadFailure);
+  firstLoad = reload();
+  firstLoad.catch(showLoadFailure);
 });

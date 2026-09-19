@@ -86,10 +86,9 @@
                 <div class="page-header">
                     <div>
                         <h1>Destinations</h1>
-                        <p class="page-sub">Nepali cities and airports offered in the customer search (Master Plan
-                            §2.1 #7) — the same 11-airport set <code>searchFlight.js</code> uses. Per the hybrid image
-                            split (§3.5), destination images are stored as <strong>URLs</strong> (mocking Cloudinary
-                            <code>secure_url</code>) — unlike airline logos, which are database Base64/BLOB.</p>
+                        <p class="page-sub">The Nepali cities and airports customers can pick from when they
+                            search for a flight. Marking a destination <strong>Inactive</strong> keeps it on record
+                            but takes it out of the customer-facing search.</p>
                     </div>
                     <div class="page-actions">
                         <button class="a-btn" id="addDestBtn"><i class="fa-solid fa-plus"></i> Add Destination</button>
@@ -179,13 +178,12 @@
                             placeholder="Short blurb shown to customers…"></textarea>
                     </div>
                     <div class="a-field span-2">
-                        <label for="destImageUrl">Image URL (Cloudinary secure_url)</label>
+                        <label for="destImageUrl">Image URL</label>
                         <input type="text" class="a-input" id="destImageUrl"
                             placeholder="https://res.cloudinary.com/…" autocomplete="off">
                         <small class="form-hint">Leave empty to use the code-badge fallback in the table.</small>
-                    </div>
-                    <div class="a-field span-2">
-                        <label>Image upload (Cloudinary)</label>
+                    </div>                        <div class="a-field span-2">
+                        <label>Or upload an image</label>
                         <div class="upload-row">
                             <div class="upload-preview" id="imgPreview"><span>No file</span></div>
                             <div>
@@ -195,10 +193,9 @@
                                     <button type="button" class="a-btn a-btn-outline" id="removeImgBtn" hidden><i
                                             class="fa-solid fa-trash"></i> Remove</button>
                                 </div>
-                                <p class="upload-hint">Goes to Cloudinary through
-                                    <code>POST /api/admin/destinations/image</code>, and the row keeps the returned
-                                    <code>secure_url</code> + public id (§3.5). The URL field stays editable for a
-                                    pasted link.</p>
+                                <p class="upload-hint">PNG/JPG/WEBP, up to 2 MB · uploaded to Cloudinary and
+                                    attached to this destination. The Image URL field above stays editable, so a
+                                    pasted link works too.</p>
                             </div>
                         </div>
                         <input type="file" id="imgInput" accept="image/png,image/jpeg,image/webp"
@@ -231,7 +228,7 @@
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p class="confirm-msg" id="confirmMsg">This action cannot be undone in the demo.</p>
+                <p class="confirm-msg" id="confirmMsg">This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="a-btn a-btn-outline" id="confirmNo">Keep it</button>

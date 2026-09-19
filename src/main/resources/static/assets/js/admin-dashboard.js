@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* Compact revenue like the original dummy "NPR 42.6L" (lakh/crore) */
   function fmtShortNPR(n) {
+    // A missing `stats` block handed this undefined, and every comparison below
+    // failed through to Math.round(undefined) → "NPR NaN" on the card.
+    n = Number(n) || 0;
     if (n >= 1e7) return 'NPR ' + (n / 1e7).toFixed(1) + 'Cr';
     if (n >= 1e5) return 'NPR ' + (n / 1e5).toFixed(1) + 'L';
     if (n >= 1e3) return 'NPR ' + (n / 1e3).toFixed(1) + 'K';
@@ -165,13 +168,70 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ---------- First render ---------- */
+  /* ---------- Export ----------
+     The button used to be an `onclick="return false"` stub, so clicking it did
+     nothing at all. It now downloads the rows the table is showing as a CSV the
+     admin can open in Excel or Sheets. The rows come from `lastData` — the last
+     dashboard read, which is the same array the table is drawn from — so the
+     file can never disagree with what is on screen. */
+  function csvCell(value) {
+    const s = value == null || value === '' ? '' : String(value);
+    // A field holding a comma, a quote or a line break has to be wrapped, with
+    // its own quotes doubled (RFC 4180) — "Ghising, Dikshya" is one cell.
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function exportBookings() {
+    const rows = (lastData && lastData.bookings) || [];
+    if (!rows.length) {
+      showToast('There is nothing to export yet.', 'error');
+      return;
+    }
+
+    const head = ['PNR', 'Customer', 'Flight', 'From', 'To', 'Date',
+      'Amount (NPR)', 'Payment', 'Status', 'Booked on'];
+    const lines = [head.map(csvCell).join(',')].concat(
+      rows.map((b) => {
+        const f = b.flight || {};
+        return [b.pnr, b.customer, f.flightNo, f.from, f.to, f.date,
+          b.amount, b.paymentStatus, b.status, b.createdAt].map(csvCell).join(',');
+      })
+    );
+
+    // The BOM keeps Excel from mangling non-ASCII characters (names, NPR sign).
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'yatra-bookings-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    showToast(`${rows.length} booking${rows.length === 1 ? '' : 's'} exported.`, 'success');
+  }
+
+  const exportBtn = $('#dashExport');
+  if (exportBtn) exportBtn.addEventListener('click', exportBookings);
+
+  /* ---------- First render ----------
+     A failed read used to leave the markup's placeholder numbers (1,248 users,
+     86 flights) on screen as if they were real, with the failure only in the
+     console. The cards are zeroed and the failure is reported instead. */
+  function showLoadFailure(err) {
+    lastData = { bookings: [] };
+    ['#statUsers', '#statFlights', '#statAirlines', '#statBookings', '#statToday', '#statPending']
+      .forEach((sel) => { $(sel).textContent = '0'; });
+    $('#statRevenue').textContent = fmtShortNPR(0);
+    renderRecent(lastData);
+    showToast('Could not load the dashboard: ' + ((err && err.message) || err), 'error');
+  }
+
   loadDashboard()
     .then((data) => {
       renderStats(data);
       renderRecent(data);
     })
-    .catch((err) => {
-      console.error('Dashboard load failed:', err && err.message ? err.message : err);
-    });
+    .catch(showLoadFailure);
 });

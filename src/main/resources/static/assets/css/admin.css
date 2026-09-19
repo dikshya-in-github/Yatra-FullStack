@@ -59,6 +59,21 @@ a {
   color: inherit;
 }
 
+/* The `hidden` attribute is how every admin page keeps something OFF: the
+   add/edit modals start hidden, the styled confirm dialog starts hidden, the
+   page loader flips empty states with it, and buttons such as "Remove logo"
+   or "Refund" only appear when a row qualifies. The UA stylesheet's own
+   `[hidden] { display: none }` loses to any of the display rules below
+   (.modal-overlay is display:flex, .a-btn is display:inline-flex, .pw-meter
+   and .form-hint.rule are display:flex), so without this one line every modal
+   painted itself open on page load and no Close / Keep it / Confirm / Done
+   button could shut it — the element stayed visible however often JS set
+   `hidden = true`. Declared once, here, instead of per component
+   (same fix as esewaV2.css). Reported from the admin pages 2026-09-19. */
+[hidden] {
+  display: none !important;
+}
+
 img {
   max-width: 100%;
   display: block;

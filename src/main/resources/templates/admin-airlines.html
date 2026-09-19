@@ -85,10 +85,9 @@
                 <div class="page-header">
                     <div>
                         <h1>Airlines</h1>
-                        <p class="page-sub">Manage airline information — logos are stored in the database as
-                            Base64 and served from <code>GET /api/airlines/{id}/logo</code> (Master Plan §2.6,
-                            §3.5). Airline data is separate from flight inventory — no seat management here
-                            (spec §14).</p>
+                        <p class="page-sub">Manage the airlines Yatra sells seats on — their name, IATA code,
+                            logo and description. Airline details are kept separately from flight inventory,
+                            so seats and fares are managed on the Flights page.</p>
                     </div>
                     <div class="page-actions">
                         <button class="a-btn a-btn-primary" id="addAirlineBtn"><i class="fa-solid fa-plus"></i> Add
@@ -193,9 +192,8 @@
                                     <button type="button" class="a-btn a-btn-outline" id="removeLogoBtn"
                                         hidden><i class="fa-solid fa-trash"></i> Remove</button>
                                 </div>
-                                <p class="upload-hint">PNG/JPG/SVG, up to 2 MB · stored in the database as Base64
-                                    and served from <code>GET /api/airlines/{id}/logo</code> (Master Plan §3.5). The
-                                    preview below is local until you save.</p>
+                                <p class="upload-hint">PNG/JPG/SVG, up to 2 MB · stored with the airline and shown
+                                    on the storefront. The preview below is local until you save.</p>
                             </div>
                         </div>
                         <input type="file" id="logoInput" accept="image/png,image/jpeg,image/svg+xml"

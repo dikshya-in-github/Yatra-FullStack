@@ -69,6 +69,18 @@ var YATRA_CONFIG = {
         "signup.html",
         "admin-login.html",  /* §1 + §13 — the panel's sign-in and its real role check */
 
+        /* §2.5 + Phase 13 — the admin dashboard. It was the LAST admin page still
+           reading mock-data.js: the seven cards and "Recent Bookings" came from the
+           mock's own route, so the table sat permanently empty ("No bookings yet —
+           complete a checkout on the storefront and it appears here", with eight
+           bookings in MySQL) and the totals were the mock's arithmetic while
+           GET /api/admin/dashboard — the endpoint this page's own header and
+           AdminDashboardController both describe — answered the real rows and a
+           `stats` block with the same keys. Named here for the same reason as the
+           seven modules below: its READS moved. It has no write to move with them
+           (Export downloads a CSV in the browser). */
+        "admin-dashboard.html",
+
         /* §12 + §13 — the Flights module, the reference pattern for §12's five-step
            workflow (execution step 5): GET /api/admin/flights + /api/airlines +
            /api/destinations for reads, POST/PUT/DELETE /api/admin/flights for
@@ -149,6 +161,19 @@ var YATRA_CONFIG = {
            as Voided. Nothing in the API voids a document; only the seeder writes
            CANCELLED. */
         "admin-tickets.html",
+
+        /* Phase 14 — the administrator's own account, and the LAST admin page still
+           reading the mock: `/api/admin/profile` answered from mock-data.js, so a
+           change of name, email or mobile went to a browser store while
+           AdminProfileController (which closed Phase 14's checkpoint) was never
+           called. It resolves its subject from the JWT's `sub` claim — no id in the
+           path to tamper with — and answers exactly the envelope this page reads,
+           `{ user: { userId, name, email, phone, role, status, registeredAt } }`.
+           Named here because its reads AND its writes (POST /api/admin/profile) both
+           moved. One thing on the page is still deliberately unwired: the Change
+           Password form, because the API serves no such route — it now says so
+           instead of reporting a change it never made. */
+        "admin-profile.html",
 
         /* §7 + §11 — the signed-in account. profile.html is §11's page; both pages
            call ONLY GET/POST/PUT /api/users/me and GET /api/users/me/bookings, so

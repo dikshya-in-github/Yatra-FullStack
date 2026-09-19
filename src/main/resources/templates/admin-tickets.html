@@ -86,15 +86,12 @@
                 <div class="page-header">
                     <div>
                         <h1>Tickets</h1>
-                        <p class="page-sub">Generated e-tickets (Master Plan §2.1 #9), read from
-                            <code>/api/admin/tickets</code> — the PNR + ticket number the customer printed at
-                            <code>eticket.html</code>. Search, both filters and paging are queries, and the
-                            <strong>Status column is the ticket's own state</strong> (<code>ISSUED</code> →
-                            Issued, <code>CANCELLED</code> → Voided), with the booking's state beside it —
-                            the two are independent: a cancelled booking's document stays <em>Issued</em>,
-                            because nothing in the API voids a ticket. This view is <strong>read-only</strong>
-                            — a document is issued by the checkout when a payment settles, and cancelling a
-                            booking starts at <a href="./admin-bookings.html">Bookings</a>.</p>
+                        <p class="page-sub">The e-tickets Yatra has issued — the PNR and ticket number a
+                            customer prints or downloads from their booking. This page is
+                            <strong>read-only</strong>: a ticket is issued automatically when a payment settles,
+                            so the only thing you can do here is look one up. The Status column shows the
+                            ticket's own state, which is tracked separately from the booking it belongs to —
+                            to cancel a booking, use <a href="./admin-bookings.html">Bookings</a>.</p>
                     </div>
                 </div>
 
@@ -170,7 +167,7 @@
     <div class="modal-overlay" id="ticketModal" hidden>
         <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="ticketModalTitle">
             <div class="modal-header">
-                <h2 id="ticketModalTitle">Ticket</h2>
+                <h2 id="ticketModalTitle">Ticket details</h2>
                 <button type="button" class="modal-close" id="ticketModalClose" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>

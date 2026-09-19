@@ -273,19 +273,51 @@
             cursor: not-allowed;
         }
 
-        .demo-hint {
-            margin-top: 1.4rem;
+        /* "Forgot password?" is a button, not a dead href — it opens the note
+           below instead of jumping to the top of the page. */
+        .link-btn {
+            background: none;
+            border: 0;
+            padding: 0;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .link-btn:hover {
+            text-decoration: underline;
+        }
+
+        .form-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-top: 0.9rem;
             background: var(--field-bg);
-            border: 1px dashed var(--line);
+            border: 1px solid var(--line);
             border-radius: var(--radius-md);
-            padding: 0.75rem 0.9rem;
-            font-size: 0.76rem;
-            color: var(--slate-light);
+            padding: 0.7rem 0.85rem;
+            font-size: 0.78rem;
+            color: var(--slate);
             line-height: 1.5;
         }
 
-        .demo-hint strong {
-            color: var(--slate);
+        .form-note i {
+            margin-top: 0.15rem;
+            color: var(--primary);
+        }
+
+        .form-note a {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* .form-note is display:flex, which beats the UA [hidden] rule — without
+           this the note ignores `hidden` and shows before the link is clicked. */
+        .form-note[hidden] {
+            display: none;
         }
 
         .back-link {
@@ -375,7 +407,7 @@
                 <label for="adminId">Email or Username</label>
                 <div class="input-wrap">
                     <i class="fa-solid fa-user-shield"></i>
-                    <input type="text" id="adminId" name="adminId" placeholder="admin@gmail.com" autocomplete="username">
+                    <input type="text" id="adminId" name="adminId" placeholder="admin@example.com" autocomplete="username">
                 </div>
             </div>
 
@@ -394,20 +426,21 @@
                 <label class="remember">
                     <input type="checkbox" id="keepSigned"> Keep me signed in
                 </label>
-                <a href="#" onclick="return false;">Forgot password?</a>
+                <button type="button" class="link-btn" id="forgotPw" aria-expanded="false"
+                    aria-controls="forgotNote">Forgot password?</button>
             </div>
+
+            <p class="form-note" id="forgotNote" hidden>
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Yatra Admin has no self-service reset. Email
+                    <a href="mailto:support@yatra2.0.com">support@yatra2.0.com</a> and an administrator will reset
+                    your password for you.</span>
+            </p>
 
             <button type="submit" class="btn-submit">
                 <i class="fa-solid fa-right-to-bracket"></i> Log in to Dashboard
             </button>
         </form>
-
-        <p class="demo-hint">
-            <strong>Real authentication.</strong> <code>POST /api/auth/login</code> → JWT → role check
-            (Master Plan §2.3 / §3.3–3.4). Only a seeded account whose stored role is
-            <code>ADMIN</code> opens the dashboard; the demo credentials are in the Run-and-Test
-            guide, §3. The password is verified against a BCrypt hash — not by this page.
-        </p>
 
         <a class="back-link" href="./home.html"><i class="fa-solid fa-arrow-left"></i> Back to Yatra site</a>
     </main>
@@ -453,6 +486,18 @@
                     input.focus({ preventScroll: true });
                 });
             });
+
+            /* "Forgot password?" — there is no reset endpoint, so this explains
+               the real route (an administrator resets it) instead of pointing at
+               a dead link. Toggles the note, so clicking twice closes it. */
+            const forgotBtn = $('#forgotPw');
+            const forgotNote = $('#forgotNote');
+            if (forgotBtn && forgotNote) {
+                forgotBtn.addEventListener('click', () => {
+                    forgotNote.hidden = !forgotNote.hidden;
+                    forgotBtn.setAttribute('aria-expanded', String(!forgotNote.hidden));
+                });
+            }
 
             function clearError(el) {
                 const field = el.closest('.field');

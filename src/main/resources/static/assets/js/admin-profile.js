@@ -1,28 +1,33 @@
 /* =========================================
-   YATRA ADMIN — PROFILE PAGE JS (Master Plan §2.1 #10)
+   YATRA ADMIN — PROFILE PAGE JS
 
-   The admin's own account + logout. Reads and writes through
-   the API layer's own admin route, so the page code is the
-   same in mock mode and against Spring Security in Phase 3:
+   The admin's own account + logout. Reads and writes the real
+   endpoint, named in config.js's REAL_API_PAGES:
 
      GET  /api/admin/profile  → { user }
      POST /api/admin/profile  → { user }
 
-   That route is the mock's stand-in for a controller behind
-   @PreAuthorize("hasRole('ADMIN')"): it answers 401 when no
-   admin session exists, exactly like the real one will.
-   admin.js has already run its guard by the time this file
-   executes (it is loaded first, so its DOMContentLoaded
-   listener is registered first).
+   AdminProfileController resolves the caller from the JWT's
+   `sub` claim, so there is no id in the URL to tamper with and
+   the page posts the same empty-path body it always did. It
+   answers 401 when no admin session exists, which is why the
+   load path can bounce to the sign-in page. admin.js has
+   already run its guard by the time this file executes (it is
+   loaded first, so its DOMContentLoaded listener is registered
+   first).
 
-   The account row is the SAME `yatra_admin_users` record the
-   Users page manages — one roster for signup, admin-users and
-   this page, so an edit here can never drift from the panel.
+   The account row is the SAME record the Users page manages —
+   one roster for signup, admin-users and this page, so an edit
+   here can never drift from the panel.
 
-   Passwords are never stored or compared client-side: the mock
-   drops the field and BCryptPasswordEncoder owns it server-side
-   (Master Plan §3.4). The form is a real validation flow that
-   will POST /api/admin/profile/password in Phase 3.
+   Passwords are never stored or compared client-side. The
+   Change Password form is NOT wired: the API serves no
+   password-change route, so it validates the real rules and
+   then says so in the open (see the submit handler). It used to
+   reset the fields and toast "Password updated" from a
+   setTimeout — a success message for a change that never
+   happened. The rules above it are unchanged, so wiring it the
+   day the endpoint lands is a one-block edit.
    ========================================= */
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
@@ -76,12 +81,12 @@ document.addEventListener('DOMContentLoaded', function () {
             : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     }
 
+    /* Only the last six characters, and no vocabulary about how the key is built:
+       the old version printed "JWT ••••xxxxxx (3 segments)", which describes the
+       implementation to whoever is looking at the screen. */
     function maskToken(token) {
-        if (!token) return 'No token in this tab';
-        var parts = String(token).split('.');
-        return parts.length === 3
-            ? 'JWT ••••' + String(token).slice(-6) + ' (' + parts.length + ' segments)'
-            : '••••' + String(token).slice(-6);
+        if (!token) return 'No session key in this tab';
+        return '••••' + String(token).slice(-6);
     }
 
     /* ---------- State ---------- */
@@ -116,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
         $id('sessId').textContent = u.userId ? '#' + u.userId : '—';
         $id('sessToken').textContent = maskToken((function () {
             try { return sessionStorage.getItem(cfg.AUTH_TOKEN_KEY || 'yatra_auth_token'); } catch (e) { return null; }
-        })() || (adminSession() ? 'admin-session' : null));
+        })());
     }
 
     function prefill(u) {
@@ -315,20 +320,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            var btn = $id('passwordSaveBtn');
-            var original = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Updating…';
-
-            /* Demo: the backend owns password storage, so nothing is persisted.
-               Phase 3 swaps this block for POST /api/admin/profile/password. */
-            setTimeout(function () {
-                pwForm.reset();
-                $id('pwMeter').hidden = true;
-                btn.disabled = false;
-                btn.innerHTML = original;
-                showToast('Password updated (demo — the backend hashes it in Phase 3).');
-            }, 800);
+            /* Nothing is sent and nothing is claimed. There is no password-change
+               route to call (AdminProfileController's own note records the decision),
+               so the form refuses in the OPEN rather than confirming a change it did
+               not make — which is what this block used to do: reset the fields, hide
+               the meter and toast "Password updated" from an 800ms setTimeout.
+               The fields deliberately keep their values: clearing them is the visual
+               language of a successful save. */
+            $id('pwUnavailable').hidden = false;
+            showToast('Nothing was saved — changing your password is not available in this build.',
+                'error');
         });
     }
 

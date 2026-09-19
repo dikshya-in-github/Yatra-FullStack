@@ -86,13 +86,10 @@
                 <div class="page-header">
                     <div>
                         <h1>Payments</h1>
-                        <p class="page-sub">eSewa transaction monitoring (Master Plan §2.1 #8), read from
-                            <code>/api/admin/payments</code> — search, method and status are queries, so the count,
-                            the paging and the four tiles are the database's. A refund is a <strong>money
-                                action</strong> (<code>POST /api/admin/payments/{id}/refund</code>), not an editable
-                            field: it is refused for a payment that never succeeded, and it deliberately leaves
-                            the booking and its seats alone. Amounts, transaction ids and dates are the
-                            gateway's.</p>
+                        <p class="page-sub">Every eSewa payment that has come through Yatra. A refund is a
+                            <strong>money action</strong>, not an editable field: it is refused for a payment that
+                            never succeeded, and it leaves the booking and its seats untouched. Amounts,
+                            transaction IDs and dates come straight from the gateway.</p>
                     </div>
                 </div>                    <!-- Payment summary — the database's own totals (`stats` on the ledger
                          response), over the whole ledger and not the current search. -->
@@ -272,7 +269,7 @@
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <p class="confirm-msg" id="confirmMsg">This action cannot be undone in the demo.</p>
+                <p class="confirm-msg" id="confirmMsg">This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="a-btn a-btn-outline" id="confirmNo">Keep it</button>
