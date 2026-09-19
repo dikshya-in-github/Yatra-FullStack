@@ -86,9 +86,10 @@
                 <div class="page-header">
                     <div>
                         <h1>Bookings</h1>
-                        <p class="page-sub">Customer bookings from the storefront — completed eSewa checkouts are saved
-                            here automatically (Master Plan §2.1 #5). Cancelling a booking is a
-                            <strong>status change</strong>: seats stay counted on the flight.</p>
+                        <p class="page-sub">Customer bookings from the storefront — every booking the wizard creates
+                            is written here automatically (Master Plan §2.1 #5). Cancelling a booking is a
+                            <strong>status change</strong>: seats stay counted on the flight. Confirming one is
+                            gated on a successful payment, and a booking is never deleted from this page.</p>
                     </div>
                     <div class="page-actions">
                         <button class="a-btn a-btn-outline" id="resetBtn"><i class="fa-solid fa-rotate-left"></i>
@@ -106,6 +107,7 @@
                         </div>
                         <select class="a-select" id="bookingStatusFilter" aria-label="Filter by booking status">
                             <option value="ALL">All bookings</option>
+                            <option value="Pending">Pending</option>
                             <option value="Confirmed">Confirmed</option>
                             <option value="Cancelled">Cancelled</option>
                         </select>

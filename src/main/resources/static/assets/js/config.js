@@ -98,6 +98,18 @@ var YATRA_CONFIG = {
            Named here only because its WRITES moved with its reads. */
         "admin-destinations.html",
 
+        /* §12 + §13 — the Bookings module, migrated the same way: the list is a
+           server QUERY (GET /api/admin/bookings?search=&status=&paymentStatus=
+           &page=&size=), the detail modal reads GET /api/admin/bookings/{id}, and
+           the one write is PUT /api/admin/bookings/{id}/status — cancel, and the
+           confirm the API gates on a SUCCESS payment. It is the module that has no
+           CREATE and no DELETE: bookings are created by the wizard (§7) and the API
+           deliberately serves no booking delete at all (a booking with a payment or
+           a ticket is never hard-deleted). Its Reset button names
+           POST /api/admin/reset + /seed. Named here only because its WRITES moved
+           with its reads. */
+        "admin-bookings.html",
+
         /* §7 + §11 — the signed-in account. profile.html is §11's page; both pages
            call ONLY GET/POST/PUT /api/users/me and GET /api/users/me/bookings, so
            naming them here moves no unrelated call with them. They are named
