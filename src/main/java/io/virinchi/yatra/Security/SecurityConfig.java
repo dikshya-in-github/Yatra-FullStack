@@ -90,12 +90,28 @@ public class SecurityConfig {
                         // can be marked paid without that first step. Named as two
                         // exact paths rather than /api/payments/** so no future
                         // read or admin route under it is opened by accident.
-                        // What this does NOT have: any form of callback
-                        // authentication (a real eSewa integration signs its
-                        // webhook) and any rate limit. Recorded as a limitation in
+                        // What `verify` does NOT have: any form of callback
+                        // authentication, because the mock gateway IS the browser
+                        // and there is nothing to verify it against. §10's real
+                        // callback does — it re-signs eSewa's payload and asks
+                        // eSewa's status API (see EsewaController). Neither has a
+                        // rate limit. Recorded as a limitation in
                         // Service/PaymentService and the standards doc, not hidden.
                         .requestMatchers(HttpMethod.POST,
                                 "/api/payments/initiate", "/api/payments/verify").permitAll()
+                        // §10's three eSewa endpoints, and the rule is GET-only on
+                        // this exact prefix: `/checkout/{id}` is the signed handoff
+                        // page the wizard navigates to, and `/success/{id}` and
+                        // `/failure/{id}` are where eSewa redirects the customer's
+                        // browser with a Base64 result. They have to be public for
+                        // the same reason the booking write is — a signed-out visitor
+                        // is allowed to pay, and a 401 here would strand them on the
+                        // wrong side of a payment they may have already made.
+                        // Public is not unguarded: nothing is confirmed without a
+                        // signature this server can reproduce AND a COMPLETE from
+                        // eSewa's own status API. GET-only, so no write and no admin
+                        // route under /api/payments/** is opened by this line.
+                        .requestMatchers(HttpMethod.GET, "/api/payments/esewa/**").permitAll()
                         // The airline READS are public because the storefront is:
                         // searchFlight.html shows an airline on every flight card,
                         // to signed-out visitors too. GET-only, so the admin

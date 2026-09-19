@@ -306,4 +306,84 @@ public class ConflictException extends ApiException {
                         + "A booking may be cancelled from any state, and only a PENDING booking with a "
                         + "successful payment may be confirmed.");
     }
+
+    /* ------------------------------------------------------------------ *
+     *  The real eSewa callback (fix-plan §10)                             *
+     *
+     *  Four refusals, and the first two are the pair that makes a public
+     *  callback safe: a transaction reference that no row holds, and one that
+     *  belongs to a different booking. Both are about *attribution* rather than
+     *  about money — a callback that cannot be tied to exactly one pending
+     *  transaction must be refused before anything is written, because the
+     *  alternative is confirming a booking nobody paid for.
+     * ------------------------------------------------------------------ */
+
+    /**
+     * The callback named a transaction this server has no record of.
+     *
+     * <p>Not a 404: the endpoint exists and the booking in its path may well be real —
+     * what is missing is the transaction. The causes worth knowing about are a
+     * reference minted for another environment (a UAT callback pointing at a
+     * production-shaped database), a booking whose attempt was re-initiated after the
+     * callback was issued, and a made-up uuid. All three are refused identically, and
+     * the message names the reference so a support ticket can quote it.
+     */
+    public static ConflictException esewaTransactionUnknown(String transactionUuid) {
+        return new ConflictException(
+                "ESEWA_TRANSACTION_UNKNOWN",
+                "Transaction \"" + transactionUuid + "\" is not recorded against any payment, so "
+                        + "nothing was settled. If a payment was made, quote this reference to "
+                        + "support — the gateway may hold it under a different booking.");
+    }
+
+    /**
+     * The transaction exists but belongs to another booking.
+     *
+     * <p>The callback's path carries a booking id and its payload carries a transaction
+     * reference, and this is what happens when the two disagree — a pasted URL, a
+     * tampered one, or a customer who has several bookings open. The refusal is not
+     * about the money (the transaction may be perfectly valid); it is that settling it
+     * against <i>this</i> booking would confirm the wrong trip.
+     */
+    public static ConflictException esewaTransactionNotCurrent(int bookingId, String claimed, String stored) {
+        return new ConflictException(
+                "ESEWA_TRANSACTION_NOT_CURRENT",
+                "Booking " + bookingId + " is not the booking transaction \"" + claimed + "\" belongs "
+                        + "to (" + stored + " does). This is usually a stale response from an earlier "
+                        + "attempt — the current attempt's own callback is the one that settles it.");
+    }
+
+    /**
+     * eSewa's ledger holds a different figure than the booking owes.
+     *
+     * <p>This is the "paid one rupee, confirmed a 16,599.98 booking" case seen from the
+     * far end. The status API is asked about the payment row's own amount, so a mismatch
+     * here means eSewa's answer is about another transaction entirely — and a booking is
+     * never confirmed on an answer that is not demonstrably about its own money.
+     */
+    public static ConflictException esewaAmountMismatch(int bookingId, String expected, String paid) {
+        return new ConflictException(
+                "ESEWA_AMOUNT_MISMATCH",
+                "Booking " + bookingId + " is owed " + expected + " but eSewa's ledger holds " + paid
+                        + " for this transaction, so nothing was settled. Check the gateway's own "
+                        + "dashboard before retrying — if money moved, it moved against another "
+                        + "transaction.");
+    }
+
+    /**
+     * The callback claimed success and eSewa's own ledger disagreed.
+     *
+     * <p>Distinct from the mismatch above because of what it implies: the payload passed
+     * its signature check and still told a different story than the gateway's server-side
+     * answer, which in production is the signature of a compromised or misconfigured
+     * signing key. Nothing is settled in either direction — failing the booking would act
+     * on the same untrusted claim, merely negatively — and the case is logged at WARN.
+     */
+    public static ConflictException esewaPaymentNotConfirmed(int bookingId, String gatewayStatus) {
+        return new ConflictException(
+                "ESEWA_PAYMENT_NOT_CONFIRMED",
+                "Booking " + bookingId + " was reported as paid but eSewa's own records say \""
+                        + gatewayStatus + "\", so it was not confirmed. The booking is unchanged; "
+                        + "verify the transaction in eSewa before contacting the customer.");
+    }
 }

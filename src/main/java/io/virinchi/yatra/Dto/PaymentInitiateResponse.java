@@ -16,6 +16,26 @@ import java.math.BigDecimal;
  * {@code amount} are the four the mock answers, in its own spelling
  * ({@code paymentRef}, camel case, amount as a number).
  *
+ * <p><b>{@code gatewayRedirect} no longer names a Yatra page (fix-plan §10).</b> It
+ * used to answer {@code esewaLogin.html}, one of the four pages that recreated
+ * eSewa's own login/OTP/balance screens as static Yatra HTML. It now points at this
+ * server's own handoff — {@code /api/payments/esewa/checkout/{bookingId}} — which
+ * signs the transaction and POSTs the customer to eSewa's real hosted page. That is
+ * the one value {@code payment.js} consumes, so the cut-over really is this line:
+ * the page navigates where the server tells it to, and the server is what knows
+ * whether the gateway is configured at all.
+ *
+ * <p>It is a <b>relative path beginning with {@code /}</b> rather than an absolute
+ * URL: the handoff must happen on the origin the customer is already using, and
+ * hard-coding {@code localhost:8080} here is how a demo on 8081 or a tunnel
+ * silently sends the browser to the wrong instance — or to a stranger's. The same
+ * reasoning is why the checkout page builds its own callback URLs from the request
+ * that reached <i>it</i>.
+ *
+ * <p>The mock path is untouched: {@code api.js}'s route table still answers
+ * {@code esewaLogin.html}, so a page in mock mode walks the demo screens exactly as
+ * before. Only the real API's answer changed, and it is the answer that had to.
+ *
  * <p><b>What {@code paymentRef} is here.</b> The mock mints a throwaway
  * {@code "PAY" + timestamp}. This API returns the <b>payment row's own id</b> in
  * the same {@code PAY}-prefixed, zero-padded shape — so the reference names a row
@@ -41,10 +61,13 @@ public record PaymentInitiateResponse(
 ) {
 
     /**
-     * The eSewa mock's entry page — the same relative path the mock returns, which
-     * resolves against the flat {@code static/} page root the project serves.
+     * The real eSewa handoff's path, without the booking id.
+     *
+     * <p>A path, not a page name: {@code EsewaController} serves it, it answers HTML
+     * (the self-submitting form), and it is public because the wizard lets a
+     * signed-out visitor pay.
      */
-    public static final String ESEWA_GATEWAY = "esewaLogin.html";
+    public static final String ESEWA_CHECKOUT = "/api/payments/esewa/checkout/";
 
     /**
      * The reference a caller sees: {@code "PAY" + the payment row's id, padded to
@@ -56,6 +79,6 @@ public record PaymentInitiateResponse(
                 payment.getBooking().getId(),
                 payment.getMethod(),
                 payment.getAmount(),
-                ESEWA_GATEWAY);
+                ESEWA_CHECKOUT + payment.getBooking().getId());
     }
 }

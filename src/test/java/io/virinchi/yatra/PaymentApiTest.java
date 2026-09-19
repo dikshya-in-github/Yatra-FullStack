@@ -124,7 +124,13 @@ class PaymentApiTest {
                 // The stored spelling, which admin-payments.html's filter compares against.
                 .andExpect(jsonPath("$.method").value("eSewa"))
                 .andExpect(jsonPath("$.amount").value(16599.98))
-                .andExpect(jsonPath("$.gatewayRedirect").value("esewaLogin.html"))
+                // §10 (Session 63) — this used to answer "esewaLogin.html", one of the
+                // four pages that recreated eSewa's own login/OTP/balance screens as
+                // static Yatra HTML. The wizard now navigates to this server's signed
+                // handoff, which POSTs the customer to eSewa's real hosted page. The
+                // mock path is unaffected: api.js's own route still answers the page.
+                .andExpect(jsonPath("$.gatewayRedirect")
+                        .value("/api/payments/esewa/checkout/" + bookingId))
                 .andReturn().getResponse().getContentAsString();
 
         // The reference names the row it created, not a throwaway timestamp.
@@ -136,7 +142,17 @@ class PaymentApiTest {
         Payment payment = payment(payments.findByBookingId(bookingId));
         assertThat(payment.getStatus()).as("initiate opens the transaction, it does not settle it")
                 .isEqualTo("PENDING");
-        assertThat(payment.getTxnId()).as("the gateway's reference does not exist yet").isNull();
+        // §10 (Session 63) — the row now holds the transaction_uuid this server mints and
+        // sends to eSewa, because that reference is what the real callback is matched by:
+        // eSewa's redirect carries the uuid and no booking id, so the row has to be
+        // findable by it. It replaces an older assertion that this was null; the value is
+        // deliberately opaque (a bare UUID), so only its presence is asserted here.
+        assertThat(payment.getTxnId())
+                .as("the transaction reference the callback will be matched by")
+                .isNotBlank();
+        assertThat(payment.getTxnId())
+                .as("a UUID, not a booking-derived value — eSewa rejects a reused transaction_uuid")
+                .matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
         assertThat(payment.getPaidAt()).isNull();
         assertThat(payment.getMethod()).isEqualTo("eSewa");
         assertThat(payment.getAmount()).as("fare x passengers, computed server-side")

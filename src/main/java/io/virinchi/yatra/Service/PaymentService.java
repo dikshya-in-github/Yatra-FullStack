@@ -28,6 +28,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -38,14 +39,26 @@ import java.util.stream.Collectors;
  * <pre>
  * booking created (PENDING, seats held)        BookingService.createBooking
  *        ↓
- * POST /api/payments/initiate                  → a PENDING payment row
+ * POST /api/payments/initiate                  → a PENDING payment row + the transaction uuid
  *        ↓
- * the mock gateway walks its own pages          (payment.js → esewaLogin → … → esewaConfirm)
+ * one of two gateways:
+ *   a) the mock page walks its own screens        (payment.js → esewaLogin → … → esewaConfirm)
+ *      ↓ POST /api/payments/verify                  → the mock says what happened
+ *   b) GET /api/payments/esewa/checkout/{id}       (fix-plan §10 — the real one)
+ *      → a signed form that POSTs the customer to eSewa's own hosted page
+ *      → eSewa redirects back to /api/payments/esewa/success|failure/{id}
+ *        ↓ EsewaGatewayService: re-sign the payload, ask eSewa's status API, then settle
  *        ↓
- * POST /api/payments/verify                    → SUCCESS: payment SUCCESS, booking CONFIRMED,
- *                                                ticket issued
+ * settle()                                     → SUCCESS: payment SUCCESS, booking CONFIRMED,
+ *                                                           ticket issued
  *                                              → FAILED:  payment FAILED, booking untouched
  * </pre>
+ *
+ * <p><b>Both gateways end in the same {@code settle}.</b> That is deliberate and it is
+ * the point of the extraction §10 forced: "what a paid booking is" — payment
+ * {@code SUCCESS} first, then the one confirm path, then the ticket — is one method, so
+ * the mock callback, the real callback and the admin's own status button cannot drift
+ * into three slightly different definitions of paid.
  *
  * <p><b>Initiate writes a row; verify is what the gateway's answer updates.</b> That
  * split is what makes {@code PAYMENT_NOT_INITIATED} a real refusal rather than a
@@ -211,7 +224,9 @@ public class PaymentService {
             payment.setMethod(method);
             payment.setAmount(booking.getTotalAmount());
             payment.setStatus(PENDING);
-            payment.setTxnId(null);
+            //A fresh transaction reference, because the previous attempt's is dead: a
+            //callback carrying the old uuid must not settle this attempt (§10).
+            payment.setTxnId(transactionUuid());
             payment.setPaidAt(null);
 
             //The roadmap's "payments processed" event (Phase 14). A re-initiated
@@ -227,6 +242,10 @@ public class PaymentService {
         payment.setMethod(method);
         payment.setAmount(booking.getTotalAmount());
         payment.setStatus(PENDING);
+        //Minted here, before the customer leaves for the gateway, and stored on the row:
+        //it is the key the real callback is matched by, and the only handle that survives
+        //the round trip through eSewa (§10).
+        payment.setTxnId(transactionUuid());
         payment.setCreatedAt(LocalDateTime.now());
 
         log.info("Payment initiated: booking={} method={} amount={}",
@@ -260,12 +279,81 @@ public class PaymentService {
     @Transactional
     public PaymentVerifyResponse verify(PaymentVerifyRequest request) {
         Booking booking = requireBooking(request.bookingId());
-        String txnId = request.txnId().trim();
-        LocalDateTime answeredAt = LocalDateTime.now();
 
         Payment payment = payments.findByBookingId(booking.getId())
                 .orElseThrow(() -> ConflictException.paymentNotInitiated(booking.getId()));
 
+        //The mock page names the gateway it walked; a blank one keeps the stored spelling.
+        //Resolved here rather than in settle() because it is the *request's* vocabulary,
+        //while everything after it is shared with the real gateway path.
+        String method = blankToNull(request.method()) == null
+                ? payment.getMethod()
+                : canonicalMethod(request.method());
+
+        return settle(booking, payment, request.txnId().trim(), method, request.failed(),
+                LocalDateTime.now());
+    }
+
+    /**
+     * Settles a payment the real eSewa callback has already verified — fix-plan §10.
+     *
+     * <p><b>The caller is {@code EsewaGatewayService}, and the verification is already
+     * done.</b> By the time this runs the payload's signature has been re-computed and
+     * matched, eSewa's own status API has answered {@code COMPLETE}, and the amount it
+     * answered has been compared with the row's. So this method is not a second verifier
+     * — it is the writer, and it is deliberately the <i>same</i> writer as the mock
+     * path's: {@link #settle}. What it adds is the lookup: the callback carries a
+     * transaction uuid and no booking, so the row is found by the reference this server
+     * minted at initiate, which is also what makes a replayed callback harmless.
+     *
+     * <p>{@code paid} is the caller's verdict, and a {@code false} one travels the exact
+     * failure path the mock's declined payment does: the payment row records the attempt
+     * and the booking keeps its seats, its {@code PENDING} status and its absence of a
+     * ticket. A callback for a transaction that already succeeded is not an error —
+     * {@code settle}'s idempotency guard answers with the existing sale, so a customer
+     * refreshing the success URL gets their e-ticket again instead of a 409.
+     *
+     * @param bookingId       the booking the callback named in its path
+     * @param transactionUuid the uuid from the verified payload
+     * @param paid            whether eSewa's ledger said the transaction is complete
+     * @throws ResourceNotFoundException 404 — no such booking
+     * @throws ConflictException         409 {@code ESEWA_TRANSACTION_UNKNOWN} when no row
+     *                                   holds that reference, or
+     *                                   {@code ESEWA_TRANSACTION_NOT_CURRENT} when the row
+     *                                   belongs to a different booking
+     */
+    @Transactional
+    public PaymentVerifyResponse settleFromGateway(int bookingId, String transactionUuid, boolean paid) {
+        Booking booking = requireBooking(bookingId);
+
+        Payment payment = payments.findByTxnId(transactionUuid)
+                .orElseThrow(() -> ConflictException.esewaTransactionUnknown(transactionUuid));
+
+        //Two independent keys have to agree: the path's booking id and the payload's
+        //transaction uuid. Either one alone would be a single point of trust in a URL
+        //anybody can craft.
+        if (payment.getBooking() == null || payment.getBooking().getId() != bookingId) {
+            throw ConflictException.esewaTransactionNotCurrent(bookingId, transactionUuid,
+                    payment.getBooking() == null ? "no booking" : "booking " + payment.getBooking().getId());
+        }
+
+        //The customer chose the method, not the gateway — the row keeps its own.
+        return settle(booking, payment, transactionUuid, payment.getMethod(), !paid, LocalDateTime.now());
+    }
+
+    /**
+     * The one place a payment becomes settled — the shared second half of
+     * {@link #verify} (the mock gateway) and {@link #settleFromGateway} (the real one).
+     *
+     * <p>The guards, in order, and why the order is what it is: a refunded payment is
+     * refused first (undoing it is a finance action, not a retry); a successful one is
+     * answered idempotently when the reference matches and refused when it does not (the
+     * booking holds exactly one transaction); a cancelled booking is refused before
+     * anything is written; and the reference is checked against every other row before the
+     * write, so the UNIQUE column is a backstop rather than the error message.
+     */
+    private PaymentVerifyResponse settle(Booking booking, Payment payment, String txnId,
+                                         String method, boolean failed, LocalDateTime answeredAt) {
         String state = upper(payment.getStatus());
 
         if (REFUNDED.equals(state)) {
@@ -286,16 +374,15 @@ public class PaymentService {
         }
 
         //Pre-checked for a clean 409: the UNIQUE column would refuse it too, but as a
-        //driver-level duplicate that the handler can only report generically.
+        //driver-level duplicate that the handler can only report generically. On the real
+        //gateway path the id IS this row's own, so the filter removes it and the check
+        //passes — which is what keeps a callback for the current attempt idempotent
+        //instead of flagging itself as a duplicate.
         payments.findByTxnId(txnId)
                 .filter(other -> other.getId() != payment.getId())
                 .ifPresent(other -> {
                     throw ConflictException.txnIdAlreadyUsed(txnId);
                 });
-
-        String method = blankToNull(request.method()) == null
-                ? payment.getMethod()
-                : canonicalMethod(request.method());
 
         payment.setTxnId(txnId);
         payment.setMethod(method);
@@ -304,7 +391,7 @@ public class PaymentService {
             payment.setCreatedAt(answeredAt);
         }
 
-        if (request.failed()) {
+        if (failed) {
             payment.setStatus(FAILED);
             payment.setPaidAt(null);
             payments.save(payment);
@@ -610,5 +697,24 @@ public class PaymentService {
     private static String blankToNull(String value) {
         String trimmed = String.valueOf(value == null ? "" : value).trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * The transaction reference this server sends to the gateway and stores on the row.
+     *
+     * <p>A UUID rather than a derived value, for two reasons. eSewa's {@code ePay} v2
+     * rejects a {@code transaction_uuid} it has already seen for a completed transaction,
+     * so a re-initiated attempt must mint a new one — which a uuid does by construction
+     * where a {@code bookingId + timestamp} would eventually collide. And it is opaque on
+     * purpose: nothing about the booking, the customer or the amount is readable from it,
+     * so a transaction reference appearing in a log line or a support email leaks nothing.
+     *
+     * <p>The one cost is stated rather than hidden: the admin ledger shows this value as
+     * the transaction id for a pending payment, where the mock path left that field blank
+     * until the gateway answered. It is the honest value — there <i>is</i> a reference,
+     * this server minted it, and it is what eSewa will be asked about.
+     */
+    private static String transactionUuid() {
+        return UUID.randomUUID().toString();
     }
 }
