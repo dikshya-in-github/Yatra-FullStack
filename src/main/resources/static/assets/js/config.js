@@ -88,6 +88,16 @@ var YATRA_CONFIG = {
            like it worked while nothing reached the database. */
         "admin-airlines.html",
 
+        /* §12 + §13 — the Destinations module, migrated the same way: the list is
+           a server QUERY (GET /api/admin/destinations?search=&status=&page=&size=),
+           the edit modal reads its row fresh from GET /api/destinations/{id}, and
+           the writes are POST/PUT/DELETE /api/admin/destinations. It is the first
+           page that also calls an endpoint the others do not —
+           POST /api/admin/destinations/image, the multipart Cloudinary upload that
+           replaces the demo's data URL — which api.js reaches through apiUpload().
+           Named here only because its WRITES moved with its reads. */
+        "admin-destinations.html",
+
         /* §7 + §11 — the signed-in account. profile.html is §11's page; both pages
            call ONLY GET/POST/PUT /api/users/me and GET /api/users/me/bookings, so
            naming them here moves no unrelated call with them. They are named

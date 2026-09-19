@@ -165,7 +165,8 @@
                         <label for="destCode">Airport code <span class="req">*</span></label>
                         <input type="text" class="a-input" id="destCode" placeholder="e.g. PKR" maxlength="3"
                             autocomplete="off" style="text-transform: uppercase;">
-                        <small class="form-hint">IATA 3-letter code — must match searchFlight's airport map.</small>
+                        <small class="form-hint">IATA 3-letter code — three letters, unique across
+                            destinations.</small>
                     </div>
                     <div class="a-field span-2">
                         <label for="destAirport">Airport name <span class="req">*</span></label>
@@ -184,7 +185,7 @@
                         <small class="form-hint">Leave empty to use the code-badge fallback in the table.</small>
                     </div>
                     <div class="a-field span-2">
-                        <label>Demo upload (becomes a data URL)</label>
+                        <label>Image upload (Cloudinary)</label>
                         <div class="upload-row">
                             <div class="upload-preview" id="imgPreview"><span>No file</span></div>
                             <div>
@@ -194,8 +195,10 @@
                                     <button type="button" class="a-btn a-btn-outline" id="removeImgBtn" hidden><i
                                             class="fa-solid fa-trash"></i> Remove</button>
                                 </div>
-                                <p class="upload-hint">Demo only: converts to a data URL so the demo works offline —
-                                    the backend will upload to Cloudinary and store the returned URL instead (§3.5).</p>
+                                <p class="upload-hint">Goes to Cloudinary through
+                                    <code>POST /api/admin/destinations/image</code>, and the row keeps the returned
+                                    <code>secure_url</code> + public id (§3.5). The URL field stays editable for a
+                                    pasted link.</p>
                             </div>
                         </div>
                         <input type="file" id="imgInput" accept="image/png,image/jpeg,image/webp"

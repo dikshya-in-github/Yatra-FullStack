@@ -752,9 +752,60 @@ async function httpRequest(method, path, body) {
     return data;
 }
 
+/* The upload's transport. It deliberately does NOT set Content-Type: the browser
+   must generate the multipart boundary itself, and a hand-set header would strip it
+   and make Spring refuse the part. The Bearer token is attached exactly as
+   httpRequest does — the upload endpoint is @PreAuthorize'd like every other admin
+   write — and the error shape is identical, so a page catches one kind of failure. */
+async function httpUpload(path, file) {
+    var form = new FormData();
+    form.append("file", file);
+
+    var headers = { "Accept": "application/json" };
+    var tokenKey = (typeof YATRA_CONFIG !== "undefined" && YATRA_CONFIG.AUTH_TOKEN_KEY)
+        || "yatra_auth_token";
+    var authToken = sessionStorage.getItem(tokenKey);
+    if (authToken) headers["Authorization"] = "Bearer " + authToken;
+
+    var res;
+    try {
+        res = await fetch(API_BASE_URL + path, { method: "POST", headers: headers, body: form });
+    } catch (err) {
+        throw new ApiError(0, "NETWORK_ERROR", "Could not reach the API at " + API_BASE_URL);
+    }
+
+    var text = await res.text();
+    var data = null;
+    if (text) {
+        try { data = JSON.parse(text); } catch (err) { /* non-JSON body */ }
+    }
+    if (!res.ok) {
+        throw new ApiError(res.status,
+            (data && data.error) || "HTTP_" + res.status,
+            (data && data.message) || res.statusText || "Upload failed");
+    }
+    return data;
+}
+
 /* =====================================================
    Public surface — the only API functions pages may call
    ===================================================== */
+
+/* The multipart upload — the ONE write in the panel whose body is not JSON.
+   Master Plan §3.5's hybrid split: an airline logo is bytes in a database column,
+   so it travels as a data URL inside a JSON body; a destination image goes to
+   Cloudinary and only its URL comes back, so the file itself is posted once to
+   `POST /api/admin/destinations/image` and the answer is { imageUrl, publicId }.
+
+   Mock mode refuses loudly rather than inventing a URL: there is no CDN behind a
+   browser store, and no page still on the mock calls this. */
+async function apiUpload(path, file) {
+    if (USE_MOCK_DATA) {
+        throw new ApiError(404, "NOT_IMPLEMENTED",
+            "Image upload needs the real API: " + path);
+    }
+    return httpUpload(path, file);
+}
 
 async function apiGet(path) {
     if (USE_MOCK_DATA) return mockRequest("GET", path);
