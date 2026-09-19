@@ -183,6 +183,44 @@ class HoldExpiryTest {
         assertThat(bookedSeats(flightId)).as("only the hold ended; the sale record did not").isZero();
     }
 
+    /**
+     * The other half of that branch: the customer opened a transaction and walked away, so
+     * the payment row is still {@code PENDING} when the window closes.
+     *
+     * <p>The booking is cancelled exactly as the declined case is — and the open
+     * transaction is <b>closed with it</b>, because a cancelled booking can never settle:
+     * {@code verify} answers 409 {@code BOOKING_CANCELLED}, the refund gap the sweep's own
+     * note records. Left open, the row is permanently "awaiting an answer", and the
+     * Payments ledger renders precisely that: its Pending filter reads this row while the
+     * Status column prints the booking's {@code paymentStatus}, so the orphan appears as a
+     * live Pending transaction beside a booking that says Failed.
+     */
+    @Test
+    void anAbandonedAttemptsOpenTransactionIsClosedWithItsBooking() throws Exception {
+        Fixture fixture = fixture();
+        String flightNo = createFlight(fixture, 6, "8299.99");
+        int flightId = flightId(flightNo);
+
+        int bookingId = book(fixture, flightNo, 1);
+        initiate(bookingId);
+        refresh();
+
+        assertThat(payments.findByBookingId(bookingId).orElseThrow().getStatus())
+                .as("initiated at the gateway and never answered").isEqualTo("PENDING");
+        assertThat(bookedSeats(flightId)).as("its seat is held while the attempt is open").isEqualTo(1);
+
+        backdate(bookingId, 20);
+        bookingService.expireHolds(Duration.ofMinutes(15));
+        refresh();
+
+        assertThat(require(bookingId).getBookingStatus())
+                .as("kept and cancelled — a transaction is on record").isEqualTo("CANCELLED");
+        assertThat(payments.findByBookingId(bookingId).orElseThrow().getStatus())
+                .as("and the attempt is closed rather than left waiting for an answer that cannot come")
+                .isEqualTo("FAILED");
+        assertThat(bookedSeats(flightId)).as("the seat is back in the cabin").isZero();
+    }
+
     /* ------------------------------------------------------------------ *
      *  what must NOT be touched                                            *
      * ------------------------------------------------------------------ */

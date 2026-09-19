@@ -131,6 +131,9 @@ public class BookingService {
     private static final String PAYMENT_PAID = "Paid";
     /** The <i>payment row's</i> status once the gateway has been paid — not the booking's text. */
     private static final String SUCCESS = "SUCCESS";
+
+    /** The payment row's closed state — the attempt is over and no money moved. */
+    private static final String FAILED = "FAILED";
     private static final String BOOKED = "BOOKED";
     private static final String AVAILABLE = "AVAILABLE";
     private static final String ADULT = "ADT";
@@ -729,6 +732,19 @@ public class BookingService {
                 cancel(booking);
                 bookings.save(booking);
                 cancelled++;
+
+                //...and close the attempt with it if it is still open. A cancelled booking
+                //can never settle — {@code verify} answers 409 {@code BOOKING_CANCELLED},
+                //the refund gap this method's note records — so a row left {@code PENDING}
+                //here describes a transaction that can never become anything. It is not
+                //cosmetic either: the Payments ledger filters on this row while its Status
+                //column prints the booking's {@code paymentStatus}, so an orphaned open row
+                //is reported as a live Pending transaction beside a booking saying Failed.
+                if (PENDING.equalsIgnoreCase(payment.getStatus())) {
+                    payment.setStatus(FAILED);
+                    payments.save(payment);
+                }
+
                 log.info("Hold expired: booking={} flight={} seats={} outcome=cancelled (payment {})",
                         booking.getId(), flightNo(booking), bookingPassengers.size(), payment.getStatus());
             } else {
