@@ -96,10 +96,13 @@
         <!-- Flight cards (rendered by JS) -->
         <div class="flights-list" id="flightsList"></div>
 
+        <!-- The one line under the heading is set from JS (searchFlight.js): an empty
+             answer and a failed request are different facts, and until §10 wired this
+             page to the real API only the first could happen. -->
         <div class="empty-state" id="emptyState" hidden>
             <i class="fa-regular fa-face-frown"></i>
             <h3>No flights found</h3>
-            <p>Please modify your search and pick two different airports.</p>
+            <p id="emptyHint">No flights on this route for this date.</p>
         </div>
     </main>
 
@@ -242,6 +245,9 @@
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/auth.js"></script>
+    <!-- §9 — one toast implementation for every page; this page needs it now that the
+         search can fail (the mock could not). -->
+    <script src="assets/js/toast.js"></script>
     <!-- §4's popup reuses the home form's rules, so it needs both shared layers:
          validation.js (validateSearchForm) and cityPair.js (§3's city rules). -->
     <script src="assets/js/validation.js"></script>

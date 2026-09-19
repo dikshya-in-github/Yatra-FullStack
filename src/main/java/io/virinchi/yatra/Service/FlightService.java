@@ -1,6 +1,7 @@
 package io.virinchi.yatra.Service;
 
 import io.virinchi.yatra.Dto.FlightRequest;
+import io.virinchi.yatra.Dto.StorefrontSearchResponse;
 import io.virinchi.yatra.Exception.ConflictException;
 import io.virinchi.yatra.Exception.DuplicateResourceException;
 import io.virinchi.yatra.Exception.ResourceNotFoundException;
@@ -182,6 +183,56 @@ public class FlightService {
             counts.put(count.getFlightId(), count.getTotal());
         }
         return counts;
+    }
+
+    /* ------------------------------------------------------------------ *
+     *  The storefront's search (fix-plan §10)                             *
+     * ------------------------------------------------------------------ */
+
+    /**
+     * The storefront's search — {@code GET /api/flights/search} (fix-plan §10).
+     *
+     * <p><b>The route the wizard's first page calls, built over real rows.</b> Until
+     * this existed the search answered from {@code mock-data.js}, which generated its
+     * flights per date and <i>invented</i> their numbers
+     * ({@code al.iata + " " + (951 + i * 7 + dow)}). That is why this was the
+     * cut-over's blocker rather than one more page to wire: the customer selected a
+     * flight that was not a row, and {@code POST /api/bookings} resolves the flight by
+     * its number — it would have 404'd on a perfectly valid-looking search result.
+     *
+     * <p><b>Nothing here is derived from the date.</b> The flights are the
+     * {@code flight} rows for that route on that date, active ones only, ordered by
+     * departure in SQL. {@code passengers} is echoed back because the page sizes its
+     * own header and confirmation from it; it does not filter anything, because a
+     * flight is not sold per-party — the seats are claimed one at a time at booking
+     * time, and availability is reported per flight
+     * ({@code StorefrontSearchResponse.seatsAvailable}).
+     *
+     * <p><b>An empty answer is a normal answer, not an error.</b> A route with no
+     * flight that day, a code that is not a destination, or the same code on both
+     * sides all return the response with an empty {@code flights} list, exactly as the
+     * mock did — the page's empty state is built for it, and 404-ing a search the
+     * customer can fix by changing the date would turn a legible empty page into an
+     * error dialog. The endpoints still come back (with the code as the fallback name)
+     * so the heading can name the route that had nothing.
+     */
+    @Transactional(readOnly = true)
+    public StorefrontSearchResponse searchStorefront(String origin, String destination,
+                                                     LocalDate date, Integer passengers) {
+        String from = code(origin);
+        String to = code(destination);
+        LocalDate on = date == null ? LocalDate.now() : date;
+        int pax = passengers == null || passengers < 1 ? 1 : passengers;
+
+        Destination originRow = from == null ? null : destinations.findByCode(from).orElse(null);
+        Destination destinationRow = to == null ? null : destinations.findByCode(to).orElse(null);
+
+        List<Flight> rows = (from == null || to == null || from.equals(to))
+                ? List.of()
+                : flights.searchStorefront(from, to, on);
+
+        return StorefrontSearchResponse.of(from, originRow, to, destinationRow, on, pax, rows,
+                bookedSeatsFor(rows));
     }
 
     /**

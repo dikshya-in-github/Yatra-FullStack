@@ -3,20 +3,36 @@
    ticket-class pricing, policy modal, step-1 select
 
    Item 16 (mock API refactor): all flight data — routes,
-   schedules, carriers, fare classes, prices — now comes
-   from apiGet("/api/flights/search") (mock layer in
-   mock-data.js). This file keeps only rendering + page
-   interactions; no hardcoded flight data remains here.
+   schedules, carriers, fare classes, prices — comes from
+   apiGet("/api/flights/search").
+
+   Fix-plan §10: that call now reaches the real API. This
+   page is in config.js's REAL_API_PAGES, so apiGet resolves
+   against Spring (FlightController.search) instead of
+   mock-data.js. The call, the URL and the response shape did
+   not change — the response was always the mock's contract,
+   and the API now answers it over real `flight` rows. What
+   did change here is everything that was only true because
+   the mock could not fail: there is a failure path below
+   (the mock always answered), and the card no longer prints
+   a strike-through price, because the mock's "was" figure was
+   invented (base + 177) and is not in the data.
    ===================================================== */
 document.addEventListener("DOMContentLoaded", function () {
 
     /* Airport, schedule, carrier and fare-class data moved to
        mock-data.js — served through api.js (see loadFlights). */
 
-    /* ---------- URL params ---------- */
+    /* ---------- URL params ----------
+       The fallback pair is Kathmandu → Pokhara, which is the pair the search form
+       on homeLogged.html offers and the one the demo seed flies a week of. It used
+       to fall back to BDP (Bhadrapur) — a leftover from when the mock generated
+       flights for any route on any date, so a default into a route with no flights
+       still looked full. Against real data that default opens the demo on an empty
+       page, so the fallback moved to a route that exists. */
     var params = new URLSearchParams(location.search);
     var from = (params.get("from") || "KTM").toUpperCase();
-    var to = (params.get("to") || "BDP").toUpperCase();
+    var to = (params.get("to") || "PKR").toUpperCase();
     var pax = parseInt(params.get("pax"), 10) || 1;
 
     function parseDate(s) {
@@ -76,7 +92,26 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("resultsTitle").textContent =
                 "Select your preferred flight from " + currentSearch.origin.label +
                 " to " + currentSearch.destination.label;
+            emptyHint.textContent = "No flights on this route for " + shortDate(selected) +
+                ". Try another day in the strip above, or modify your search.";
             renderFlights();
+        }).catch(function (err) {
+            /* The mock could not fail; a real API can, and this page had no path for
+               it. Without this the rejection left the previous cards on screen (or an
+               empty list before the first search) and the customer saw a blank
+               results area with no reason — the silent-failure shape the module pass
+               kept finding. The seq guard matters here too: a slow failing request
+               must not paint over the answer to a newer search. */
+            if (seq !== searchSeq) return;
+            currentSearch = null;
+            currentFlights = [];
+            list.innerHTML = "";
+            emptyHint.textContent = "Could not load flights: " + ((err && err.message) || err) +
+                ". Please try again.";
+            emptyState.hidden = false;
+            if (typeof showToast === "function") {
+                showToast("Could not load flights: " + ((err && err.message) || err), "error");
+            }
         });
     }
 
@@ -84,6 +119,9 @@ document.addEventListener("DOMContentLoaded", function () {
     var strip = document.getElementById("dateStrip");
     var list = document.getElementById("flightsList");
     var emptyState = document.getElementById("emptyState");
+    /* The one line under "No flights found": an empty answer and a failed request
+       are different facts and the page now says which one it is. */
+    var emptyHint = document.getElementById("emptyHint");
 
     function renderStrip() {
         strip.innerHTML = "";
@@ -133,7 +171,10 @@ document.addEventListener("DOMContentLoaded", function () {
         card.dataset.idx = idx;
         card.dataset.classIdx = "0";
 
-        var was = f.isLowest ? "<s>" + npr(f.comparePrice) + "</s> " : "";
+        /* No strike-through: the mock's `comparePrice` was base + 177 — a discount
+           nobody was ever charged — and the real response has no such field
+           (see Dto/StorefrontSearchResponse). The "Low fare" badge stays, because
+           `isLowest` is real: the cheapest fare returned for that route and date. */
         var row = document.createElement("button");
         row.type = "button";
         row.className = "flight-row";
@@ -149,7 +190,8 @@ document.addEventListener("DOMContentLoaded", function () {
             '<div class="fc-cell fc-hand"><strong>5kg</strong><span><i class="fa-solid fa-suitcase-rolling"></i> Hand carry</span></div>' +
             '<div class="fc-price"><strong>' + npr(f.baseFare) +
             (f.isLowest ? ' <span class="badge-low">Low fare</span>' : "") +
-            '</strong><p>' + was + '<span class="refund-word">Non Refundable</span></p></div>' +
+            '</strong><p><span class="refund-word">' +
+            (f.fareOptions[0].refundable ? "Refundable" : "Non Refundable") + '</span></p></div>' +
             '<span class="fc-chev"><i class="fa-solid fa-chevron-down"></i></span>';
         card.appendChild(row);
 
@@ -160,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
             '<div class="fe-inner">' +
             '<div class="fe-head"><h4><span>Departure</span> &nbsp;·&nbsp; ' + dateStr + '</h4>' +
             '<div><span class="fe-price">' + npr(f.baseFare) + '</span> ' +
-            '<span class="fe-refund">Non Refundable</span></div></div>' +
+            '<span class="fe-refund">' + (f.fareOptions[0].refundable ? "Refundable" : "Non Refundable") + '</span></div></div>' +
             '<div class="fe-body">' +
             '<div class="fe-timeline">' +
             '<div class="tl-row"><span class="tl-time">' + to12(f.depart) + '</span><span class="tl-place">' + fromCity + " (" + from + ')</span></div>' +
@@ -235,16 +277,12 @@ document.addEventListener("DOMContentLoaded", function () {
             var f = currentFlights[idx];
             var cls = f.fareOptions[ci];
             var price = cls.price;
-            var was = f.isLowest && ci === 0 ? "<s>" + npr(f.comparePrice) + "</s> " : "";
 
             card.querySelector(".fc-class strong").textContent = cls.label;
             card.querySelector(".fc-price strong").innerHTML = npr(price) +
                 (f.isLowest && ci === 0 ? ' <span class="badge-low">Low fare</span>' : "");
             card.querySelector(".fc-price .refund-word").textContent =
                 cls.refundable ? "Refundable" : "Non Refundable";
-            var wasEl = card.querySelector(".fc-price s");
-            if (wasEl) wasEl.remove();
-            if (was) card.querySelector(".fc-price p").insertAdjacentHTML("afterbegin", was);
 
             card.querySelector(".fe-price").textContent = npr(price);
             card.querySelector(".fe-refund").textContent = cls.refundable ? "Refundable" : "Non Refundable";
@@ -388,6 +426,11 @@ document.addEventListener("DOMContentLoaded", function () {
            written, not what. booking.html reads exactly these keys. */
         sessionStorage.setItem("yatra_selected_flight", JSON.stringify({
             from: from, to: to, date: iso(selected),
+            /* The cities the response named, carried to the two pages that print the
+               route. booking.js and payment.js used to resolve a code through
+               mock-data.js's AIRPORTS map; when the search is real the names come
+               from the destination rows, and this is where they travel. */
+            fromCity: fromCity, toCity: toCity,
             flightNo: pending.flight.flightNo,
             depart: pending.flight.depart,
             arrive: pending.flight.arrive,

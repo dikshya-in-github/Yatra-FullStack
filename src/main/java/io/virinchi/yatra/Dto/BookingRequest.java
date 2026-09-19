@@ -29,14 +29,27 @@ import java.util.List;
  * trust:</b>
  * <ol>
  *   <li><b>{@code amount}.</b> Accepted and ignored. The payable total is computed
- *       server-side from the <i>flight row's</i> fare × passenger count, because a
- *       number that arrives in a JSON body is a number a browser can edit. The
- *       response returns the figure that was actually stored, so the caller can
- *       see the difference rather than guess. (Fare-class deltas are the
- *       fare-class phase's; today every class prices at the base fare, which is
- *       also how {@code MockDB.payableTotal()} orders its fallbacks.)</li>
+ *       server-side from the <i>flight row's</i> fare <b>plus the selected fare
+ *       class's delta</b> × passenger count, because a number that arrives in a JSON
+ *       body is a number a browser can edit. The response returns the figure that was
+ *       actually stored, so the caller can see the difference rather than guess.
+ *       (This note used to say every class priced at the base fare, "the fare-class
+ *       phase's" — true until §10 wired the storefront, at which point the page quoted
+ *       one price and the server charged another. The deltas live in
+ *       {@link io.virinchi.yatra.Model.FareClass} now, and both the search response
+ *       and {@code BookingService} read them from there.)</li>
  *   <li><b>{@code flight.pricePerPassenger} / {@code totalPrice}.</b> The same
  *       rule — informational, ignored for pricing.</li>
+ *   <li><b>{@code flight.refundable}.</b> Also not read: refundability is the fare
+ *       class's own rule ({@code FareClass.isRefundable()}) and is stored from
+ *       there, because the flag arrives in the body from the pill the page drew. A
+ *       request claiming a non-refundable class was refundable would otherwise be
+ *       recorded as one — and on a page whose whole point is quoting the terms, the
+ *       stored terms and the quoted terms have to be the same ones.</li>
+ *   <li><b>{@code flight.flightClass}.</b> <i>Is</i> read, and is the one part of
+ *       the selected-flight block that decides money: a blank class means the base
+ *       economy fare, a name this server does not sell is a 400, and a known one
+ *       prices the booking. See {@code BookingService.fareClass}.</li>
  *   <li><b>{@code flight.from} / {@code to}.</b> Not ignored: they are
  *       cross-checked against the flight row as a cheap staleness guard. A
  *       {@code yatra_selected_flight} left in {@code sessionStorage} from an
@@ -132,6 +145,24 @@ public record BookingRequest(
      * deliberately ignored ({@link BookingRequest} explains why) while
      * {@code from}/{@code to} are used as a staleness check.
      *
+     * <p><b>{@code airline} is a String, and the page has to send one.</b>
+     * {@code searchFlight.js} carries the carrier as the object its cards render
+     * ({@code {name, code, logo}}) because {@code eticket.js} draws the logo from it,
+     * so {@code booking.js} posts <i>the name</i> out of that object instead of the
+     * object itself. A mismatched type here does not degrade gracefully: Jackson
+     * cannot bind an object to this field and answers 400 "Request body is missing or
+     * is not valid JSON", which is what the first real POST to this endpoint did —
+     * the mock never bound the payload to a DTO at all, so nothing caught it while
+     * the wizard was mock. The value is informational: the booking's carrier is the
+     * flight row's own {@code airline}.
+     *
+     * <p><b>{@code fromCity} / {@code toCity} are sent and not read.</b> §10 added
+     * them so {@code booking.html} and {@code payment.html} can print the cities the
+     * search response named rather than looking the codes up in the mock's airport
+     * map. They ride in the selected-flight record because that is the one handoff
+     * the wizard already has; the server's own route check uses {@code from}/{@code to}.
+     * They are accepted because unknown keys are ignored ({@code ignoreUnknown} above).
+     *
      * <p><b>{@code date} is a plain {@code String}, not a {@code LocalDate}, on
      * purpose.</b> {@code searchFlight.js} commits it as ISO
      * ({@code iso(selected)}), so a {@code LocalDate} would parse today — but the
@@ -149,6 +180,7 @@ public record BookingRequest(
             String date,
             String depart,
             String arrive,
+            /* The carrier's name — see the record's note on why not the object. */
             String airline,
             String flightClass,
             Boolean refundable,

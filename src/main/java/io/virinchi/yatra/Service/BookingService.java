@@ -7,6 +7,7 @@ import io.virinchi.yatra.Exception.ConflictException;
 import io.virinchi.yatra.Exception.ResourceNotFoundException;
 import io.virinchi.yatra.Exception.ValidationException;
 import io.virinchi.yatra.Model.Booking;
+import io.virinchi.yatra.Model.FareClass;
 import io.virinchi.yatra.Model.Destination;
 import io.virinchi.yatra.Model.Flight;
 import io.virinchi.yatra.Model.Passenger;
@@ -756,12 +757,21 @@ public class BookingService {
         booking.setContactPhone(normalizePhone(request.contact().phone()));
         booking.setBookingStatus(PENDING);
         booking.setPaymentStatus(PAYMENT_PENDING);
-        booking.setFareClass(blankToNull(request.flight().flightClass()));
-        booking.setRefundable(Boolean.TRUE.equals(request.flight().refundable()));
+        /* The class is the one row of the request that decides the price, so it is
+           resolved against the server's own table before anything is written: a blank
+           class means the base economy fare (the class the flight's own `fare` is
+           quoted in), and a name this server does not sell is a 400 rather than a
+           silent fall back to E — see FareClass.find. */
+        FareClass fareClass = fareClass(request.flight().flightClass());
+        booking.setFareClass(fareClass.getLabel());
+        /* Refundability is the class's rule, not the browser's claim. The page sends
+           its own `refundable` flag from the pill it drew; trusting it would let a
+           request buy a non-refundable E Class seat and record it as refundable. */
+        booking.setRefundable(fareClass.isRefundable());
 
-        //Money server-side: fare × paying passengers, scale 2. The request's own
-        //`amount` is deliberately not read — see Dto/BookingRequest.
-        BigDecimal payable = payable(flight, request.passengers().size());
+        //Money server-side: (fare + class delta) × paying passengers, scale 2. The
+        //request's own `amount` is deliberately not read — see Dto/BookingRequest.
+        BigDecimal payable = payable(flight, fareClass, request.passengers().size());
         booking.setProductAmount(payable);
         booking.setTotalAmount(payable);
         booking.setCreatedAt(LocalDateTime.now());
@@ -910,17 +920,52 @@ public class BookingService {
     }
 
     /**
-     * The amount the gateway will be asked for: the flight's own fare × the paying
-     * passengers, at currency scale.
+     * The amount the gateway will be asked for: <b>one seat in the selected class</b>
+     * × the paying passengers, at currency scale.
+     *
+     * <p><b>Why the class is in this signature.</b> Every class used to price at the
+     * flight row's {@code fare}, which was invisible while the whole wizard was mock —
+     * the mock computed its own total. The moment {@code searchFlight.js} and
+     * {@code booking.js} moved to this API, the page quoted A Class at base + 4,000
+     * (the pill's own price, from the same {@link FareClass} table) and this method
+     * stored a charge of base: a quote and a charge that disagree by up to
+     * {@code 5,000 × passengers}, on the figure the eSewa handoff then signs.
+     * {@link FareClass#priceFor(BigDecimal)} is now the only place a class's price is
+     * computed, and the search response prices its pills through the same call, so
+     * the two cannot drift.
      *
      * <p>{@code BigDecimal} throughout (R5): {@code BigDecimal.valueOf(...)} for the
      * count and {@code setScale(2, HALF_UP)} for the currency, never a {@code double}
      * multiply.
      */
-    private static BigDecimal payable(Flight flight, int payingPassengers) {
-        return flight.getFare()
+    private static BigDecimal payable(Flight flight, FareClass fareClass, int payingPassengers) {
+        return fareClass.priceFor(flight.getFare())
                 .multiply(BigDecimal.valueOf(payingPassengers))
                 .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * The booking's fare class: the requested one, the base class when the request
+     * names none, and a 400 when it names one this server does not sell.
+     *
+     * <p>Blank is not an error: the wizard's payload always carries a class (the pill
+     * it pre-selects), but {@code POST /api/bookings} is a public write that Postman
+     * and the module walk files call directly, and "the default fare" is a reasonable
+     * thing for a caller to omit. An unknown non-blank name is the opposite — it is a
+     * request to charge a price this server cannot quote, and answering it with a
+     * substituted class would put a different figure on the booking than the one that
+     * was asked for.
+     */
+    private static FareClass fareClass(String requested) {
+        String value = blankToNull(requested);
+        if (value == null) {
+            return FareClass.DEFAULT;
+        }
+        return FareClass.find(value).orElseThrow(() -> new ValidationException(
+                "Unknown fare class '" + value + "'. This server sells "
+                        + java.util.Arrays.stream(FareClass.values())
+                        .map(FareClass::getLabel)
+                        .collect(java.util.stream.Collectors.joining(", ")) + "."));
     }
 
     /**

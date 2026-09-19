@@ -2,12 +2,19 @@
 # Removes the probe bookings the admin-module walks must leave in the demo database,
 # in FK-safe order, and releases the seats they hold.
 #
-# Callers, both of them walks:
+# Callers, all four of them walks:
 #   * tools/walks/bookings.py — its module has no CREATE and no DELETE, so it cannot
 #     clean up after itself through the UI (see below).
 #   * tools/walks/payments.py (added Session 68) — its three probes ARE probe bookings
 #     (a transaction on that page is a booking that reached the gateway), so it reuses
 #     this script rather than copying its 130 lines.
+#   * tools/walks/tickets.py (Session 69) — a document exists because a booking was
+#     settled, so its two probes are probe bookings as well.
+#   * tools/walks/storefront.py (Session 70, fix-plan §10) — the storefront IS the
+#     booking path: its probe is the booking the wizard itself creates, and the walk
+#     runs this script at BOTH ends, because a leftover probe from an interrupted run
+#     holds a seat on a seeded flight and the walk's seat-release check compares that
+#     flight's booked count before and after.
 #
 # Why this is needed at all: the module has no CREATE and no DELETE. The walk creates
 # its probe bookings through the PUBLIC endpoint (that is the only way to verify §13's

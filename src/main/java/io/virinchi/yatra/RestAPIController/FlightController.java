@@ -4,6 +4,7 @@ import io.virinchi.yatra.Dto.FlightListResponse;
 import io.virinchi.yatra.Dto.FlightRequest;
 import io.virinchi.yatra.Dto.FlightResponse;
 import io.virinchi.yatra.Dto.SeatMapResponse;
+import io.virinchi.yatra.Dto.StorefrontSearchResponse;
 import io.virinchi.yatra.Model.Flight;
 import io.virinchi.yatra.Service.FlightService;
 import jakarta.validation.Valid;
@@ -35,23 +36,30 @@ import java.util.List;
  * {@code SecurityConfig} and {@code @PreAuthorize("hasRole('ADMIN')")} on each
  * method. Hiding a link in the admin page is not one of the layers.
  *
- * <p><b>The one public read is the seat map</b> ({@code GET
- * /api/flights/{id}/seats}, added in Phase 6). A booking page has to show the cabin
- * to signed-out visitors, and it is the deliberate consequence R12 flagged when the
- * {@code /api/flights/**} GET permit went in early: the permit is a prefix rule, so
- * this path inherits it. Keeping it public is the choice — a 401 here fails exactly
- * the way the airline logos did (the page would draw an empty cabin rather than an
- * error), and the map exposes nothing a browsing customer cannot already see.
+ * <p><b>Two public reads, both deliberate.</b> The seat map ({@code GET
+ * /api/flights/{id}/seats}, Phase 6) exists because a booking page has to show the
+ * cabin to signed-out visitors, and the search ({@code GET /api/flights/search},
+ * fix-plan §10) because the storefront's first page is public by definition. Both
+ * are the consequence R12 flagged when the {@code /api/flights/**} GET permit went
+ * in early: the permit is a prefix rule, so these paths inherit it. Keeping them
+ * public is the choice — a 401 here fails exactly the way the airline logos did (the
+ * page would draw an empty cabin or an empty result list rather than an error), and
+ * neither exposes anything a browsing customer cannot already see: the map is seat
+ * statuses and the search is flights, carriers, times and prices.
  *
- * <p><b>What this module deliberately does not serve yet.</b> The storefront route
- * {@code GET /api/flights/search?origin=&destination=&date=&passengers=} is
- * committed in {@code assets/js/api.js}, but its response carries fare classes,
- * {@code fareOptions} and {@code FARE_POLICIES} — data the fare-class phase owns
- * and this phase does not build. Serving a narrower shape under that path would
- * answer a page with a body it cannot render, so {@code searchFlight.html} stays
- * on the mock until then. The GET permit for {@code /api/flights/**} is already in
- * {@code SecurityConfig} so the endpoint cannot fall into the silent-401 trap that
- * cost the airline logos a phase (risk R8).
+ * <p><b>The storefront search was built here, and it is why this class's own doc
+ * used to say it could not be.</b> The note that stood in this spot said the route
+ * was committed in {@code assets/js/api.js} but could not be served because its
+ * response carries fare classes and {@code fareOptions} — data "the fare-class
+ * phase" owned. That was true of the response <i>shape</i> and wrong about the
+ * blocker: what stopped the cut-over was that the mock <b>invented its flight
+ * numbers from the date</b>, so the flight a customer picked was not a row and
+ * {@code POST /api/bookings}, which resolves the flight by number, would have
+ * 404'd. The deltas themselves were never a phase-sized problem — they are six
+ * constants, and they now live in {@link io.virinchi.yatra.Model.FareClass}, which
+ * both this response and {@code BookingService}'s pricing read. The permit being in
+ * place a phase early is the part that held up: this endpoint needed no
+ * {@code SecurityConfig} change (risk R8, paid off).
  *
  * <p><b>Unpaged by default, paged on request</b>, exactly as the airline list: the
  * admin table filters and pages client-side over the full list today, and a hidden
@@ -135,7 +143,35 @@ public class FlightController {
     }
 
     /**
-     * The live seat map — the module's only public, unauthenticated read.
+     * The storefront's flight search — the page-level read behind
+     * {@code searchFlight.html} (fix-plan §10).
+     *
+     * <p><b>Public, and on the path the page has always called.</b>
+     * {@code searchFlight.js} has requested {@code /api/flights/search} since item 16
+     * and rendered the answer; that call used to resolve inside {@code mock-data.js}.
+     * Pointing the page at this API is therefore an allow-list entry, not a rewrite —
+     * the response reproduces the mock's keys (see
+     * {@link io.virinchi.yatra.Dto.StorefrontSearchResponse}) over real rows.
+     *
+     * @param origin      departure airport code; unknown or blank returns no flights
+     * @param destination arrival airport code; the same code as {@code origin} also
+     *                    returns no flights (a route to itself is not a route)
+     * @param date        an exact travel date; omitted means today, because a
+     *                    customer's search always has a day and a null date would
+     *                    have to mean "any", which is not a question this page asks
+     * @param passengers  echoed back to size the page's own header; it filters nothing
+     */
+    @GetMapping("/flights/search")
+    public StorefrontSearchResponse search(@RequestParam(required = false) String origin,
+                                           @RequestParam(required = false) String destination,
+                                           @RequestParam(required = false)
+                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                           @RequestParam(required = false) Integer passengers) {
+        return flightService.searchStorefront(origin, destination, date, passengers);
+    }
+
+    /**
+     * The live seat map — the module's other public, unauthenticated read.
      *
      * <p>{@code available} is computed from the seat rows on every call; nothing
      * about it is stored, which is the teacher-flagged availability rule expressed as

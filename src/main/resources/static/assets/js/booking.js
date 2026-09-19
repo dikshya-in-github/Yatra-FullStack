@@ -10,11 +10,21 @@ document.addEventListener('DOMContentLoaded', () => {
     var flight = load("yatra_selected_flight");
     var search = load("flightSearchData");
 
-    /* Demo fallback so the page still works when opened directly — the data
-       itself lives in the mock layer (MockDB.DEMO_FLIGHT), not in page JS
-       (§47 dynamic-readiness: no hardcoded flight data outside mock-data.js). */
+    /* Fix-plan §10 — no fabricated selection.
+       This page used to fall back to MockDB.DEMO_FLIGHT so that opening booking.html
+       directly still rendered something. On the real API that fallback is worse than
+       useless: POST /api/bookings resolves the flight by number, so the fabricated
+       flight either 404s or — if its number is one the database happens to hold — puts
+       a real seat hold behind a flight the customer never chose. A page whose entire
+       input is "the flight you selected" is a page that cannot invent one, so with
+       nothing selected it says so and hands the visitor back to the search, which is
+       where a selection comes from. */
     if (!flight) {
-        flight = JSON.parse(JSON.stringify(MockDB.DEMO_FLIGHT));
+        if (typeof showToast === "function") {
+            showToast("Choose a flight to continue.", "error");
+        }
+        setTimeout(function () { location.replace("./searchFlight.html"); }, 1200);
+        return;
     }
 
     /* Passenger split: prefer the home search, else the selection count */
@@ -32,12 +42,21 @@ document.addEventListener('DOMContentLoaded', () => {
     var paxLabel = counts.adult + (counts.adult === 1 ? " Adult" : " Adults") +
         (counts.child ? (", " + counts.child + (counts.child === 1 ? " Child" : " Children")) : "");
 
-    /* Airport city names come from the mock data layer (MockDB.AIRPORTS) —
-       the same 11-airport map the search results and admin pages use, so
-       this page no longer keeps a second copy of it (item 17). */
-    function cityName(code) {
-        var airport = MockDB.AIRPORTS[code];
-        return airport ? airport.city : code;
+    /* City names travel with the selection now (§10): searchFlight.js writes the
+       names the search response named (`fromCity`/`toCity`, from the destination
+       rows) into yatra_selected_flight, so this page prints the real city rather
+       than looking the code up itself.
+
+       MockDB.AIRPORTS stays as the fallback for a selection stored before §10 — a
+       back-button visit can still hold one — and goes when mock-data.js does (the
+       last page off the allow-list). A code that resolves nowhere is printed as the
+       code, which is what this function did before the map existed at all. */
+    function cityName(code, known) {
+        if (known) return known;
+        if (typeof MockDB !== "undefined" && MockDB.AIRPORTS && MockDB.AIRPORTS[code]) {
+            return MockDB.AIRPORTS[code].city;
+        }
+        return code;
     }
 
     function to12(hhmm) {
@@ -105,8 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (sbRoute) {
         sbRoute.textContent =
-            cityName(flight.from) + " (" + flight.from + ") – " +
-            cityName(flight.to) + " (" + flight.to + ")";
+            cityName(flight.from, flight.fromCity) + " (" + flight.from + ") – " +
+            cityName(flight.to, flight.toCity) + " (" + flight.to + ")";
     }
 
     if (sbPaxSub) sbPaxSub.textContent = "(" + paxLabel + ")";
@@ -301,6 +320,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 ssr: Array.from(document.querySelectorAll('input[name="ssr"]:checked')).map(c => c.value),
                 flight: {
                     from: flight.from, to: flight.to,
+                    /* Carried through to payment.html, which prints the same route on
+                       the page where money changes hands (§10). The API's booking DTO
+                       ignores unknown keys, so this is free. */
+                    fromCity: flight.fromCity || null,
+                    toCity: flight.toCity || null,
                     date: flight.date,
                     depart: flight.depart, arrive: flight.arrive,
                     flightNo: flight.flightNo,
@@ -338,27 +362,48 @@ document.addEventListener('DOMContentLoaded', () => {
             continueBtn.disabled = true;
 
             /* Item 16 — create the pending booking through the API layer
-               (POST /api/bookings, §36). Mock: returns the bookingId only
-               (the confirmed row is written at POST /api/payments/verify).
-               Real backend: persists the PENDING row here. Either way the
-               id rides inside the existing bookingData key (§31.2) — no
-               new one-off sessionStorage keys. */
+               (POST /api/bookings). Real backend (§10): this persists the PENDING row
+               and holds the seats, and `pending.bookingId` is the id every later step
+               needs — payment.html posts it to /api/payments/initiate, which 400s
+               without it.
+
+               The old catch was silent and the navigation sat in `finally`, so a
+               failed POST walked the customer to the payment page anyway with no
+               bookingId: on the mock that was survivable (the mock mints an id), on
+               the real API it is a dead end at the gateway. The page now stays put,
+               says what happened and lets them retry. */
             apiPost('/api/bookings', {
                 contact: bookingData.contact,
                 passengers: bookingData.passengers,
-                flight: bookingData.flight,
+                /* The carrier goes over the wire as its NAME.
+                   `bookingData.flight.airline` is the object the search response gave
+                   the cards ({name, code, logo}) and eticket.js renders it as one, so
+                   the session keeps the object — but BookingRequest.SelectedFlight.airline
+                   is a String, and Jackson refuses the whole body when an object meets a
+                   String field (400 "Request body is missing or is not valid JSON").
+                   That went unnoticed for as long as this page was on the mock, because
+                   the mock never bound the payload to a DTO — it is exactly the kind of
+                   mismatch the first real POST to this API surfaces. The value is
+                   informational there (the booking's carrier is the flight row's). */
+                flight: Object.assign({}, bookingData.flight, {
+                    airline: (bookingData.flight.airline && bookingData.flight.airline.name)
+                        || bookingData.flight.airline || null,
+                }),
                 amount: bookingData.flight.totalPrice,
             }).then((pending) => {
                 bookingData.bookingId = pending.bookingId;
                 bookingData.bookingStatus = pending.status;
                 sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
-            }).catch(() => {
-                /* demo must never dead-end: payment/verify tolerate a
-                   missing bookingId (the verify mock mints one if absent) */
-            }).finally(() => {
                 setTimeout(() => {
                     window.location.href = './payment.html';
                 }, 1200);
+            }).catch((err) => {
+                /* Restored to the button's own markup (booking.html), not a new label. */
+                continueBtn.innerHTML = 'Continue <i class="fa-solid fa-arrow-right"></i>';
+                continueBtn.disabled = false;
+                if (typeof showToast === "function") {
+                    showToast((err && err.message) || 'The booking could not be created.', 'error');
+                }
             });
         });
     }

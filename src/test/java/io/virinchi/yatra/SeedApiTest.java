@@ -55,7 +55,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p><b>A full seed is expensive — about a minute — and the reason is structural.</b>
  * Every entity uses {@code GenerationType.IDENTITY} (the SpringWeb template's
  * convention), and with IDENTITY Hibernate cannot batch inserts: it needs each row's
- * generated key in hand, so all 682 seat rows, 12 flights and 8 bookings go over the
+ * generated key in hand, so all 1,214 seat rows, 40 flights and 8 bookings go over the
  * wire as individual statements to the remote TiDB Cloud instance at roughly 40 ms
  * each. Measured, not assumed: creating one 70-seat flight takes ~3.5 s, which is why
  * {@code FlightApiTest} takes minutes too.
@@ -82,10 +82,14 @@ class SeedApiTest {
     private static final int AIRLINES = 4;
     private static final int DESTINATIONS = 11;
     private static final int USERS = 10;
-    private static final int FLIGHTS = 12;
+    /* 12 hand-written + the storefront schedule (fix-plan §10): 2 departures a day in
+       each direction on Kathmandu–Pokhara for 7 days = 28 more. */
+    private static final int FLIGHTS = 40;
     private static final int BOOKINGS = 8;
     private static final int PASSENGERS = 15;
-    private static final int SEATS = 682;   // 70+70+78+19+70+46+70+46+78+19+70+46
+    /* The twelve above (70+70+78+19+70+46+70+46+78+19+70+46 = 682) plus the schedule's
+       19 seats × 4 flights a day × 7 days = 532. */
+    private static final int SEATS = 1214;
 
     @Autowired private MockMvc mockMvc;
     @Autowired private EntityManager entityManager;

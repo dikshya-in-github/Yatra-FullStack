@@ -83,8 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const h = +parts[0];
             return ((h + 11) % 12 + 1) + ':' + parts[1] + ' ' + (h >= 12 ? 'PM' : 'AM');
         };
-        const cityOf = (code) => (typeof MockDB !== 'undefined' && MockDB.AIRPORTS[code])
-            ? MockDB.AIRPORTS[code].city : code;
+        /* City names travel with the booking now (§10): searchFlight.js writes the names
+           the search response gave it and booking.js carries them through, so this page
+           prints the same route as the page before it rather than looking a code up in
+           its own copy of the airport map. The MockDB map stays as the fallback for a
+           bookingData stored before §10, and goes when mock-data.js does. */
+        const cityOf = (code, known) => known
+            || ((typeof MockDB !== 'undefined' && MockDB.AIRPORTS[code])
+                ? MockDB.AIRPORTS[code].city : code);
         const titled = (t) => (!t ? '' : (/\.$/.test(t) ? t : t + '.'));
         const fullName = (p) => [titled(p.title), p.firstName, p.middleName, p.lastName]
             .filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
@@ -99,7 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setText('sbDate', dep && !isNaN(dep)
             ? dep.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
             : '—');
-        setText('sbRoute', cityOf(bf.from) + ' (' + bf.from + ') – ' + cityOf(bf.to) + ' (' + bf.to + ')');
+        setText('sbRoute', cityOf(bf.from, bf.fromCity) + ' (' + bf.from + ') – ' +
+            cityOf(bf.to, bf.toCity) + ' (' + bf.to + ')');
 
         // Paying passengers (adults + children; infants ride on a lap)
         const children = passengers.filter((p) => p.type === 'CHD').length;
@@ -234,16 +241,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const promoCode = promoInput?.value.trim() || null;
 
             // Step 3a — initiate the payment through the API layer
-            // (POST /api/payments/initiate, §36) and go where the response
-            // sends us. Mock: gatewayRedirect = esewaLogin.html (the same
-            // handoff as before). Real backend: PaymentService returns the
-            // eSewa redirect URL. Fail-safe: if initiate fails, the demo
-            // still walks the static gateway path — never dead-ends (same
-            // rule as booking.js's pending-booking call).
+            // (POST /api/payments/initiate) and go where the response sends us.
+            //
+            // Fix-plan §10: this page is on config.js's REAL_API_PAGES, so the answer
+            // now comes from PaymentService — `gatewayRedirect` is
+            // /api/payments/esewa/checkout/{bookingId}, the server-signed
+            // self-submitting form that POSTs the customer to eSewa's own hosted page.
+            // The page needed no other change: it has always navigated where the
+            // response told it to.
+            //
+            // The fallback is the part that had to change. It used to default to
+            // ./esewaLogin.html and keep it on any failure — one of the four static
+            // pages that only imitated eSewa's login, OTP and balance screens, and a
+            // "payment" on them reaches no gateway and no API. That is a defensible
+            // demo in mock mode and a lie against the real API, so the fallback is now
+            // mock-only: on a real booking, a failure to initiate STOPS here and says
+            // so instead of walking the customer into retired screens.
             let booking = null;
             try { booking = JSON.parse(sessionStorage.getItem('bookingData')); } catch (err) { /* ignore */ }
 
-            let gatewayUrl = './esewaLogin.html';
+            const mockMode = (typeof USE_MOCK_DATA !== 'undefined') && USE_MOCK_DATA;
+            let gatewayUrl = mockMode ? './esewaLogin.html' : null;
             apiPost('/api/payments/initiate', {
                 bookingId: (booking && booking.bookingId) || null,
                 method: method,
@@ -253,8 +271,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }).then((init) => {
                 if (init.gatewayRedirect) gatewayUrl = init.gatewayRedirect;
             }).catch(() => {
-                /* initiate failed — keep the static gateway handoff */
+                /* Real mode: `gatewayUrl` stays null and the block below reports it. */
             }).finally(() => {
+                if (!gatewayUrl) {
+                    continueBtn.innerHTML = 'Continue <i class="fa-solid fa-arrow-right"></i>';
+                    continueBtn.disabled = false;
+                    if (typeof showToast === 'function') {
+                        showToast('The payment could not be started. Please try again.', 'error');
+                    }
+                    return;
+                }
                 setTimeout(() => {
                     window.location.href = gatewayUrl;
                 }, 1200);

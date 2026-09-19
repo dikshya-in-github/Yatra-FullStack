@@ -157,15 +157,44 @@ var YATRA_CONFIG = {
            total read that one endpoint, and the pages' comments say the two counts
            "can never disagree" — switching one without the other would make them.
 
-           booking.html is deliberately NOT named, even though §7 is about it. Its
-           pre-fill reaches GET /api/users/me through the same api.js call and gets
-           the real account either way — see booking.js §12. Naming it here would
-           also move POST /api/bookings to the real backend while payment.html is
-           still mock (§10), creating PENDING bookings holding real seats that
-           nothing sweeps (the hold sweep is off by default). It joins this list
-           with payment.html, in §10. */
+           booking.html used to be the counter-example written into this comment, and
+           the note is kept in the §10 block below so the reasoning is not lost: a
+           page joins this list only when its WRITES move with its reads, and
+           booking.html's write (POST /api/bookings) could not move until the page that
+           charges for the booking did. It is named with payment.html now. */
         "profile.html",
-        "my-bookings.html"
+        "my-bookings.html",
+
+        /* §10 — the storefront's own booking flow: the search page, the passenger
+           details page and the payment page, named TOGETHER because they are one
+           handoff and naming them apart is the bug this list exists to prevent.
+
+           searchFlight.html is §10's blocker made real: GET /api/flights/search now
+           exists (FlightController.search over the flight table). It could not be
+           served before because the mock INVENTED its flight numbers from the date
+           (mock-data.js's `al.iata + " " + (951 + i * 7 + dow)`), so the flight a
+           customer selected was not a row at all — and POST /api/bookings resolves the
+           flight by number, so a real booking of a mock flight would have 404'd. The
+           response now carries real rows, and the page needed no rewrite: it has
+           rendered this shape since item 16.
+
+           booking.html is the page this comment used to say must NOT be named yet —
+           "naming it here would also move POST /api/bookings to the real backend while
+           payment.html is still mock (§10), creating PENDING bookings holding real
+           seats that nothing sweeps". That reasoning was right and is why it waited
+           for this session rather than being wired with the other reads: the three
+           pages move in one commit or the wizard holds seats it never charges for.
+
+           payment.html needs one line of page change for all of it — payment.js
+           already navigates to `init.gatewayRedirect`, which the real API answers with
+           /api/payments/esewa/checkout/{bookingId}: the server-signed, self-submitting
+           form that POSTs the customer to eSewa's own hosted page (EPAYTEST). Its
+           ./esewaLogin.html fallback is now gated to mock mode, because falling back
+           to the retired static gateway screens from a real booking would be a
+           "payment" that never reaches the API. */
+        "searchFlight.html",
+        "booking.html",
+        "payment.html"
     ]
 };
 

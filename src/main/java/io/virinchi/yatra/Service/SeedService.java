@@ -225,6 +225,13 @@ public class SeedService {
      *
      * <p>{@code daysFromToday} replaces the mock's fixed September dates so the data is
      * never stale: the flights span yesterday to six days out, every run.
+     *
+     * <p><b>Two lists use this record, for two different jobs.</b> {@link #FLIGHTS} is
+     * what the seeded bookings point at — one flight per route, one date each, so every
+     * demo booking resolves to a real row. {@link #storefrontSchedule()} is what the
+     * storefront's search page has to have in order to be usable at all. They are kept
+     * apart because the first is referenced by PNR and must not move, while the second is
+     * generated and may be resized freely.
      */
     private record FlightSeed(String no, String iata, String from, String to, int daysFromToday,
                               String dep, String arr, String aircraft, String fare, int seats) {
@@ -243,6 +250,75 @@ public class SeedService {
             new FlightSeed("ST 231", "ST", "KTM", "JKR", 4, "14:20", "15:00", "Dornier 228", "8699.99", 19),
             new FlightSeed("U4 957", "U4", "KTM", "DHI", 5, "16:40", "17:45", "ATR 72", "11499.99", 70),
             new FlightSeed("YT 966", "YT", "KTM", "TMI", 6, "08:40", "09:30", "ATR 42", "9299.99", 46));
+
+    /** How many days the storefront's generated schedule covers, starting today. */
+    private static final int STOREFRONT_DAYS = 7;
+
+    /**
+     * Two departures a day in each direction on the one route the storefront's own form
+     * offers — Kathmandu to Pokhara and back, for a week.
+     *
+     * <p><b>Why a generated block sits beside a hand-written list.</b> The twelve flights
+     * above exist to serve the seeded bookings: one per route, one date each, so a booking
+     * has something to point at. That is not a schedule — and the mock hid the difference
+     * for as long as it did by <i>inventing</i> 4–6 flights for any route on any date. The
+     * moment {@code searchFlight.html} moved to the real API (fix-plan §10) the difference
+     * became the demo's problem: the search form offers exactly two cities and the results
+     * page draws a seven-day date strip, so on the twelve above the page would have opened
+     * empty six days out of seven and offered no return leg at all.
+     *
+     * <p><b>Scoped to those two cities, and to a week.</b> Not the mock's eleven airports: a
+     * flight is a seat map ({@code seatCapacity} {@code Seat} rows, written by
+     * {@code FlightService.createFlight}), so the size of this schedule is the size of the
+     * demo database and of the seed's slowest test — four departures a day (two out, two
+     * home) is what the date strip and a return trip actually need, and no more.
+     *
+     * <p><b>Flown as 19-seat Dornier 228s, and that is a size decision, not a fleet
+     * one.</b> The demo database is <i>remote</i> (TiDB Cloud Serverless), so every
+     * {@code Seat} row is a round trip on insert and another on delete, and the seed's
+     * cost tracks seat rows almost linearly — measured: ~0.11s per seat row, which is
+     * why the first version of this schedule (ATR 42/72, 46 and 70 seats) took the
+     * seed from ~150s to ~325s and pushed {@code SeedApiTest}'s two-seed method past
+     * the harness's per-command limit. Twenty-eight flights of 19 seats is 532 rows
+     * where the 46/70 mix was 1,624 — the same week, the same four daily departures in
+     * each direction, a third of the rows. It is also the aircraft the seed already
+     * uses on thin domestic routes (Sita Air's Dornier 228).
+     *
+     * <p><b>The flight numbers are a reserved series</b> — {@code YT 7xx} outbound,
+     * {@code U4 8xx} home — because {@code flight_no} is {@code UNIQUE}: a generated number
+     * that collided with a real one would fail the whole seed on a duplicate-key error
+     * rather than on anything legible. Nothing in the twelve above, and nothing a booking
+     * references, uses those ranges.
+     *
+     * <p>Both carriers are ones the airline seed already creates, so the cards draw real
+     * logos and the flight numbers name the carrier that flies the route.
+     */
+    private static List<FlightSeed> storefrontSchedule() {
+        List<FlightSeed> rows = new ArrayList<>();
+
+        for (int day = 0; day < STOREFRONT_DAYS; day++) {
+            rows.add(new FlightSeed("YT 7%02d".formatted(day * 10), "YT", "KTM", "PKR", day,
+                    "07:20", "08:05", "Dornier 228", "8299.99", 19));
+            rows.add(new FlightSeed("YT 7%02d".formatted(day * 10 + 1), "YT", "KTM", "PKR", day,
+                    "13:05", "13:55", "Dornier 228", "8999.99", 19));
+            rows.add(new FlightSeed("U4 8%02d".formatted(day * 10), "U4", "PKR", "KTM", day,
+                    "09:30", "10:15", "Dornier 228", "8399.99", 19));
+            rows.add(new FlightSeed("U4 8%02d".formatted(day * 10 + 1), "U4", "PKR", "KTM", day,
+                    "16:40", "17:25", "Dornier 228", "9199.99", 19));
+        }
+
+        return List.copyOf(rows);
+    }
+
+    /**
+     * Every flight the seeder creates: the twelve the demo's bookings point at, then the
+     * generated storefront schedule.
+     */
+    private static List<FlightSeed> allFlightSeeds() {
+        List<FlightSeed> all = new ArrayList<>(FLIGHTS);
+        all.addAll(storefrontSchedule());
+        return all;
+    }
 
     /** A passenger on a seeded booking. */
     private record PassengerSeed(String title, String firstName, String lastName, String type) {
@@ -517,7 +593,7 @@ public class SeedService {
     private Map<String, Flight> seedFlights(Map<String, Airline> airlinesByIata, LocalDate today) {
         Map<String, Flight> byNo = new LinkedHashMap<>();
 
-        for (FlightSeed seed : FLIGHTS) {
+        for (FlightSeed seed : allFlightSeeds()) {
             Airline airline = airlinesByIata.get(seed.iata());
             if (airline == null) {
                 throw new IllegalStateException(
