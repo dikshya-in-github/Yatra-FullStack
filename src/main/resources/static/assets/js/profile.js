@@ -2,8 +2,8 @@
    YATRA 2.0 — PROFILE PAGE JS (customer account settings)
 
    Reads / writes the signed-in user's own account through
-   the API layer (§36 contract), so the page code is identical
-   in mock mode and against Spring Security in Phase 3:
+   the API layer (§36 contract). profile.html is named in
+   config.js's REAL_API_PAGES, so both calls are the real ones:
 
      GET  /api/users/me   → { user }   ← prefills every panel
      POST /api/users/me   → { user }   ← account details save
@@ -13,11 +13,13 @@
    and hands the server's answer back with updateCurrentUser()
    so the navbar chip and the next page agree with the server.
 
-   Password changes are deliberately NOT persisted: hashing
-   belongs to the backend's BCryptPasswordEncoder (Master Plan
-   §3.4) and the mock store never holds a password. The form is
-   a real UX flow (validation + strength meter) that will POST
-   to /api/users/me/password in Phase 3 — nothing else changes.
+   Password changes are NOT wired: the API serves no
+   password-change route (for this page or the admin's), so the
+   form validates the real rules and then refuses in the open —
+   see the submit handler. It used to reset the fields and toast
+   "Password updated" from a setTimeout, which confirmed a change
+   that never happened. Only that one block changes the day the
+   endpoint lands.
    ========================================================= */
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
@@ -73,12 +75,11 @@ document.addEventListener('DOMContentLoaded', function () {
             : digits;
     }
 
+    /* Only the last six characters — the token's own shape is not the customer's
+       business, and the old version printed "JWT ••••xxxxxx (3 segments)". */
     function maskToken(token) {
-        if (!token) return 'No token in this tab';
-        var parts = String(token).split('.');
-        return parts.length === 3
-            ? 'JWT ••••' + String(token).slice(-6) + ' (' + parts.length + ' segments)'
-            : '••••' + String(token).slice(-6);
+        if (!token) return 'No session key in this tab';
+        return '••••' + String(token).slice(-6);
     }
 
     /* =========================================================
@@ -260,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* =========================================================
-       Password form (mock — the backend owns hashing)
+       Password form (validates the real rules, then says so — not wired)
        ========================================================= */
     var pwForm = $id('passwordForm');
     var pwNew = $id('pwNew');
@@ -368,21 +369,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            var btn = $id('passwordSaveBtn');
-            var original = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Updating…';
-
-            /* Demo: the backend owns password storage, so nothing is persisted.
-               The same form will POST /api/users/me/password in Phase 3 (the
-               endpoint that runs BCryptPasswordEncoder) — only this block changes. */
-            setTimeout(function () {
-                pwForm.reset();
-                $id('pwMeter').hidden = true;
-                btn.disabled = false;
-                btn.innerHTML = original;
-                showToast('Password updated (demo — the backend hashes it in Phase 3).');
-            }, 800);
+            /* Nothing is sent and nothing is claimed. There is no password-change
+               route to call, so the form refuses in the OPEN rather than confirming a
+               change it did not make — which is what this block used to do: reset the
+               fields, hide the meter and toast "Password updated" from an 800ms
+               setTimeout. The fields keep their values on purpose: clearing them is
+               the visual language of a successful save. The rules above are still the
+               real ones, so wiring this is a one-block edit here and on the admin's
+               page (admin-profile.js). */
+            $id('pwUnavailable').hidden = false;
+            showToast('Nothing was saved — changing your password is not available in this build.',
+                'error');
         });
     }
 

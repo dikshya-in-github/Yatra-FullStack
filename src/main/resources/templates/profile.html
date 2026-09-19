@@ -176,8 +176,10 @@
                     <div class="panel reveal">
                         <div class="panel-head">
                             <h3><i class="fa-solid fa-lock"></i> Change Password</h3>
-                            <p>Passwords are hashed by the Spring backend (BCrypt) — the demo never stores one.
-                                Rules: at least 8 characters, and the confirmation must match.</p>
+                            <p>Not available in this build — Yatra has no password-change service yet, so this
+                                form checks your input and then tells you plainly that nothing was saved. Email
+                                <a href="mailto:support@yatra2.0.com">support@yatra2.0.com</a> and an administrator
+                                will reset your password for you.</p>
                         </div>
 
                         <form class="profile-form" id="passwordForm" novalidate>
@@ -215,6 +217,10 @@
                                 <span class="pw-meter-bar"><i id="pwMeterFill"></i></span>
                                 <span class="pw-meter-text" id="pwMeterText">—</span>
                             </p>
+
+                            <p class="pw-note" id="pwUnavailable" hidden><i class="fa-solid fa-circle-info"></i>
+                                Nothing was saved — changing your password is not available in this build. Email
+                                support@yatra2.0.com and an administrator will reset it for you.</p>
 
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary" id="passwordSaveBtn">

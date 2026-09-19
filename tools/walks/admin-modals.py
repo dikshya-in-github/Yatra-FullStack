@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""§12/§13 — every admin page's dialogs, audited in the state a USER first meets them.
+"""§12/§13 — every admin page's dialogs — and both profile pages' password forms —
+audited in the state a USER first meets them.
 
 One sentence from the admin-side report is the whole reason this file exists:
 
@@ -38,6 +39,16 @@ dropdown claims were separated from a stale-build artifact: run it against the r
 app first (the defects reproduce), then against a fresh `tools/module-check.sh` build
 (they do not).
 
+The storefront's `profile.html` is audited here too, because it is the customer-side
+twin of `admin-profile.html` and shares two of the three defects: the same
+`Change Password` form, and the same CSS-vs-`hidden` shape in its own stylesheet
+(`profile.css` also had a `display: flex` rule beating `[hidden]`, so the strength
+meter painted itself open with its empty "—" state). It is one page in one audit
+rather than a second walk for one page. It is audited LAST and needs its own session:
+`auth.js`'s guard reads the customer keys, and `/api/users/me` resolves the caller
+from the JWT, so the walk signs in as the seeded customer — replacing the admin token
+the pages above were using, which is exactly why nothing may follow it.
+
 Read-only. It creates no rows, so there is nothing to sweep; the one write it does
 attempt is a delete the API is KNOWN to refuse (409 `DESTINATION_HAS_FLIGHTS`, a
 destination a flight route still uses), which is what lets it click "Confirm" for real
@@ -55,6 +66,13 @@ import sys
 sys.path.insert(0, os.path.normpath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")))
 from module_check import BASE, Walk  # noqa: E402
+
+
+# profile.html needs a CUSTOMER session: auth.js's guard reads its own two keys, and
+# /api/users/me resolves the caller from the JWT — so this is the seeded customer, the
+# same account storefront.py signs in as.
+CUSTOMER_EMAIL = os.environ.get("YATRA_CUSTOMER_EMAIL", "anju.karki@example.com")
+CUSTOMER_PASSWORD = os.environ.get("YATRA_CUSTOMER_PASSWORD", "Yatra@123")
 
 
 # ---------------------------------------------------------------- the primitives
@@ -197,6 +215,18 @@ PAGES = [
     },
 ]
 
+# The storefront twin, kept OUT of PAGES on purpose: it needs the customer session, and
+# signing in as a customer replaces the token every admin page above relies on — so it
+# is audited last, after everything else, and nothing follows it.
+PROFILE_SPEC = {
+    "page": "profile.html",
+    "title": "profile.html (storefront) — the password meter, and a form that must not lie",
+    # The account id is an em dash in the markup until GET /api/users/me answers.
+    "ready": "document.getElementById('pcId').textContent.charAt(0) === '#'",
+    "dialogs": [],
+    "checks": ["password-honest"],
+}
+
 
 # ---------------------------------------------------------------- helpers
 def hidden_still_visible(c):
@@ -289,35 +319,59 @@ def check_export(walk, c):
                "%d line(s), first=%r" % (len(lines), lines[0] if lines else ""))
 
 
-def check_password_form(walk, c):
-    """The Change Password form must not report a change it never made.
+def check_password_form(walk, c, page):
+    """A Change Password form must not report a change it never made.
 
-    It used to send nothing, reset the fields and toast "Password updated" from an
-    800ms setTimeout — a success message with no write behind it. The API still serves
-    no password-change route, so the expected behaviour is a refusal in the open:
-    the note appears, the fields KEEP their values (clearing them is the visual
-    language of a successful save), and the toast says nothing was saved.
+    Both profile pages used to send nothing, reset the fields and toast "Password
+    updated" from a setTimeout — a success message with no write behind it. The API
+    serves no password-change route for either surface, so the expected behaviour is a
+    refusal in the open: the note appears, the fields KEEP their values (clearing them
+    is the visual language of a successful save), and the toast says nothing was saved.
+
+    `page` is the spec's own file name: the two forms share these ids, so a check name
+    that hard-coded one page would read as the other's when it failed.
     """
     if not c.js("!!document.getElementById('passwordForm')"):
-        walk.check("admin-profile.html: the Change Password form is on the page", False,
+        walk.check("%s: the Change Password form is on the page" % page, False,
                    "no #passwordForm")
         return
 
-    walk.fill(c, {"pwCurrent": "admin",
-                  "pwNew": "Yatra-Admin-2026",
-                  "pwConfirm": "Yatra-Admin-2026"})
+    walk.fill(c, {"pwCurrent": "Yatra-2026",
+                  "pwNew": "Yatra-Profile-2026",
+                  "pwConfirm": "Yatra-Profile-2026"})
     walk.click(c, "#passwordSaveBtn")
 
-    walk.check("admin-profile.html: submitting the password form shows the not-available note",
+    walk.check("%s: submitting the password form shows the not-available note" % page,
                bool(c.wait_js(VISIBLE % json.dumps("#pwUnavailable"), timeout=10)))
 
     kept = c.js("document.getElementById('pwNew').value")
-    walk.check("admin-profile.html: the password fields are NOT cleared (no false success)",
-               kept == "Yatra-Admin-2026", "pwNew=%r" % kept)
+    walk.check("%s: the password fields are NOT cleared (no false success)" % page,
+               kept == "Yatra-Profile-2026", "pwNew=%r" % kept)
 
     toast = str(c.js("(document.getElementById('toast')||{}).textContent || ''")).lower()
-    walk.check("admin-profile.html: the toast says nothing was saved, never \"updated\"",
+    walk.check("%s: the toast says nothing was saved, never \"updated\"" % page,
                "nothing was saved" in toast and "updated" not in toast, "toast=%r" % toast)
+
+
+def sign_in_customer(walk, c):
+    """A customer session for profile.html, bought through the real endpoint.
+
+    YatraAuth reads exactly `yatra_auth_token` / `yatra_auth_user`, which the admin
+    sign-in never writes, and an admin's token would not do for this page anyway —
+    /api/users/me answers for whoever the JWT says, and the page is about the
+    customer's own account.
+    """
+    status, session = walk.api("POST", "/api/auth/login",
+                              {"loginId": CUSTOMER_EMAIL, "password": CUSTOMER_PASSWORD})
+    ok = status == 200 and bool((session or {}).get("token"))
+    walk.check("setup: a customer signed in against the real API for profile.html", ok,
+               "POST /api/auth/login answered %s" % status)
+    if not ok:
+        return False
+    c.js("sessionStorage.setItem('yatra_auth_token', %s);"
+         "sessionStorage.setItem('yatra_auth_user', %s);"
+         % (json.dumps(session.get("token")), json.dumps(json.dumps(session.get("user")))))
+    return True
 
 
 
@@ -357,6 +411,74 @@ def check_confirm_yes(walk, c, dest):
                   else "GONE"))
 
 
+def audit_page(walk, c, spec):
+    """Everything this walk asserts about ONE page, in the order a user meets it.
+
+    Split out of main() because profile.html is audited with it too — a customer page
+    that cannot sit in PAGES (it is last, and it needs the other session).
+    """
+    walk.step(spec["title"])
+    c.goto(BASE + "/" + spec["page"])
+    ready = c.wait_js(spec["ready"], timeout=30)
+    walk.check("%s: the page finished its first read" % spec["page"], ready,
+               "waited on: %s" % spec["ready"])
+    walk.check("%s: reads the real API, not the mock layer" % spec["page"],
+               c.js("USE_MOCK_DATA") is False, "USE_MOCK_DATA=%r" % c.js("USE_MOCK_DATA"))
+
+    # 1. The page-load state — where the defect lived and no walk had looked.
+    audit_hidden(walk, c, spec["page"])
+    dialogs = c.js("Array.from(document.querySelectorAll('.modal-overlay'))"
+                   ".map(function (el) { return el.id; })")
+    visible = json.loads(c.js("JSON.stringify("
+                              "Array.from(document.querySelectorAll('.modal-overlay'))"
+                              ".filter(function (el) {"
+                              "  var cs = getComputedStyle(el);"
+                              "  if (cs.display === 'none' || cs.visibility === 'hidden') return false;"
+                              "  var r = el.getBoundingClientRect();"
+                              "  return r.width > 0 && r.height > 0;"
+                              "}).map(function (el) { return el.id; }))"))
+    walk.check("%s: NO dialog is open on a fresh load (%d declared in the markup)"
+               % (spec["page"], len(dialogs)), not visible, "open: %s" % ", ".join(visible))
+
+    # 2. The named control opens it, and every close control closes it.
+    for dlg in spec.get("dialogs", []):
+        where = spec["page"]
+        walk.check("%s: #%s is closed before its trigger is used" % (where, dlg["id"]),
+                   bool(c.js(NOT_VISIBLE % json.dumps("#" + dlg["id"]))))
+        if open_dialog(walk, c, dlg, where):
+            walk.check("%s: %s opens #%s" % (where, dlg["trigger"], dlg["id"]), True)
+            # Inside an OPEN dialog is where the conditional buttons live
+            # (.a-btn is inline-flex, so `hidden` lost there too).
+            audit_hidden(walk, c, "%s with #%s open" % (where, dlg["id"]))
+            close_controls(walk, c, dlg, where)
+        else:
+            walk.check("%s: %s opens #%s" % (where, dlg["trigger"], dlg["id"]), False,
+                       "clicked the trigger; the dialog never became visible")
+
+    for dlg in spec.get("optional_dialogs", []):
+        where = spec["page"]
+        if not c.js("!!document.querySelector(%s)" % json.dumps(dlg["trigger"])):
+            walk.note("%s: no row offers %s right now, so #%s gets no trigger test "
+                      "(the load-state check above still covered it)"
+                      % (where, dlg["trigger"], dlg["id"]))
+            continue
+        if open_dialog(walk, c, dlg, where):
+            walk.check("%s: %s opens #%s" % (where, dlg["trigger"], dlg["id"]), True)
+            close_controls(walk, c, dlg, where)
+        else:
+            walk.check("%s: %s opens #%s" % (where, dlg["trigger"], dlg["id"]), False)
+
+    # 3. The reported behaviours that are not a dialog.
+    checks = spec.get("checks", [])
+    if "route-selects" in checks:
+        open_dialog(walk, c, {"id": "flightModal", "trigger": "#addFlightBtn"}, spec["page"])
+        check_route_selects(walk, c)
+    if "export" in checks:
+        check_export(walk, c)
+    if "password-honest" in checks:
+        check_password_form(walk, c, spec["page"])
+
+
 def main():
     allow_stale = "--allow-stale" in sys.argv
     walk = Walk("admin-modals")
@@ -371,11 +493,13 @@ def main():
                    walk.assert_serving_working_tree(
                        assets=["assets/css/admin.css", "assets/js/admin-flights.js",
                                "assets/js/admin-dashboard.js", "assets/js/admin-profile.js",
-                               "assets/js/config.js"],
+                               "assets/js/config.js", "assets/css/profile.css",
+                               "assets/js/profile.js"],
                        markers=[("admin-flights.html", "addFlightBtn"),
                                 ("admin-bookings.html", "confirmModal"),
                                 ("admin-tickets.html", "Ticket details"),
-                                ("admin-profile.html", "pwUnavailable")]))
+                                ("admin-profile.html", "pwUnavailable"),
+                                ("profile.html", "pwUnavailable")]))
 
     c = walk.browser()
 
@@ -405,66 +529,7 @@ def main():
         return walk.finish()
 
     for spec in PAGES[1:]:
-        walk.step(spec["title"])
-        c.goto(BASE + "/" + spec["page"])
-        ready = c.wait_js(spec["ready"], timeout=30)
-        walk.check("%s: the page finished its first read" % spec["page"], ready,
-                   "waited on: %s" % spec["ready"])
-        walk.check("%s: reads the real API, not the mock layer" % spec["page"],
-                   c.js("USE_MOCK_DATA") is False, "USE_MOCK_DATA=%r" % c.js("USE_MOCK_DATA"))
-
-        # 1. The page-load state — where the defect lived and no walk had looked.
-        audit_hidden(walk, c, spec["page"])
-        dialogs = c.js("Array.from(document.querySelectorAll('.modal-overlay'))"
-                       ".map(function (el) { return el.id; })")
-        visible = json.loads(c.js("JSON.stringify("
-                                  "Array.from(document.querySelectorAll('.modal-overlay'))"
-                                  ".filter(function (el) {"
-                                  "  var cs = getComputedStyle(el);"
-                                  "  if (cs.display === 'none' || cs.visibility === 'hidden') return false;"
-                                  "  var r = el.getBoundingClientRect();"
-                                  "  return r.width > 0 && r.height > 0;"
-                                  "}).map(function (el) { return el.id; }))"))
-        walk.check("%s: NO dialog is open on a fresh load (%d declared in the markup)"
-                   % (spec["page"], len(dialogs)), not visible, "open: %s" % ", ".join(visible))
-
-        # 2. The named control opens it, and every close control closes it.
-        for dlg in spec.get("dialogs", []):
-            where = spec["page"]
-            walk.check("%s: #%s is closed before its trigger is used" % (where, dlg["id"]),
-                       bool(c.js(NOT_VISIBLE % json.dumps("#" + dlg["id"]))))
-            if open_dialog(walk, c, dlg, where):
-                walk.check("%s: %s opens #%s" % (where, dlg["trigger"], dlg["id"]), True)
-                # Inside an OPEN dialog is where the conditional buttons live
-                # (.a-btn is inline-flex, so `hidden` lost there too).
-                audit_hidden(walk, c, "%s with #%s open" % (where, dlg["id"]))
-                close_controls(walk, c, dlg, where)
-            else:
-                walk.check("%s: %s opens #%s" % (where, dlg["trigger"], dlg["id"]), False,
-                           "clicked the trigger; the dialog never became visible")
-
-        for dlg in spec.get("optional_dialogs", []):
-            where = spec["page"]
-            if not c.js("!!document.querySelector(%s)" % json.dumps(dlg["trigger"])):
-                walk.note("%s: no row offers %s right now, so #%s gets no trigger test "
-                          "(the load-state check above still covered it)"
-                          % (where, dlg["trigger"], dlg["id"]))
-                continue
-            if open_dialog(walk, c, dlg, where):
-                walk.check("%s: %s opens #%s" % (where, dlg["trigger"], dlg["id"]), True)
-                close_controls(walk, c, dlg, where)
-            else:
-                walk.check("%s: %s opens #%s" % (where, dlg["trigger"], dlg["id"]), False)
-
-        # 3. The reported behaviours that are not a dialog.
-        checks = spec.get("checks", [])
-        if "route-selects" in checks:
-            open_dialog(walk, c, {"id": "flightModal", "trigger": "#addFlightBtn"}, spec["page"])
-            check_route_selects(walk, c)
-        if "export" in checks:
-            check_export(walk, c)
-        if "password-honest" in checks:
-            check_password_form(walk, c)
+        audit_page(walk, c, spec)
 
     # 4. "Confirm" clicked for real, on a write the API refuses. Done last so the
     #    search it leaves in the toolbar cannot confuse an earlier page's checks.
@@ -488,11 +553,22 @@ def main():
         c.wait_js(dest_page["ready"], timeout=30)
         check_confirm_yes(walk, c, dest)
 
+    # 5. The storefront profile page — the customer-side twin of admin-profile.html,
+    #    sharing its password form and its CSS-vs-`hidden` shape. LAST on purpose:
+    #    signing in as a customer replaces the admin token every page above used, so
+    #    nothing may follow it.
+    if sign_in_customer(walk, c):
+        audit_page(walk, c, PROFILE_SPEC)
+
     walk.drain(c)
-    # The 409s this walk asks for: the destination delete it clicks Confirm on, and
-    # (when the demo has no Pending booking) nothing else.
+    # The 409 this walk asks for: the destination delete it clicks Confirm on. Chrome
+    # reports one refused request TWICE — `Network.responseReceived` ("409 <url>") and a
+    # console `Log.entryAdded` ("Failed to load resource: the server responded with a
+    # status of 409") — so the intent has to be spelled out in both of Chrome's shapes
+    # or the console half fails the run on a refusal the walk deliberately provoked.
     return walk.finish(expected_failures=[
         "409 %s/api/admin/destinations" % BASE,
+        "the server responded with a status of 409",
     ])
 
 
