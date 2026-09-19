@@ -340,13 +340,18 @@ class Walk:
             % (json.dumps(selector), json.dumps(needle)), timeout=timeout)
 
     def search_until(self, c, input_id, table_id, term, expect_count=None,
-                     expect_name=None, timeout=25):
+                     expect_name=None, column=2, timeout=25):
         """Type a search term and wait until the table actually reflects it.
 
         Two searches in a row can both answer one row, so waiting on the count alone
         passes before the new query is even sent — and the assertion that follows
         reads the previous result. Naming the row being waited for is what makes the
         wait mean something; `expect_name` is therefore the parameter to use.
+
+        `column` is the 1-based cell the name lives in, and it is NOT always 2: the
+        bookings walk searches by flight number, which is cell 3 on that page, and a
+        wait pointed at cell 2 there never satisfies — the failure looks like an
+        assertion about the search, not about the wait.
         """
         self.fill(c, {input_id: term})
         wait = "true"
@@ -354,9 +359,9 @@ class Walk:
             wait = ("document.querySelectorAll('#%s tr').length === %d"
                     % (table_id, expect_count))
         if expect_name is not None:
-            wait += (" && (function(){var r=document.querySelector('#%s tr td:nth-child(2)');"
+            wait += (" && (function(){var r=document.querySelector('#%s tr td:nth-child(%d)');"
                      "return !!r && r.textContent.indexOf(%s) !== -1;})()"
-                     % (table_id, json.dumps(expect_name)))
+                     % (table_id, column, json.dumps(expect_name)))
         return c.wait_js(wait, timeout=timeout)
 
     def search_empty(self, c, input_id, table_id, term, timeout=25):
